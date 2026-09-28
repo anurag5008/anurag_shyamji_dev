@@ -1,0 +1,187 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-09-19 09:50:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "datetime_section",
+  "entry_date",
+  "entry_time",
+  "tp_section",
+  "pass_unique_key",
+  "transit_pass_no",
+  "column_break_tp",
+  "tp_quantity",
+  "pacs_name",
+  "entry_details_section",
+  "agent_name",
+  "column_break_1",
+  "entry_quantity",
+  "entry_price_per_quintal",
+  "total_amount"
+ ],
+ "fields": [
+  {
+   "default": "EN-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "EN-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "datetime_section",
+   "fieldtype": "Section Break",
+   "label": "Entry"
+  },
+  {
+   "default": "Today",
+   "fieldname": "entry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "entry_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tp_section",
+   "fieldtype": "Section Break",
+   "label": "Transit Pass"
+  },
+  {
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP (Pass Unique Key)",
+   "max_items": 25,
+   "reqd": 1
+  },
+  {
+   "fieldname": "transit_pass_no",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Transit Pass No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tp_quantity",
+   "fieldtype": "Float",
+   "label": "TP Quantity",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pacs_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PACS Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_details_section",
+   "fieldtype": "Section Break",
+   "label": "Entry Details"
+  },
+  {
+   "fieldname": "agent_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Agent Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "entry_quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Entry Quantity",
+   "non_negative": 1,
+   "precision": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "entry_price_per_quintal",
+   "fieldtype": "Float",
+   "label": "Entry Price Per Quintal",
+   "non_negative": 1,
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Total Amount",
+   "non_negative": 1,
+   "precision": "2",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-19 09:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Entry",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "pass_unique_key,pacs_name,agent_name,transit_pass_no",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "pass_unique_key",
+ "track_changes": 1
+}

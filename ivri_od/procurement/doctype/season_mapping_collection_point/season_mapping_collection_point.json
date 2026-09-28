@@ -1,0 +1,76 @@
+{
+ "actions": [],
+ "creation": "2026-09-25 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "collection_point",
+  "paddy_proportion",
+  "paddy_procured_till_date",
+  "rice_due_till_date",
+  "rice_dispatched",
+  "remaining_balance"
+ ],
+ "fields": [
+  {
+   "fieldname": "collection_point",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Collection Point",
+   "options": "FCI\nRRC",
+   "reqd": 1
+  },
+  {
+   "fieldname": "paddy_proportion",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Paddy Proportion (%)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "paddy_procured_till_date",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Paddy Procured Till Date (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rice_due_till_date",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rice Due Till Date (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rice_dispatched",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rice Dispatched (QT)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "remaining_balance",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Remaining Balance (QT)",
+   "precision": "3",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "module": "Procurement",
+ "name": "Season Mapping Collection Point",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}

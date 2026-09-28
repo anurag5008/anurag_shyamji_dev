@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "hash",
+ "creation": "2026-09-15 07:25:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "season",
+  "season_year",
+  "column_break_1",
+  "ppc_name",
+  "mill_name",
+  "season_quantity",
+  "rice_yield",
+  "collection_point_section",
+  "collection_point_details"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "season.year",
+   "fieldname": "season_year",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "ppc_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PPC Name",
+   "options": "PPC Master",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "mill_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Mill Name",
+   "options": "Mill Master",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "season_quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Season Quantity",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "rice_yield",
+   "fieldtype": "Percent",
+   "label": "Rice Yield (%)",
+   "precision": "2"
+  },
+  {
+   "fieldname": "collection_point_section",
+   "fieldtype": "Section Break",
+   "label": "Collection Point Details"
+  },
+  {
+   "fieldname": "collection_point_details",
+   "fieldtype": "Table",
+   "label": "Collection Point Details",
+   "options": "Season Mapping Collection Point"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-16 04:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Season Mapping",
+ "naming_rule": "Random",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "search_fields": "season,season_year,ppc_name,mill_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "season",
+ "track_changes": 1
+}

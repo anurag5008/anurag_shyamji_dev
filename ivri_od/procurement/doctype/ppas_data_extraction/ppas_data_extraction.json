@@ -1,0 +1,162 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-09-16 14:43:11.228220",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "season",
+  "column_break_status",
+  "status",
+  "records_extracted",
+  "mapping_section",
+  "column_mapping_html",
+  "file_section",
+  "excel_file",
+  "column_break_url",
+  "download_url",
+  "actions_section",
+  "load_ppas_sessions",
+  "extract_data",
+  "column_break_actions",
+  "download_excel_file",
+  "close_ppas_session"
+ ],
+ "fields": [
+  {
+   "fieldname": "season",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Loading...",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_status",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_extracted",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Records Extracted",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "mapping_section",
+   "fieldtype": "Section Break",
+   "label": "Excel \u2192 PPAS Transit Pass Mapping"
+  },
+  {
+   "fieldname": "column_mapping_html",
+   "fieldtype": "HTML",
+   "label": "Column Mapping"
+  },
+  {
+   "fieldname": "file_section",
+   "fieldtype": "Section Break",
+   "label": "File Details"
+  },
+  {
+   "fieldname": "excel_file",
+   "fieldtype": "Data",
+   "label": "Excel File",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_url",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "download_url",
+   "fieldtype": "Data",
+   "label": "Download URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actions_section",
+   "fieldtype": "Section Break",
+   "label": "Actions"
+  },
+  {
+   "fieldname": "load_ppas_sessions",
+   "fieldtype": "Button",
+   "label": "Load PPAS Sessions"
+  },
+  {
+   "fieldname": "extract_data",
+   "fieldtype": "Button",
+   "label": "Extract Data"
+  },
+  {
+   "fieldname": "column_break_actions",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "download_excel_file",
+   "fieldtype": "Button",
+   "label": "Download Excel File"
+  },
+  {
+   "fieldname": "close_ppas_session",
+   "fieldtype": "Button",
+   "label": "Close PPAS Session"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-16 14:43:11.228220",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "PPAS Data Extraction",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "season,status",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "season",
+ "track_changes": 1
+}

@@ -1,0 +1,41 @@
+{
+ "actions": [],
+ "creation": "2026-09-16 03:50:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "miller_code",
+  "type"
+ ],
+ "fields": [
+  {
+   "columns": 3,
+   "fieldname": "miller_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Miller Code",
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Type",
+   "options": "\nRaw\nBoiled",
+   "reqd": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-09-16 03:50:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Mill Code Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

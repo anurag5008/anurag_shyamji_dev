@@ -1,0 +1,181 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "field:rst_no",
+ "creation": "2026-09-24 14:57:35.867304",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "rst_no",
+  "vehicle_no",
+  "ppc_name",
+  "gross_vehicle_weight_qt",
+  "tare_vehicle_weight_qt",
+  "gross_paddy_weight_qt",
+  "deduction_qt",
+  "gunny_weight_qt",
+  "net_paddy_weight_qt",
+  "commodity",
+  "entry_date",
+  "entry_time",
+  "tp_no",
+  "tp_status",
+  "mill_name",
+  "weigh_bridge_measurement"
+ ],
+ "fields": [
+  {
+   "fieldname": "rst_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "RST No",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle No"
+  },
+  {
+   "fieldname": "ppc_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PPC Name",
+   "reqd": 1
+  },
+  {
+   "fieldname": "gross_vehicle_weight_qt",
+   "fieldtype": "Float",
+   "label": "Gross Vehicle Weight (QT)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "gross_paddy_weight_qt",
+   "fieldtype": "Float",
+   "label": "Gross Paddy Weight (QT)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "deduction_qt",
+   "fieldtype": "Float",
+   "label": "Deduction (QT)",
+   "precision": "3"
+  },
+  {
+   "default": "0",
+   "fieldname": "gunny_weight_qt",
+   "fieldtype": "Float",
+   "label": "Gunny Weight (QT)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "net_paddy_weight_qt",
+   "fieldtype": "Float",
+   "label": "Net Paddy Weight (QT)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "commodity",
+   "fieldtype": "Data",
+   "label": "Commodity"
+  },
+  {
+   "default": "Today",
+   "fieldname": "entry_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Date"
+  },
+  {
+   "default": "Now",
+   "fieldname": "entry_time",
+   "fieldtype": "Time",
+   "label": "Time"
+  },
+  {
+   "fieldname": "tp_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP No"
+  },
+  {
+   "default": "TP Pending Agent",
+   "fieldname": "tp_status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "TP Status",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tare_vehicle_weight_qt",
+   "fieldtype": "Float",
+   "label": "Tare Vehicle Weight (QT)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "mill_name",
+   "fieldtype": "Data",
+   "label": "Mill No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "weigh_bridge_measurement",
+   "fieldtype": "Link",
+   "label": "Weigh Bridge Measurement",
+   "options": "Weigh Bridge Measurement",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-26 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "RST Details",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "rst_no,vehicle_no,ppc_name,tp_no",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "rst_no",
+ "track_changes": 1
+}

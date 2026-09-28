@@ -1,0 +1,261 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "format:QC-{YYYY}-{#}",
+ "creation": "2026-09-22 13:36:35.622486",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "qc_datetime_section",
+  "qc_date",
+  "qc_time",
+  "is_farmer_or_agent",
+  "farmer_name",
+  "gate_section",
+  "vehicle_no",
+  "gate_entry",
+  "driver_name",
+  "column_break_gate",
+  "unloading_point",
+  "staff_name",
+  "party_name",
+  "paddy_section",
+  "paddy_received_in_pkt",
+  "paddy_returned",
+  "column_break_paddy",
+  "paddy_type",
+  "paddy_quality",
+  "quality_params_section",
+  "moisture",
+  "dust",
+  "qc_decision_section",
+  "qc_decision",
+  "type_of_pkt_section",
+  "type_of_pkt"
+ ],
+ "fields": [
+  {
+   "fieldname": "qc_datetime_section",
+   "fieldtype": "Section Break",
+   "label": "Quality Check"
+  },
+  {
+   "default": "Today",
+   "fieldname": "qc_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "qc_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_farmer_or_agent",
+   "fieldtype": "Check",
+   "label": "From Farmer or Agent"
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "farmer_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Farmer Name",
+   "mandatory_depends_on": "eval:doc.is_farmer_or_agent"
+  },
+  {
+   "fieldname": "gate_section",
+   "fieldtype": "Section Break",
+   "label": "Vehicle"
+  },
+  {
+   "description": "Checking quality of this vehicle",
+   "fieldname": "vehicle_no",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle No",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "gate_entry",
+   "fieldtype": "Link",
+   "label": "Gate Entry",
+   "options": "Gate Entry",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "column_break_gate",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "unloading_point",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Unloading Point",
+   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "staff_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Staff",
+   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "party_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PPC Name",
+   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent",
+   "options": "PPC Master"
+  },
+  {
+   "fieldname": "paddy_section",
+   "fieldtype": "Section Break",
+   "label": "Paddy"
+  },
+  {
+   "fieldname": "paddy_received_in_pkt",
+   "fieldtype": "Int",
+   "label": "Paddy Received (Bags)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "paddy_returned",
+   "fieldtype": "Int",
+   "label": "Paddy Returned (Bags)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_paddy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "paddy_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Paddy Type",
+   "options": "\nOld\nNew",
+   "reqd": 1
+  },
+  {
+   "fieldname": "paddy_quality",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Paddy Quality",
+   "options": "\nMota\nPatla",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quality_params_section",
+   "fieldtype": "Section Break",
+   "label": "Quality Parameters"
+  },
+  {
+   "fieldname": "moisture",
+   "fieldtype": "Float",
+   "label": "Moisture(%)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "dust",
+   "fieldtype": "Float",
+   "label": "Dust(Kg)",
+   "non_negative": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "qc_decision_section",
+   "fieldtype": "Section Break",
+   "label": "Quality Test"
+  },
+  {
+   "fieldname": "qc_decision",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quality Test",
+   "options": "\nAccepted\nPartially Accepted\nRejected",
+   "reqd": 1
+  },
+  {
+   "fieldname": "type_of_pkt_section",
+   "fieldtype": "Section Break",
+   "label": "Type of Bags"
+  },
+  {
+   "fieldname": "type_of_pkt",
+   "fieldtype": "Table",
+   "label": "Type of Bags",
+   "options": "Quality Check Bag Detail"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-22 15:15:22.504305",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Quality Check",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "qc_decision,gate_entry,vehicle_no,unloading_point,staff_name,party_name,farmer_name,driver_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "vehicle_no",
+ "track_changes": 1
+}

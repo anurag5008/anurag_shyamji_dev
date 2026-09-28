@@ -1,0 +1,14 @@
+{
+ "add_total_row": 1,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Procurement",
+ "name": "Season Mapping Receipt Summary",
+ "ref_doctype": "Season Mapping",
+ "report_name": "Season Mapping Receipt Summary",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Desk User"}
+ ]
+}

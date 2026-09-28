@@ -1,0 +1,233 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_import": 1,
+ "autoname": "field:pass_unique_key",
+ "creation": "2026-09-16 09:25:00",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "season",
+  "sl",
+  "column_break_1",
+  "pacs",
+  "ppc",
+  "miller",
+  "pass_section",
+  "transit_pass_no",
+  "pass_unique_key",
+  "transit_pass_date",
+  "column_break_2",
+  "transit_pass_time",
+  "vehicle_section",
+  "vehicle_no",
+  "driver_name",
+  "column_break_3",
+  "bags",
+  "quantity",
+  "acceptance_section",
+  "delay_in_days",
+  "accepted_date",
+  "column_break_4",
+  "accepted_time",
+  "action"
+ ],
+ "fields": [
+  {
+   "fieldname": "season",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season",
+   "reqd": 1
+  },
+  {
+   "bold": 1,
+   "fieldname": "sl",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Sl#",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pacs",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "PACS"
+  },
+  {
+   "fieldname": "ppc",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PPC",
+   "reqd": 1
+  },
+  {
+   "fieldname": "miller",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Miller"
+  },
+  {
+   "fieldname": "pass_section",
+   "fieldtype": "Section Break",
+   "label": "Transit Pass"
+  },
+  {
+   "bold": 0,
+   "fieldname": "transit_pass_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Transit Pass No",
+   "reqd": 1
+  },
+  {
+   "description": "Miller code-PPC name(code)-K25/R24-TP{pass no}. Unique across PPAS and mills.",
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pass Unique Key",
+   "read_only": 1,
+   "unique": 1
+  },
+  {
+   "fieldname": "transit_pass_date",
+   "fieldtype": "Date",
+   "in_standard_filter": 1,
+   "label": "Transit Pass Date"
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "transit_pass_time",
+   "fieldtype": "Time",
+   "label": "Transit Pass Time"
+  },
+  {
+   "fieldname": "vehicle_section",
+   "fieldtype": "Section Break",
+   "label": "Vehicle Details"
+  },
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Vehicle No"
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name"
+  },
+  {
+   "fieldname": "column_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "default": "0",
+   "fieldname": "bags",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "No of Bag",
+   "non_negative": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "label": "Quantity",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "acceptance_section",
+   "fieldtype": "Section Break",
+   "label": "Acceptance"
+  },
+  {
+   "default": "0",
+   "default": "0",
+   "fieldname": "delay_in_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Delay (In Days)",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "accepted_date",
+   "fieldtype": "Date",
+   "label": "Accepted Date"
+  },
+  {
+   "fieldname": "column_break_4",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "accepted_time",
+   "fieldtype": "Time",
+   "label": "Accepted Time"
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Action"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-17 15:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "PPAS Transit Pass",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "pass_unique_key",
+ "show_title_field_in_link": 0,
+ "sort_field": "sl",
+ "sort_order": "ASC",
+ "states": [],
+ "title_field": "pass_unique_key",
+ "track_changes": 1
+}

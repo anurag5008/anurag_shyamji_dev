@@ -1,0 +1,20 @@
+"""Reload Weigh Bridge Measurement after farmer/agent source fields were added."""
+
+import os
+
+import frappe
+from frappe.modules.import_file import import_file_by_path
+
+
+def execute():
+	app_path = frappe.get_app_path("ivri_od")
+	path = os.path.join(
+		app_path,
+		"procurement",
+		"doctype",
+		"weigh_bridge_measurement",
+		"weigh_bridge_measurement.json",
+	)
+	if os.path.exists(path):
+		import_file_by_path(path, force=True, ignore_version=True, reset_permissions=True)
+	frappe.clear_cache(doctype="Weigh Bridge Measurement")

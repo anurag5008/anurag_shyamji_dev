@@ -11,15 +11,15 @@ app_license = "mit"
 # required_apps = []
 
 # Each item in the list will be shown as an app in the apps page
-# add_to_apps_screen = [
-# 	{
-# 		"name": "ivri_od",
-# 		"logo": "/assets/ivri_od/logo.png",
-# 		"title": "ivri_od",
-# 		"route": "/ivri_od",
-# 		"has_permission": "ivri_od.api.permission.has_app_permission"
-# 	}
-# ]
+add_to_apps_screen = [
+	{
+		"name": "ivri_od",
+		"logo": "/assets/ivri_od/images/procurement.svg",
+		"title": "ivri_od",
+		"route": "/desk/procurement",
+		"has_permission": "ivri_od.api.permission.has_app_permission",
+	}
+]
 
 # Includes in <head>
 # ------------------

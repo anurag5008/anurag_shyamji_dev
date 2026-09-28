@@ -1,0 +1,375 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-09-24 16:08:59.528979",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "demo_rst_data",
+  "is_farmer_or_agent",
+  "transit_pass_section",
+  "pass_unique_key",
+  "pacs_name",
+  "tp_weight",
+  "column_break_tp",
+  "weighment_section",
+  "measurement_date",
+  "measurement_time",
+  "rst_no",
+  "quality_check",
+  "quality_test",
+  "truck_section",
+  "truck_no_in_tp",
+  "gate_entry",
+  "column_break_truck",
+  "same_truck_as_transit_pass",
+  "actual_truck_no",
+  "load_section",
+  "commodity",
+  "no_of_bags",
+  "gunny_type",
+  "column_break_load",
+  "load_weight",
+  "tare_weight",
+  "gross_weight",
+  "gunny_weight",
+  "deduction",
+  "net_weight",
+  "slno_of_qc",
+  "transit_pass_no",
+  "total_jute_empty_qt",
+  "total_plastic_empty_qt",
+  "section_break_rnxd",
+  "bag_weight_details",
+  "vehicle_no"
+ ],
+ "fields": [
+  {
+   "default": "WBM-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "WBM-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "demo_rst_data",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Demo RST Data",
+   "options": "RST Details",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_farmer_or_agent",
+   "fieldtype": "Check",
+   "label": "From Farmer or Agent"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "transit_pass_section",
+   "fieldtype": "Section Break",
+   "label": "Transit Pass"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pass Unique Key",
+   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
+  },
+  {
+   "fieldname": "transit_pass_no",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Transit Pass No",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "pacs_name",
+   "fieldtype": "Data",
+   "label": "PACS Name",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "tp_weight",
+   "fieldtype": "Float",
+   "label": "TP Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "column_break_tp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "weighment_section",
+   "fieldtype": "Section Break",
+   "label": "Weighment"
+  },
+  {
+   "default": "Today",
+   "fieldname": "measurement_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Date",
+   "reqd": 1
+  },
+  {
+   "default": "Now",
+   "fieldname": "measurement_time",
+   "fieldtype": "Time",
+   "in_list_view": 1,
+   "label": "Time",
+   "reqd": 1
+  },
+  {
+   "fieldname": "rst_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "RST No"
+  },
+  {
+   "fieldname": "slno_of_qc",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sl No of QC",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "quality_check",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quality Check SL NO",
+   "options": "Quality Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quality_test",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Quality Test",
+   "options": "\nPending QC\nAccepted\nRejected\nPartially Accepted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "truck_section",
+   "fieldtype": "Section Break",
+   "label": "Vehicle"
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "description": "Open Gate Entry (In) vehicles inside the mill.",
+   "fieldname": "vehicle_no",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle No",
+   "mandatory_depends_on": "eval:doc.is_farmer_or_agent"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "truck_no_in_tp",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Truck No in TP",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "gate_entry",
+   "fieldtype": "Link",
+   "label": "Gate Entry",
+   "options": "Gate Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_truck",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "same_truck_as_transit_pass",
+   "fieldtype": "Check",
+   "label": "Actual Truck Different from Transit Pass"
+  },
+  {
+   "depends_on": "eval:doc.same_truck_as_transit_pass && !doc.is_farmer_or_agent",
+   "description": "Vehicles from Gate Entry marked Going to Weighment.",
+   "fieldname": "actual_truck_no",
+   "fieldtype": "Autocomplete",
+   "label": "Actual Truck No",
+   "mandatory_depends_on": "eval:doc.same_truck_as_transit_pass"
+  },
+  {
+   "fieldname": "load_section",
+   "fieldtype": "Section Break",
+   "label": "Load & Weights (QT)"
+  },
+  {
+   "fieldname": "commodity",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Commodity"
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "label": "No of Bags",
+   "non_negative": 1
+  },
+  {
+   "fieldname": "column_break_load",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "load_weight",
+   "fieldtype": "Float",
+   "label": "Gross Vehicle Weight (QT)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "tare_weight",
+   "fieldtype": "Float",
+   "label": "Tare Vehicle Weight (QT)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "gross_weight",
+   "fieldtype": "Float",
+   "label": "Gross Paddy Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gunny_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Gunny Type",
+   "options": "Gunny Gross\nGunny Cut",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "deduction",
+   "fieldtype": "Float",
+   "label": "Deduction (QT)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Net Paddy Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "description": "Sum of empty bag weight from Bag Details (QT, up to 3 decimals).",
+   "fieldname": "gunny_weight",
+   "fieldtype": "Float",
+   "label": "Gunny Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "fieldname": "bag_weight_details",
+   "fieldtype": "Table",
+   "label": "Bag Details (from QC)",
+   "options": "Weigh Bridge Bag Detail"
+  },
+  {
+   "fieldname": "total_jute_empty_qt",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Total Jute Empty Bag (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_plastic_empty_qt",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Total Plastic Empty Bag (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_break_rnxd",
+   "fieldtype": "Section Break"
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-09-24 19:10:51.642762",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Weigh Bridge Measurement",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "pass_unique_key,transit_pass_no,rst_no,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "pass_unique_key",
+ "track_changes": 1
+}
