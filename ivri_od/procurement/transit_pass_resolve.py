@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
+import re
+
 import frappe
+
+_PPC_CODE_IN_PARENS = re.compile(r"^.+\(([^)]+)\)\s*$")
 
 
 def matches_name_or_code(search_value: str | None, stored_value: str | None) -> bool:
@@ -71,6 +75,16 @@ def resolve_ppc_master_name(ppc_text: str | None) -> str | None:
 	ppc_text = (ppc_text or "").strip()
 	if not ppc_text:
 		return None
+
+	paren = _PPC_CODE_IN_PARENS.match(ppc_text)
+	if paren:
+		code = paren.group(1).strip()
+		found = frappe.db.get_value("PPC Master", {"code": code}, "name")
+		if found:
+			return found
+		found = frappe.db.get_value("PPC Master", {"name": code}, "name")
+		if found:
+			return found
 
 	for fieldname in ("name", "code", "ppc_name"):
 		found = frappe.db.get_value("PPC Master", {fieldname: ppc_text}, "name")

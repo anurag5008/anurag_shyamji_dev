@@ -25,9 +25,14 @@ def resolve_season_master_name(season_text: str | None) -> str | None:
 		if frappe.db.exists("Season Master", candidate):
 			return candidate
 
+	normalized = text.replace("(", " ").replace(")", " ").replace("_", " ")
+	normalized = " ".join(normalized.split())
+
 	for row in frappe.get_all("Season Master", fields=["name", "crop_season", "year"], limit_page_length=0):
 		label = f"{row.crop_season} {row.year}".strip()
 		if text.casefold() == label.casefold():
+			return row.name
+		if normalized.casefold() == label.casefold():
 			return row.name
 		if text.casefold() == short_season_code(label).casefold():
 			return row.name

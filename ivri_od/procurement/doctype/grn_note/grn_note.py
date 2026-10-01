@@ -16,6 +16,10 @@ from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measureme
 from ivri_od.procurement.doctype.season_mapping.season_mapping import get_chhatni_from_season_mapping
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.mill_gate import get_qc_sl_no, normalize_vehicle_no
+from ivri_od.procurement.grn_tp_fulfillment import (
+	clear_tp_fulfillment_fields,
+	refresh_tp_fulfillment_for_pass,
+)
 from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name, resolve_ppc_master_name
 
 
@@ -57,7 +61,38 @@ class GRNNote(Document):
 			self._sync_ppc_name_from_quality_check()
 		if self.is_new():
 			self._sync_chhatni_from_season_mapping()
+		self._sync_tp_fulfillment_status()
 		self._set_purchase_heading()
+
+	def on_trash(self):
+		key = (self.pass_unique_key or "").strip()
+		if key and not cint(self.is_local_procurement):
+			frappe.db.after_commit(lambda k=key: refresh_tp_fulfillment_for_pass(k))
+
+	def _sync_tp_fulfillment_status(self):
+		if cint(self.is_local_procurement) or not (self.pass_unique_key or "").strip():
+			clear_tp_fulfillment_fields(self)
+			return
+		key = (self.pass_unique_key or "").strip()
+		refresh_tp_fulfillment_for_pass(key)
+		if not self.name:
+			return
+		row = frappe.db.get_value(
+			"GRN Note",
+			self.name,
+			[
+				"received_quantity",
+				"tp_cumulative_received",
+				"tp_fulfillment_status",
+				"chhatni_fulfillment_status",
+			],
+			as_dict=True,
+		)
+		if row:
+			self.received_quantity = flt(row.received_quantity)
+			self.tp_cumulative_received = flt(row.tp_cumulative_received)
+			self.tp_fulfillment_status = row.tp_fulfillment_status or ""
+			self.chhatni_fulfillment_status = row.chhatni_fulfillment_status or ""
 
 	def _set_purchase_heading(self):
 		if cint(self.is_local_procurement):
@@ -776,6 +811,26 @@ def _grn_details_from_rst(rst_no: str, pass_unique_key: str | None = None) -> di
 @frappe.whitelist()
 def get_transit_pass_details(pass_unique_key):
 	return _transit_pass_payload(pass_unique_key)
+
+
+@frappe.whitelist()
+def refresh_tp_fulfillment_on_grn(name):
+	"""Refresh TP/Chhatni status fields for display (government GRN)."""
+	doc = frappe.get_doc("GRN Note", name)
+	if cint(doc.is_local_procurement) or not (doc.pass_unique_key or "").strip():
+		return {}
+	refresh_tp_fulfillment_for_pass(doc.pass_unique_key)
+	return frappe.db.get_value(
+		"GRN Note",
+		name,
+		[
+			"received_quantity",
+			"tp_cumulative_received",
+			"tp_fulfillment_status",
+			"chhatni_fulfillment_status",
+		],
+		as_dict=True,
+	)
 
 
 @frappe.whitelist()

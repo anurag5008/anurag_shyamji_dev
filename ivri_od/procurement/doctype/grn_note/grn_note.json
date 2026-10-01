@@ -42,6 +42,13 @@
   "tare_weight",
   "gunny_weight",
   "net_weight",
+  "tp_fulfillment_section",
+  "received_quantity",
+  "column_break_tp_fulfillment",
+  "tp_cumulative_received",
+  "tp_fulfillment_status",
+  "column_break_tp_fulfillment_2",
+  "chhatni_fulfillment_status",
   "gate_section",
   "vehicle_no",
   "driver_name",
@@ -308,6 +315,62 @@
    "label": "Net Paddy Weight (QT)",
    "non_negative": 1,
    "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_fulfillment_section",
+   "fieldtype": "Section Break",
+   "label": "TP & Chhatni Fulfillment"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "received_quantity",
+   "fieldtype": "Float",
+   "label": "Received Quantity (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "column_break_tp_fulfillment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "description": "Total received on this Pass Unique Key up to and including this GRN.",
+   "fieldname": "tp_cumulative_received",
+   "fieldtype": "Float",
+   "label": "Cumulative Received (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "description": "TP Completed when cumulative received is equal to or greater than TP quantity (overfill still completes the TP).",
+   "fieldname": "tp_fulfillment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP Status",
+   "options": "\nIn Progress\nTP Completed",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "column_break_tp_fulfillment_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "description": "Chhatni Received only when cumulative overfill (received − TP) reaches TP × chhatni% (e.g. 9 kg/qt → 9% of TP in QT), within 0.3 QT tolerance.",
+   "fieldname": "chhatni_fulfillment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Chhatni Status",
+   "options": "\nChhatni Pending\nChhatni Received",
    "read_only": 1
   },
   {

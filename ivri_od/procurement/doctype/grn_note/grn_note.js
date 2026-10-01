@@ -15,6 +15,7 @@ frappe.ui.form.on("GRN Note", {
 		sync_grn_no_display(frm);
 		sync_purchase_heading(frm);
 		sync_gate_exit_fields(frm);
+		sync_tp_fulfillment_display(frm);
 		if (!frm.doc.is_local_procurement && (frm.doc.pass_unique_key || "").trim() && !(frm.doc.mill_name || "").trim()) {
 			load_transit_pass_details(frm);
 		}
@@ -303,6 +304,29 @@ async function apply_rst_fetch_data(frm, data) {
 		refresh_grn_chhatni(frm);
 	}
 	sync_purchase_heading(frm);
+}
+
+function sync_tp_fulfillment_display(frm) {
+	if (frm.is_new() || frm.doc.is_local_procurement || !(frm.doc.pass_unique_key || "").trim() || !frm.doc.name) {
+		return;
+	}
+	frappe.call({
+		method: "ivri_od.procurement.doctype.grn_note.grn_note.refresh_tp_fulfillment_on_grn",
+		args: { name: frm.doc.name },
+		callback(r) {
+			const d = r.message || {};
+			for (const fieldname of [
+				"received_quantity",
+				"tp_cumulative_received",
+				"tp_fulfillment_status",
+				"chhatni_fulfillment_status",
+			]) {
+				if (d[fieldname] !== undefined && d[fieldname] !== null) {
+					frm.set_value(fieldname, d[fieldname]);
+				}
+			}
+		},
+	});
 }
 
 function setup_qc_bag_details_grid(frm) {
