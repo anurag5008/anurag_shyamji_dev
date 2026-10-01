@@ -651,3 +651,299 @@ def run_ppas_extraction_import(extraction_name, season, rows_json=None, file_con
 		**file_info,
 		**import_result,
 	}
+
+
+# --- Manual copy/paste import (PPAS Transit Pass Import) ---
+
+_PASTE_HEADER_CANONICAL = {
+	"season": "Season",
+	"sl": "Sl#",
+	"slno": "Sl#",
+	"pacs": "PACS",
+	"ppc": "PPC",
+	"miller": "Miller",
+	"transitpassno": "Transit Pass No.",
+	"transitpassdate": "Transit Pass Date",
+	"vehicleno": "Vehicle No",
+	"drivername": "Driver Name",
+	"bag": "Bag",
+	"bags": "Bag",
+	"quantity": "Quantity",
+	"delayindays": "Delay(In Days)",
+	"accepteddate": "Accepted Date",
+	"action": "Action",
+}
+
+
+def _normalize_header_key(header):
+	return re.sub(r"[^a-z0-9]", "", cstr(header).lower())
+
+
+def _looks_like_paste_header(cells):
+	if not cells:
+		return False
+	keys = {_normalize_header_key(cell) for cell in cells if cstr(cell).strip()}
+	if "transitpassno" in keys or "sl" in keys or "slno" in keys:
+		return True
+	joined = " ".join(cstr(c).lower() for c in cells)
+	return "transit pass" in joined
+
+
+def _canonical_paste_header(header):
+	key = _normalize_header_key(header)
+	return _PASTE_HEADER_CANONICAL.get(key, _text(header))
+
+
+def _row_dict_from_fixed_columns(cells):
+	"""Map tab-separated cells when no header row is present."""
+	cells = [cstr(c).strip() for c in cells]
+	n = len(cells)
+	if n < 10:
+		return {}
+
+	offset = 0
+	first = cells[0].lower() if cells else ""
+	if n >= 14 and ("kharif" in first or "rabi" in first or "(" in first):
+		offset = 1
+
+	def at(index):
+		pos = offset + index
+		return cells[pos] if pos < n else ""
+
+	row = {
+		"Season": cells[0] if offset else "",
+		"Sl#": at(0),
+		"PACS": at(1),
+		"PPC": at(2),
+		"Miller": at(3),
+		"Transit Pass No.": at(4),
+		"Transit Pass Date": at(5),
+		"Vehicle No": at(6),
+		"Driver Name": at(7),
+		"Bag": at(8),
+		"Quantity": at(9),
+		"Delay(In Days)": at(10) if n > offset + 10 else "",
+		"Accepted Date": at(11) if n > offset + 11 else "",
+		"Action": at(12) if n > offset + 12 else "",
+	}
+	return row
+
+
+def parse_ppas_tab_paste(paste_data):
+	"""Parse tab-separated PPAS portal / Excel clipboard text into row dicts."""
+	raw_text = cstr(paste_data or "").replace("\r\n", "\n").replace("\r", "\n")
+	lines = [line for line in raw_text.split("\n") if cstr(line).strip()]
+	if not lines:
+		return []
+
+	rows = []
+	header_labels = None
+
+	for line in lines:
+		cells = line.split("\t")
+		if header_labels is None and _looks_like_paste_header(cells):
+			header_labels = [_canonical_paste_header(cell) for cell in cells]
+			continue
+
+		if header_labels:
+			row = {}
+			for index, label in enumerate(header_labels):
+				row[label] = cstr(cells[index]).strip() if index < len(cells) else ""
+			if any(cstr(v).strip() for v in row.values()):
+				rows.append(row)
+		else:
+			row = _row_dict_from_fixed_columns(cells)
+			if row and any(cstr(v).strip() for v in row.values()):
+				rows.append(row)
+
+	return rows
+
+
+def resolve_ppas_season_text(season):
+	"""PPAS Transit Pass season text (e.g. Kharif(2025)) from Season Master or raw text."""
+	season_text = _text(season)
+	if not season_text:
+		return ""
+
+	if frappe.db.exists("Season Master", season_text):
+		doc = frappe.get_cached_doc("Season Master", season_text)
+		if doc.crop_season and doc.year:
+			return f"{doc.crop_season}({doc.year})"
+
+	if re.search(r"\(\d{4}\)", season_text):
+		return season_text
+
+	parts = season_text.replace("(", " ").replace(")", " ").split()
+	if len(parts) >= 2 and parts[-1].isdigit() and len(parts[-1]) == 4:
+		return f"{parts[0]}({parts[-1]})"
+
+	return season_text
+
+
+def validate_manual_ppas_std_row(std):
+	errors = []
+	tp_no = _text(std.get("Transit Pass No."))
+	ppc = _text(std.get("PPC"))
+	vehicle = _text(std.get("Vehicle No"))
+	tp_date = std.get("Transit Pass Date")
+	quantity = flt(_number(std.get("Quantity")))
+	bags = cint(_number(std.get("Bag")))
+
+	if not tp_no:
+		errors.append(_("Transit Pass No is required"))
+	if not ppc:
+		errors.append(_("PPC is required"))
+	if not vehicle:
+		errors.append(_("Vehicle No is required"))
+	if not tp_date:
+		errors.append(_("Transit Pass Date is required"))
+	if quantity <= 0:
+		errors.append(_("Quantity must be numeric and greater than 0"))
+	if bags < 0:
+		errors.append(_("Bags must not be negative"))
+
+	return errors
+
+
+def _manual_item_from_std(std, season_text, row_status, error_message=""):
+	return {
+		"source_sl": cint(std.get("Sl#")),
+		"season": season_text,
+		"pacs": _text(std.get("PACS")),
+		"ppc": _text(std.get("PPC")),
+		"miller": _text(std.get("Miller")),
+		"transit_pass_no": _text(std.get("Transit Pass No.")),
+		"transit_pass_date": std.get("Transit Pass Date"),
+		"transit_pass_time": std.get("Transit Pass Time"),
+		"vehicle_no": _text(std.get("Vehicle No")),
+		"driver_name": _text(std.get("Driver Name")),
+		"bag": cint(_number(std.get("Bag"))),
+		"quantity": flt(_number(std.get("Quantity"))),
+		"delay_in_days": cint(_number(std.get("Delay(In Days)"))),
+		"accepted_date": std.get("Accepted Date"),
+		"accepted_time": std.get("Accepted Time"),
+		"action": _text(std.get("Action")),
+		"row_status": row_status,
+		"error_message": error_message,
+	}
+
+
+def _std_row_from_manual_item(item):
+	if isinstance(item, str):
+		item = json.loads(item)
+	return {
+		"Sl#": item.get("source_sl"),
+		"PACS": item.get("pacs"),
+		"PPC": item.get("ppc"),
+		"Miller": item.get("miller"),
+		"Transit Pass No.": item.get("transit_pass_no"),
+		"Transit Pass Date": item.get("transit_pass_date"),
+		"Transit Pass Time": item.get("transit_pass_time"),
+		"Vehicle No": item.get("vehicle_no"),
+		"Driver Name": item.get("driver_name"),
+		"Bag": item.get("bag"),
+		"Quantity": item.get("quantity"),
+		"Delay(In Days)": item.get("delay_in_days"),
+		"Accepted Date": item.get("accepted_date"),
+		"Accepted Time": item.get("accepted_time"),
+		"Action": item.get("action"),
+	}
+
+
+def process_manual_ppas_paste(season, paste_data, miller=None):
+	"""Parse and validate pasted PPAS rows without requiring a saved import document."""
+	season_text = resolve_ppas_season_text(season)
+	if not season_text:
+		frappe.throw(_("Season is required"))
+
+	paste_rows = parse_ppas_tab_paste(paste_data)
+	if not paste_rows:
+		frappe.throw(_("No PPAS rows found in pasted data"))
+
+	existing_records = frappe.get_all(
+		"PPAS Transit Pass",
+		filters={"season": season_text},
+		fields=["season", "ppc", "transit_pass_no"],
+		limit_page_length=0,
+	)
+	existing_keys = {
+		row_identity_key(record.season, record.ppc, record.transit_pass_no) for record in existing_records
+	}
+
+	seen_in_paste = set()
+	items = []
+	total = 0
+	duplicate_count = 0
+	failed_count = 0
+
+	default_miller = _text(miller)
+
+	for raw_row in paste_rows:
+		if isinstance(raw_row, dict) and not _text(raw_row.get("Miller")) and default_miller:
+			raw_row = dict(raw_row)
+			raw_row["Miller"] = default_miller
+
+		std_row = normalize_ppas_excel_row(raw_row)
+
+		errors = validate_manual_ppas_std_row(std_row)
+		ppc = _text(std_row.get("PPC"))
+		tp_no = _text(std_row.get("Transit Pass No."))
+		identity = row_identity_key(season_text, ppc, tp_no) if ppc and tp_no else ""
+
+		if errors:
+			row_status = "Failed"
+			error_message = "; ".join(errors)
+			failed_count += 1
+		elif identity and identity in seen_in_paste:
+			row_status = "Duplicate"
+			error_message = _("Duplicate within pasted data")
+			duplicate_count += 1
+		elif identity and identity in existing_keys:
+			row_status = "Duplicate"
+			error_message = _("Already exists in ERP")
+			duplicate_count += 1
+		else:
+			row_status = "Valid"
+			error_message = ""
+			if identity:
+				seen_in_paste.add(identity)
+
+		total += 1
+		items.append(_manual_item_from_std(std_row, season_text, row_status, error_message))
+
+	return {
+		"season": season_text,
+		"items": items,
+		"total_records": total,
+		"duplicate_records": duplicate_count,
+		"failed_records": failed_count,
+	}
+
+
+@frappe.whitelist()
+def process_manual_ppas_paste_api(season, paste_data, miller=None):
+	return process_manual_ppas_paste(season, paste_data, miller=miller)
+
+
+@frappe.whitelist()
+def import_manual_ppas_valid_rows(season, items_json):
+	"""Import only Valid rows from manual paste review into PPAS Transit Pass."""
+	season_text = resolve_ppas_season_text(season)
+	if not season_text:
+		frappe.throw(_("Season is required"))
+
+	if isinstance(items_json, str):
+		items = json.loads(items_json)
+	else:
+		items = items_json or []
+
+	valid_rows = []
+	for item in items:
+		if _text(item.get("row_status")) != "Valid":
+			continue
+		valid_rows.append(_std_row_from_manual_item(item))
+
+	if not valid_rows:
+		frappe.throw(_("No valid rows to import"))
+
+	return bulk_import_from_ppas(season_text, rows=valid_rows)

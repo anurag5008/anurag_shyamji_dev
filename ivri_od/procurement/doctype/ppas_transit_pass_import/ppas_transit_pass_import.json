@@ -1,0 +1,123 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "hash",
+ "creation": "2026-10-01 10:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "season",
+  "miller",
+  "paste_section",
+  "paste_data",
+  "summary_section",
+  "total_records",
+  "duplicate_records",
+  "failed_records",
+  "import_items_section",
+  "import_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "miller",
+   "fieldtype": "Data",
+   "label": "Miller",
+   "description": "Optional default when pasted rows omit Miller"
+  },
+  {
+   "fieldname": "paste_section",
+   "fieldtype": "Section Break",
+   "label": "Paste PPAS Data"
+  },
+  {
+   "fieldname": "paste_data",
+   "fieldtype": "Long Text",
+   "label": "Paste PPAS Data Here"
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Summary"
+  },
+  {
+   "default": "0",
+   "fieldname": "total_records",
+   "fieldtype": "Int",
+   "label": "Total Records",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "duplicate_records",
+   "fieldtype": "Int",
+   "label": "Duplicate Records",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "failed_records",
+   "fieldtype": "Int",
+   "label": "Failed Records",
+   "read_only": 1
+  },
+  {
+   "fieldname": "import_items_section",
+   "fieldtype": "Section Break",
+   "label": "Import Items"
+  },
+  {
+   "fieldname": "import_items",
+   "fieldtype": "Table",
+   "label": "Import Items",
+   "options": "PPAS Transit Pass Import Item"
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "PPAS Transit Pass Import",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "show_name_in_global_search": 1,
+ "title_field": "season",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

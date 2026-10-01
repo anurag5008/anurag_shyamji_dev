@@ -49,6 +49,7 @@
   "tp_fulfillment_status",
   "column_break_tp_fulfillment_2",
   "chhatni_fulfillment_status",
+  "chhatni_fulfillment_remark",
   "gate_section",
   "vehicle_no",
   "driver_name",
@@ -325,9 +326,10 @@
   },
   {
    "depends_on": "eval:!doc.is_local_procurement",
+   "description": "Paddy received on this GRN only (net weight + entry quantities).",
    "fieldname": "received_quantity",
    "fieldtype": "Float",
-   "label": "Received Quantity (QT)",
+   "label": "This GRN Received (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
@@ -339,10 +341,10 @@
   },
   {
    "depends_on": "eval:!doc.is_local_procurement",
-   "description": "Total received on this Pass Unique Key up to and including this GRN.",
+   "description": "Running total received on this Pass Unique Key up to and including this GRN. Compare with TP Quantity to see if the pass is full.",
    "fieldname": "tp_cumulative_received",
    "fieldtype": "Float",
-   "label": "Cumulative Received (QT)",
+   "label": "Pass Total Received So Far (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
@@ -365,12 +367,19 @@
   },
   {
    "depends_on": "eval:!doc.is_local_procurement",
-   "description": "Chhatni Received only when cumulative overfill (received − TP) reaches TP × chhatni% (e.g. 9 kg/qt → 9% of TP in QT), within 0.3 QT tolerance.",
+   "description": "Not calculated until TP is fully received. After that, Received when overfill % of TP is within 0.3 points of chhatni % (e.g. 1% chhatni accepts 0.7% overfill or more).",
    "fieldname": "chhatni_fulfillment_status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Chhatni Status",
-   "options": "\nChhatni Pending\nChhatni Received",
+   "options": "\nChhatni Not Received\nChhatni Pending\nChhatni Received",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "chhatni_fulfillment_remark",
+   "fieldtype": "Small Text",
+   "label": "Chhatni Note",
    "read_only": 1
   },
   {

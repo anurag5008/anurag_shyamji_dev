@@ -320,6 +320,7 @@ function sync_tp_fulfillment_display(frm) {
 				"tp_cumulative_received",
 				"tp_fulfillment_status",
 				"chhatni_fulfillment_status",
+				"chhatni_fulfillment_remark",
 			]) {
 				if (d[fieldname] !== undefined && d[fieldname] !== null) {
 					frm.set_value(fieldname, d[fieldname]);

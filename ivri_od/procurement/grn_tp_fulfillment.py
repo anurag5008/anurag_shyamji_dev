@@ -6,15 +6,22 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt
 
-# Allow shortfall vs required chhatni overfill (QT) when marking Chhatni Received.
-CHHATNI_QT_TOLERANCE = 0.3
+# Allow up to 0.3 percentage points below chhatni rate (e.g. 1% required → 0.7% still accepted).
+CHHATNI_PCT_POINT_TOLERANCE = 0.3
+
+CHHATNI_NOT_RECEIVED = "Chhatni Not Received"
+CHHATNI_PENDING = "Chhatni Pending"
+CHHATNI_RECEIVED = "Chhatni Received"
+
+REMARK_TP_NOT_FILLED = (
+	"Chhatni cannot be calculated because the transit pass (TP) quantity is not fully received yet."
+)
 
 
 def chhatni_fulfillment_status(tp_qty: float, cumulative_received: float, chhatni_kg_per_quintal: float) -> str:
 	"""
-	Chhatni Received when overfill (cumulative - TP) reaches the chhatni allowance:
-	required overfill QT = TP × (chhatni kg/qt ÷ 100), same as chhatni % of TP.
-	Example: TP 206.69 QT, chhatni 9 → need ~18.6 QT overfill; 8.31 QT (~4%) → Pending.
+	Chhatni Received when overfill (as % of TP) is within 0.3 points of chhatni rate.
+	Example: chhatni 1% → accept from 0.7% overfill upward; chhatni 9% → need ~8.7%+.
 	"""
 	tp_qty = flt(tp_qty)
 	cumulative_received = flt(cumulative_received)
@@ -22,12 +29,13 @@ def chhatni_fulfillment_status(tp_qty: float, cumulative_received: float, chhatn
 	if tp_qty <= 0 or cumulative_received < tp_qty:
 		return ""
 	if chhatni_kg_per_quintal <= 0:
-		return "Chhatni Pending"
+		return CHHATNI_PENDING
 	overfill = flt(cumulative_received - tp_qty, 3)
-	required_overfill = flt(tp_qty * chhatni_kg_per_quintal / 100, 3)
-	if overfill + CHHATNI_QT_TOLERANCE >= required_overfill:
-		return "Chhatni Received"
-	return "Chhatni Pending"
+	overfill_pct = flt(overfill / tp_qty * 100, 4)
+	min_acceptable_pct = flt(max(chhatni_kg_per_quintal - CHHATNI_PCT_POINT_TOLERANCE, 0), 4)
+	if overfill_pct >= min_acceptable_pct:
+		return CHHATNI_RECEIVED
+	return CHHATNI_PENDING
 
 
 def grn_received_quantity(grn) -> float:
@@ -108,17 +116,22 @@ def _refresh_tp_fulfillment_for_pass(pass_unique_key: str):
 
 		tp_status = "In Progress"
 		chhatni_status = ""
+		chhatni_remark = ""
 
 		if tp_qty > 0 and cumulative >= tp_qty and not tp_completed_grn:
 			tp_completed_grn = doc.name
 			tp_status = "TP Completed"
 			chhatni_status = chhatni_fulfillment_status(tp_qty, cumulative, doc.chhatni)
+		elif tp_qty > 0 and cumulative < tp_qty:
+			chhatni_status = CHHATNI_NOT_RECEIVED
+			chhatni_remark = REMARK_TP_NOT_FILLED
 
 		updates[doc.name] = {
 			"received_quantity": received,
 			"tp_cumulative_received": cumulative,
 			"tp_fulfillment_status": tp_status,
 			"chhatni_fulfillment_status": chhatni_status,
+			"chhatni_fulfillment_remark": chhatni_remark,
 		}
 
 	for name, values in updates.items():
@@ -130,3 +143,4 @@ def clear_tp_fulfillment_fields(grn):
 	grn.tp_cumulative_received = 0
 	grn.tp_fulfillment_status = ""
 	grn.chhatni_fulfillment_status = ""
+	grn.chhatni_fulfillment_remark = ""

@@ -26,6 +26,13 @@ WORKSPACE_SHORTCUTS = [
 		"color": "Cyan",
 	},
 	{
+		"label": "Manual PPAS Import",
+		"type": "DocType",
+		"link_to": "PPAS Transit Pass Import",
+		"icon": "clipboard",
+		"color": "Teal",
+	},
+	{
 		"label": "Weigh Bridge",
 		"type": "DocType",
 		"link_to": "Weigh Bridge Measurement",
@@ -74,6 +81,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"PPAS",
 		[
 			("PPAS Data Extraction", "DocType"),
+			("PPAS Transit Pass Import", "DocType"),
 			("PPAS Transit Pass", "DocType"),
 		],
 	),
@@ -162,18 +170,11 @@ def build_workspace_content() -> str:
 
 
 def ensure_procurement_workspace_after_migrate():
-	"""Re-import module workspace after migrate orphan cleanup (Frappe v16)."""
-	path = os.path.join(
-		frappe.get_app_path("ivri_od"),
-		"procurement",
-		"workspace",
-		"procurement",
-		"procurement.json",
-	)
-	if os.path.exists(path):
-		import_file_by_path(path, force=True, ignore_version=True)
-	elif not frappe.db.exists("Workspace", "Procurement"):
-		apply_procurement_workspace()
+	"""Rebuild Procurement workspace from code (shortcuts + PPAS links stay in sync)."""
+	apply_procurement_workspace()
+	sidebar_path = os.path.join(frappe.get_app_path("ivri_od"), "workspace_sidebar", "procurement.json")
+	if os.path.exists(sidebar_path):
+		import_file_by_path(sidebar_path, force=True, ignore_version=True)
 	frappe.clear_cache()
 
 

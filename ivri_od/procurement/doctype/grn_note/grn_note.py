@@ -85,6 +85,7 @@ class GRNNote(Document):
 				"tp_cumulative_received",
 				"tp_fulfillment_status",
 				"chhatni_fulfillment_status",
+				"chhatni_fulfillment_remark",
 			],
 			as_dict=True,
 		)
@@ -93,6 +94,7 @@ class GRNNote(Document):
 			self.tp_cumulative_received = flt(row.tp_cumulative_received)
 			self.tp_fulfillment_status = row.tp_fulfillment_status or ""
 			self.chhatni_fulfillment_status = row.chhatni_fulfillment_status or ""
+			self.chhatni_fulfillment_remark = row.chhatni_fulfillment_remark or ""
 
 	def _set_purchase_heading(self):
 		if cint(self.is_local_procurement):
@@ -828,6 +830,7 @@ def refresh_tp_fulfillment_on_grn(name):
 			"tp_cumulative_received",
 			"tp_fulfillment_status",
 			"chhatni_fulfillment_status",
+			"chhatni_fulfillment_remark",
 		],
 		as_dict=True,
 	)

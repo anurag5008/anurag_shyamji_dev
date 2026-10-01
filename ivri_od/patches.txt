@@ -82,5 +82,7 @@ ivri_od.patches.v1_0.grn_mill_chhatni_fields
 ivri_od.patches.v1_0.grn_mill_name_transit_pass_display
 ivri_od.patches.v1_0.grn_tp_fulfillment_status
 ivri_od.patches.v1_0.recalc_grn_chhatni_fulfillment
+ivri_od.patches.v1_0.grn_chhatni_tp_not_filled_status
 ivri_od.patches.v1_0.install_gate_entry_pass_client_script
 ivri_od.patches.v1_0.remove_gate_entry_pass_client_scripts
+ivri_od.patches.v1_0.sync_ppas_manual_import_desk

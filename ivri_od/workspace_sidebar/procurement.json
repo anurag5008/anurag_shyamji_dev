@@ -183,6 +183,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "clipboard",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Manual PPAS Import",
+   "link_to": "PPAS Transit Pass Import",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "file-text",
    "indent": 1,
    "keep_closed": 1,
