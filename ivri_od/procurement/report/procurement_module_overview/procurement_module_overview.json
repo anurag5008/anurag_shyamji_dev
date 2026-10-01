@@ -1,0 +1,14 @@
+{
+ "add_total_row": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Procurement",
+ "name": "Procurement Module Overview",
+ "ref_doctype": "Season Master",
+ "report_name": "Procurement Module Overview",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Desk User"}
+ ]
+}

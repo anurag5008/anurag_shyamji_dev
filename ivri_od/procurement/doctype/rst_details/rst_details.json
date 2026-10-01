@@ -10,7 +10,7 @@
  "field_order": [
   "rst_no",
   "vehicle_no",
-  "ppc_name",
+  "party_name",
   "gross_vehicle_weight_qt",
   "tare_vehicle_weight_qt",
   "gross_paddy_weight_qt",
@@ -23,6 +23,7 @@
   "tp_no",
   "tp_status",
   "mill_name",
+  "agent_name",
   "weigh_bridge_measurement"
  ],
  "fields": [
@@ -43,11 +44,12 @@
    "label": "Vehicle No"
   },
   {
-   "fieldname": "ppc_name",
+   "description": "Matched to Transit Pass PPC. Farmer/agent only when this name is not on any transit pass and TP No is empty. If it is on a pass and TP No is empty, farmer/agent stays unticked until TP No is filled.",
+   "fieldname": "party_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "PPC Name",
+   "label": "Party Name",
    "reqd": 1
   },
   {
@@ -122,10 +124,20 @@
    "precision": "3"
   },
   {
+   "description": "Fetched from Transit Pass only when Party Name is found and TP No is filled. Not mandatory while TP No is empty.",
    "fieldname": "mill_name",
    "fieldtype": "Data",
    "label": "Mill No",
-   "reqd": 1
+   "reqd": 0
+  },
+  {
+   "description": "From PPC Master when Party Name matches Transit Pass PPC. Not used when party is not on pass (agent is set on Weigh Bridge from Party Name).",
+   "fieldname": "agent_name",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Agent Name",
+   "options": "Agent Master",
+   "read_only": 1
   },
   {
    "fieldname": "weigh_bridge_measurement",
@@ -137,7 +149,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-26 00:00:00.000000",
+ "modified": "2026-09-29 14:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "RST Details",
@@ -172,7 +184,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "rst_no,vehicle_no,ppc_name,tp_no",
+ "search_fields": "rst_no,vehicle_no,party_name,tp_no",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

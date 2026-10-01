@@ -1,4 +1,5 @@
 frappe.query_reports["Mill PPC Season Quantity Summary"] = {
+	collapsible_filters: true,
 	filters: [
 		{
 			fieldname: "season",

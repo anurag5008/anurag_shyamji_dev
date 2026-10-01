@@ -2,6 +2,8 @@
 # For license information, please see license.txt
 
 import base64
+import json
+import re
 from datetime import date, datetime, time as dt_time
 from io import BytesIO
 
@@ -61,6 +63,60 @@ class PPASDataExtraction(Document):
 		self.save(ignore_permissions=True)
 		frappe.msgprint(frappe._("PPAS session closed"))
 		return {"status": self.status}
+
+
+def _normalize_ppas_season_key(season):
+	return re.sub(r"\s+", "", (season or "").strip().lower())
+
+
+def _parse_ppas_season_options(ppas_seasons):
+	if isinstance(ppas_seasons, str):
+		ppas_seasons = json.loads(ppas_seasons)
+
+	if isinstance(ppas_seasons, list):
+		return [str(item).strip() for item in ppas_seasons if str(item).strip()]
+
+	if isinstance(ppas_seasons, dict):
+		return [str(key).strip() for key in ppas_seasons.keys() if str(key).strip()]
+
+	return []
+
+
+@frappe.whitelist()
+def get_ppas_season_for_extract(season_master_name, ppas_seasons=None):
+	"""Map a Season Master label (e.g. Kharif 2026) to a PPAS portal season (Kharif(2026))."""
+	season_master_name = (season_master_name or "").strip()
+	if not season_master_name:
+		frappe.throw(_("Season Master name is required"))
+
+	options = _parse_ppas_season_options(ppas_seasons)
+	if not options:
+		frappe.throw(
+			_("No PPAS seasons available. Click Load PPAS Sessions on PPAS Data Extraction first.")
+		)
+
+	master_key = _normalize_ppas_season_key(season_master_name)
+	for option in options:
+		if _normalize_ppas_season_key(option) == master_key:
+			return {"season": option}
+
+	master_match = re.match(
+		r"^(Kharif|Rabi)\s+(\d{4})$",
+		season_master_name,
+		flags=re.IGNORECASE,
+	)
+	if master_match:
+		candidate = f"{master_match.group(1).capitalize()}({master_match.group(2)})"
+		for option in options:
+			if _normalize_ppas_season_key(option) == _normalize_ppas_season_key(candidate):
+				return {"season": option}
+
+	frappe.throw(
+		_(
+			"Could not match Season Master {0} to any PPAS portal season. "
+			"Load PPAS Sessions first, then pick a matching season."
+		).format(season_master_name)
+	)
 
 
 def _serialize_excel_cell(value):

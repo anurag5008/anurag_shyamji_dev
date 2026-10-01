@@ -7,9 +7,16 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
-from frappe.utils import cint, flt, get_time, getdate, nowdate
+from frappe.utils import cint, flt, get_time, getdate, nowdate, nowtime
 
+from ivri_od.procurement.doctype.rst_details.rst_details import get_rst_agent_name
+from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
+	is_local_procurement_wbm,
+)
+from ivri_od.procurement.doctype.season_mapping.season_mapping import get_chhatni_from_season_mapping
+from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.mill_gate import get_qc_sl_no, normalize_vehicle_no
+from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name, resolve_ppc_master_name
 
 
 def _ppc_display_name(party_link: str | None) -> str:
@@ -36,16 +43,34 @@ class GRNNote(Document):
 	def validate(self):
 		self._ensure_grn_no()
 		self._normalize_fields()
-		self._validate_pass_unique_key()
-		self._sync_from_transit_pass()
-		self._sync_entry_details_from_pass()
-		self._validate_and_sync_rst()
-		self._sync_ppc_name_from_quality_check()
+		self._sync_local_procurement_flags()
+		self._validate_farmer_or_agent_agent()
+		if cint(self.is_local_procurement):
+			self._validate_and_sync_rst()
+			self._sync_local_procurement_from_rst()
+			self._sync_ppc_name_from_quality_check()
+		else:
+			self._validate_pass_unique_key()
+			self._sync_from_transit_pass()
+			self._sync_entry_details_from_pass()
+			self._validate_and_sync_rst()
+			self._sync_ppc_name_from_quality_check()
+		if self.is_new():
+			self._sync_chhatni_from_season_mapping()
+		self._set_purchase_heading()
+
+	def _set_purchase_heading(self):
+		if cint(self.is_local_procurement):
+			self.local_procurement_note = _("Local Paddy Purchase")
+		else:
+			self.is_local_procurement = 0
+			self.local_procurement_note = _("Government Paddy Purchase")
 
 	def _sync_ppc_name_from_quality_check(self):
 		qc_name = (self.quality_check or "").strip()
 		if not qc_name or not frappe.db.exists("Quality Check", qc_name):
-			self.ppc_name = ""
+			if not cint(self.is_local_procurement):
+				self.ppc_name = ""
 			self.qc_bag_details = []
 			return
 		ppc_link = (frappe.db.get_value("Quality Check", qc_name, "party_name") or "").strip()
@@ -69,6 +94,68 @@ class GRNNote(Document):
 		self.rst_no = (self.rst_no or "").strip()
 		if self.paddy_variety:
 			self.paddy_variety = self.paddy_variety.strip()
+
+	def _validate_farmer_or_agent_agent(self):
+		if not cint(self.is_farmer_or_agent) or cint(self.is_local_procurement):
+			if cint(self.is_local_procurement):
+				self.agent_name = ""
+			return
+		if not (self.agent_name or "").strip():
+			wbm_name = (self.weigh_bridge_measurement or "").strip()
+			rst_link = (
+				frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "demo_rst_data")
+				if wbm_name
+				else None
+			)
+			agent = get_rst_agent_name(demo_rst_data=rst_link, rst_no=self.rst_no)
+			if agent:
+				self.agent_name = agent
+		if not (self.agent_name or "").strip():
+			frappe.throw(_("Select Agent Name for farmer / agent procurement."))
+
+	def _sync_local_procurement_flags(self):
+		if cint(self.is_local_procurement):
+			self.local_procurement_note = _("Local Paddy Purchase")
+			self.pass_unique_key = ""
+			self.mill_name = ""
+			return
+		self.local_procurement_note = _("Government Paddy Purchase")
+		wbm_name = (self.weigh_bridge_measurement or "").strip()
+		if not wbm_name and (self.rst_no or "").strip():
+			wbm_name = _resolve_wbm_for_rst(self.rst_no, self.pass_unique_key) or ""
+		if wbm_name and is_local_procurement_wbm(wbm_name):
+			self.is_local_procurement = 1
+			self.is_farmer_or_agent = 1
+			self.local_procurement_note = _("Local Paddy Purchase")
+			self.pass_unique_key = ""
+
+	def _sync_local_procurement_from_rst(self):
+		if not cint(self.is_local_procurement):
+			return
+		wbm_name = (self.weigh_bridge_measurement or "").strip()
+		if not wbm_name:
+			return
+		rst_link = frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "demo_rst_data")
+		if not rst_link or not frappe.db.exists("RST Details", rst_link):
+			return
+		rst = frappe.db.get_value(
+			"RST Details",
+			rst_link,
+			["party_name", "commodity", "entry_date", "entry_time", "agent_name"],
+			as_dict=True,
+		)
+		if not rst:
+			return
+		if not (self.ppc_name or "").strip():
+			self.ppc_name = (rst.party_name or "").strip()
+		self.agent_name = ""
+		self.is_farmer_or_agent = 1
+		if not (self.paddy_variety or "").strip() and (rst.commodity or "").strip():
+			self.paddy_variety = rst.commodity.strip()
+		if not self.receipt_date and rst.entry_date:
+			self.receipt_date = rst.entry_date
+		if not self.receipt_time and rst.entry_time:
+			self.receipt_time = rst.entry_time
 
 	def _validate_pass_unique_key(self):
 		if not self.pass_unique_key:
@@ -107,10 +194,12 @@ class GRNNote(Document):
 				"quantity",
 				"pacs",
 				"ppc",
+				"miller",
 			],
 			as_dict=True,
 		)
 		if not tp:
+			self.mill_name = ""
 			return
 
 		self.cmr_season = (tp.season or "").strip()
@@ -119,26 +208,45 @@ class GRNNote(Document):
 		self.tp_quantity = flt(tp.quantity)
 		self.pacs = (tp.pacs or "").strip()
 		self.ppc = (tp.ppc or "").strip()
+		self.mill_name = (tp.miller or "").strip()
+
+	def _mill_master_link_for_grn(self) -> str:
+		if cint(self.is_local_procurement):
+			return ""
+		return resolve_mill_master_name(self.pass_unique_key, self.mill_name) or ""
+
+	def _sync_chhatni_from_season_mapping(self):
+		mill_link = self._mill_master_link_for_grn()
+		ppc_link = resolve_ppc_master_name(self.ppc) or resolve_ppc_master_name(self.ppc_name)
+		season_link = resolve_season_master_name(self.cmr_season)
+		if not (mill_link and ppc_link and season_link):
+			self.chhatni = 0
+			return
+		self.chhatni = get_chhatni_from_season_mapping(season_link, ppc_link, mill_link)
 
 	def _validate_and_sync_rst(self):
 		rst_no = (self.rst_no or "").strip()
 		if not rst_no:
 			frappe.throw(_("Enter RST No from Weigh Bridge Measurement."))
 
-		wbm_name = _resolve_wbm_for_rst(rst_no, self.pass_unique_key)
+		pass_key = (self.pass_unique_key or "").strip() if not cint(self.is_local_procurement) else ""
+		wbm_name = _resolve_wbm_for_rst(rst_no, pass_key or None)
 		if not wbm_name:
 			frappe.throw(
 				_("No Weigh Bridge Measurement found for RST No {0}.").format(frappe.bold(rst_no))
 			)
 
 		self.weigh_bridge_measurement = wbm_name
-		self._apply_weigh_bridge(wbm_name)
+		if cint(self.is_local_procurement) or is_local_procurement_wbm(wbm_name):
+			self.is_local_procurement = 1
+		strict_wbm = not cint(self.is_local_procurement)
+		self._apply_weigh_bridge(wbm_name, strict=strict_wbm)
 		qc_name = (self.quality_check or "").strip()
 		if qc_name:
 			self._apply_quality_check(qc_name)
 		self._apply_gate_entry((self.gate_entry or "").strip())
 
-	def _apply_weigh_bridge(self, wbm_name: str):
+	def _apply_weigh_bridge(self, wbm_name: str, strict: bool = True):
 		wbm = frappe.db.get_value(
 			"Weigh Bridge Measurement",
 			wbm_name,
@@ -159,28 +267,31 @@ class GRNNote(Document):
 				"truck_no_in_tp",
 				"vehicle_no",
 				"is_farmer_or_agent",
+				"agent_name",
 			],
 			as_dict=True,
 		)
 		if not wbm:
 			return
-		if wbm.quality_test not in ("Accepted", "Partially Accepted"):
-			frappe.throw(
-				_("GRN Note can be created only when Quality Test is Accepted or Partially Accepted.")
-			)
-		if not flt(wbm.tare_weight):
-			frappe.throw(_("GRN Note can be created only when tare weight is greater than zero."))
-
-		if (wbm.pass_unique_key or "").strip() != self.pass_unique_key:
-			frappe.throw(
-				_(
-					"RST No {0} belongs to Pass Unique Key {1}, not {2}."
-				).format(
-					frappe.bold(self.rst_no),
-					frappe.bold(wbm.pass_unique_key),
-					frappe.bold(self.pass_unique_key),
+		if strict:
+			if wbm.quality_test not in ("Accepted", "Partially Accepted"):
+				frappe.throw(
+					_("GRN Note can be created only when Quality Test is Accepted or Partially Accepted.")
 				)
-			)
+			if not flt(wbm.tare_weight):
+				frappe.throw(_("GRN Note can be created only when tare weight is greater than zero."))
+
+		if not cint(self.is_local_procurement):
+			if (wbm.pass_unique_key or "").strip() != self.pass_unique_key:
+				frappe.throw(
+					_(
+						"RST No {0} belongs to Pass Unique Key {1}, not {2}."
+					).format(
+						frappe.bold(self.rst_no),
+						frappe.bold(wbm.pass_unique_key),
+						frappe.bold(self.pass_unique_key),
+					)
+				)
 
 		self.gross_vehicle_weight = flt(wbm.load_weight)
 		self.gross_weight = flt(wbm.gross_weight)
@@ -194,9 +305,22 @@ class GRNNote(Document):
 		if cint(wbm.no_of_bags):
 			self.no_of_bags = cint(wbm.no_of_bags)
 
-		if cint(wbm.is_farmer_or_agent):
-			vehicle = (wbm.vehicle_no or "").strip()
+		self.is_farmer_or_agent = cint(wbm.is_farmer_or_agent)
+		if self.is_farmer_or_agent and not cint(self.is_local_procurement):
+			self.agent_name = (wbm.agent_name or "").strip()
+			if not self.agent_name:
+				rst_link = frappe.db.get_value(
+					"Weigh Bridge Measurement", wbm_name, "demo_rst_data"
+				)
+				self.agent_name = get_rst_agent_name(
+					demo_rst_data=rst_link, rst_no=self.rst_no
+				) or ""
+			vehicle = (wbm.actual_truck_no or wbm.vehicle_no or "").strip()
+		elif self.is_farmer_or_agent:
+			self.agent_name = ""
+			vehicle = (wbm.actual_truck_no or wbm.vehicle_no or "").strip()
 		else:
+			self.agent_name = ""
 			vehicle = (wbm.actual_truck_no or wbm.truck_no_in_tp or "").strip()
 		self.vehicle_no = normalize_vehicle_no(vehicle)
 
@@ -232,6 +356,12 @@ class GRNNote(Document):
 		self.unloader_name = (qc.staff_name or "").strip()
 		self.unloading_point = (qc.unloading_point or "").strip()
 		self.ppc_name = _ppc_display_name(qc.party_name)
+		if not cint(self.is_farmer_or_agent) and not (self.agent_name or "").strip():
+			ppc_link = (qc.party_name or "").strip()
+			if ppc_link and frappe.db.exists("PPC Master", ppc_link):
+				agent = frappe.db.get_value("PPC Master", ppc_link, "agent")
+				if agent:
+					self.agent_name = agent
 		self.party_name = ""
 		self.society_name = ""
 		self.paddy_type = (qc.paddy_type or "").strip()
@@ -261,6 +391,9 @@ class GRNNote(Document):
 			child.no_of_plastic_bag = cint(row.get("no_of_plastic_bag"))
 
 	def _apply_gate_entry(self, gate_entry: str):
+		self.gate_exit = ""
+		self.gate_exit_date = None
+		self.gate_out_time = None
 		if not gate_entry or not frappe.db.exists("Gate Entry", gate_entry):
 			return
 
@@ -293,16 +426,127 @@ class GRNNote(Document):
 			if not (self.vehicle_no or "").strip():
 				self.vehicle_no = normalize_vehicle_no(gate_in_row.vehicle_no)
 
-		exit_datetime = frappe.db.get_value(
-			"Gate Exit", {"gate_entry_in": gate_in}, "exit_datetime"
+		exit_row = _latest_gate_exit(gate_in, self.vehicle_no or (gate_in_row.vehicle_no if gate_in_row else ""))
+		if not exit_row or not exit_row.exit_datetime:
+			return
+		self.gate_exit = exit_row.name
+		self.gate_exit_date = getdate(exit_row.exit_datetime)
+		self.gate_out_time = get_time(exit_row.exit_datetime)
+
+
+def _latest_gate_exit(gate_in: str | None, vehicle_no: str | None):
+	"""Gate Exit for this visit, then the latest exit for the same vehicle."""
+	gate_in = (gate_in or "").strip()
+	if gate_in:
+		rows = frappe.get_all(
+			"Gate Exit",
+			filters={"gate_entry_in": gate_in},
+			fields=["name", "exit_datetime"],
+			order_by="exit_datetime desc",
+			limit=1,
 		)
-		if exit_datetime:
-			self.gate_out_time = get_time(exit_datetime)
-		else:
-			out_time = frappe.db.get_value(
-				"Gate Entry", {"in_out": "Out", "gate_entry_in": gate_in}, "entry_time"
-			)
-			self.gate_out_time = out_time
+		if rows:
+			return rows[0]
+
+	vehicle_no = normalize_vehicle_no(vehicle_no)
+	if not vehicle_no:
+		return None
+	rows = frappe.get_all(
+		"Gate Exit",
+		filters={"vehicle_no": vehicle_no},
+		fields=["name", "exit_datetime"],
+		order_by="exit_datetime desc",
+		limit=1,
+	)
+	return rows[0] if rows else None
+
+
+@frappe.whitelist()
+def sync_gate_exit_on_grn(grn_name: str | None = None):
+	"""Fill Gate Exit, date, and time on an open GRN when that vehicle has exited."""
+	grn_name = (grn_name or "").strip()
+	if not grn_name or not frappe.db.exists("GRN Note", grn_name):
+		return {"gate_exit": "", "gate_exit_date": None, "gate_out_time": None}
+	doc = frappe.get_doc("GRN Note", grn_name)
+	doc._apply_gate_entry((doc.gate_entry or "").strip())
+	doc.db_set(
+		{
+			"gate_exit": doc.gate_exit or "",
+			"gate_exit_date": doc.gate_exit_date,
+			"gate_out_time": doc.gate_out_time,
+		},
+		update_modified=False,
+	)
+	return {
+		"gate_exit": doc.gate_exit or "",
+		"gate_exit_date": doc.gate_exit_date,
+		"gate_out_time": doc.gate_out_time,
+	}
+
+
+def grn_dict_for_local_wbm(wbm_name: str) -> dict | None:
+	"""Initial GRN payload for local / farmer–agent WBM (no transit pass)."""
+	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		return None
+	if not is_local_procurement_wbm(wbm_name):
+		return None
+
+	wbm = frappe.db.get_value(
+		"Weigh Bridge Measurement",
+		wbm_name,
+		[
+			"rst_no",
+			"agent_name",
+			"demo_rst_data",
+			"load_weight",
+			"gross_weight",
+			"tare_weight",
+			"net_weight",
+			"gunny_type",
+			"gunny_weight",
+			"vehicle_no",
+			"commodity",
+			"measurement_date",
+			"measurement_time",
+			"quality_check",
+			"gate_entry",
+		],
+		as_dict=True,
+	)
+	if not wbm or not (wbm.rst_no or "").strip():
+		return None
+
+	rst = None
+	if (wbm.demo_rst_data or "").strip() and frappe.db.exists("RST Details", wbm.demo_rst_data):
+		rst = frappe.db.get_value(
+			"RST Details",
+			wbm.demo_rst_data,
+			["party_name", "commodity", "entry_date", "entry_time"],
+			as_dict=True,
+		)
+
+	return {
+		"doctype": "GRN Note",
+		"is_local_procurement": 1,
+		"is_farmer_or_agent": 1,
+		"pass_unique_key": "",
+		"rst_no": wbm.rst_no,
+		"weigh_bridge_measurement": wbm_name,
+		"agent_name": "",
+		"receipt_date": (rst.entry_date if rst else None) or wbm.measurement_date or nowdate(),
+		"receipt_time": (rst.entry_time if rst else None) or wbm.measurement_time or nowtime(),
+		"ppc_name": ((rst.party_name or "").strip() if rst else ""),
+		"paddy_variety": ((rst.commodity if rst else "") or wbm.commodity or "").strip(),
+		"gross_vehicle_weight": flt(wbm.load_weight),
+		"gross_weight": flt(wbm.gross_weight),
+		"tare_weight": flt(wbm.tare_weight),
+		"net_weight": flt(wbm.net_weight),
+		"gunny_type": wbm.gunny_type or "",
+		"gunny_weight": flt(wbm.gunny_weight),
+		"vehicle_no": normalize_vehicle_no(wbm.actual_truck_no or wbm.vehicle_no),
+		"quality_check": (wbm.quality_check or "").strip(),
+		"gate_entry": (wbm.gate_entry or "").strip(),
+	}
 
 
 def _resolve_wbm_for_rst(rst_no: str, pass_unique_key: str | None = None) -> str | None:
@@ -434,11 +678,21 @@ def _transit_pass_payload(pass_unique_key: str) -> dict:
 			"quantity",
 			"pacs",
 			"ppc",
+			"miller",
 		],
 		as_dict=True,
 	)
 	if not tp:
 		return {}
+	mill_display = (tp.miller or "").strip()
+	mill_link = resolve_mill_master_name(key, tp.miller) or ""
+	ppc_link = resolve_ppc_master_name(tp.ppc) or ""
+	season_link = resolve_season_master_name(tp.season) or ""
+	chhatni = (
+		get_chhatni_from_season_mapping(season_link, ppc_link, mill_link)
+		if mill_link and ppc_link and season_link
+		else 0
+	)
 	return {
 		"cmr_season": (tp.season or "").strip(),
 		"transit_pass_no": tp.transit_pass_no,
@@ -446,6 +700,8 @@ def _transit_pass_payload(pass_unique_key: str) -> dict:
 		"tp_quantity": flt(tp.quantity),
 		"pacs": (tp.pacs or "").strip(),
 		"ppc": (tp.ppc or "").strip(),
+		"mill_name": mill_display,
+		"chhatni": chhatni,
 		"entry_details": _entry_rows_for_pass(key),
 	}
 
@@ -453,19 +709,30 @@ def _transit_pass_payload(pass_unique_key: str) -> dict:
 def _grn_details_from_rst(rst_no: str, pass_unique_key: str | None = None) -> dict:
 	rst_no = (rst_no or "").strip()
 	wbm_name = _resolve_wbm_for_rst(rst_no, pass_unique_key)
+	if not wbm_name and not (pass_unique_key or "").strip():
+		wbm_name = _resolve_wbm_for_rst(rst_no, None)
 	if not wbm_name:
 		return {"error": _("No Weigh Bridge Measurement found for RST No {0}.").format(rst_no)}
 
 	doc = frappe.new_doc("GRN Note")
-	doc.pass_unique_key = (pass_unique_key or "").strip()
+	local = is_local_procurement_wbm(wbm_name)
+	doc.is_local_procurement = 1 if local else 0
+	doc.pass_unique_key = "" if local else (pass_unique_key or "").strip()
 	doc.rst_no = rst_no
+	doc.weigh_bridge_measurement = wbm_name
+	if local:
+		doc._sync_local_procurement_flags()
 	doc._apply_weigh_bridge(wbm_name)
+	if local:
+		doc._sync_local_procurement_from_rst()
 	if doc.quality_check:
 		doc._apply_quality_check(doc.quality_check)
 	if doc.gate_entry:
 		doc._apply_gate_entry(doc.gate_entry)
 
 	return {
+		"is_local_procurement": doc.is_local_procurement,
+		"local_procurement_note": doc.local_procurement_note,
 		"weigh_bridge_measurement": wbm_name,
 		"gross_vehicle_weight": doc.gross_vehicle_weight,
 		"gross_weight": doc.gross_weight,
@@ -478,6 +745,8 @@ def _grn_details_from_rst(rst_no: str, pass_unique_key: str | None = None) -> di
 		"driver_name": doc.driver_name,
 		"arrival_date": doc.arrival_date,
 		"arrival_time": doc.arrival_time,
+		"gate_exit": doc.gate_exit,
+		"gate_exit_date": doc.gate_exit_date,
 		"gate_out_time": doc.gate_out_time,
 		"quality_check": doc.quality_check,
 		"qc_sample_no": doc.qc_sample_no,
@@ -487,6 +756,8 @@ def _grn_details_from_rst(rst_no: str, pass_unique_key: str | None = None) -> di
 		"unloader_name": doc.unloader_name,
 		"unloading_point": doc.unloading_point,
 		"ppc_name": doc.ppc_name,
+		"is_farmer_or_agent": doc.is_farmer_or_agent,
+		"agent_name": doc.agent_name,
 		"paddy_type": doc.paddy_type,
 		"paddy_quality": doc.paddy_quality,
 		"qc_decision": doc.qc_decision,
@@ -505,6 +776,18 @@ def _grn_details_from_rst(rst_no: str, pass_unique_key: str | None = None) -> di
 @frappe.whitelist()
 def get_transit_pass_details(pass_unique_key):
 	return _transit_pass_payload(pass_unique_key)
+
+
+@frappe.whitelist()
+def fetch_chhatni_for_grn(
+	pass_unique_key=None, mill_name=None, ppc=None, ppc_name=None, cmr_season=None
+):
+	mill_link = resolve_mill_master_name(pass_unique_key, mill_name) or ""
+	ppc_link = resolve_ppc_master_name(ppc) or resolve_ppc_master_name(ppc_name)
+	season_link = resolve_season_master_name(cmr_season)
+	if not (mill_link and ppc_link and season_link):
+		return 0
+	return get_chhatni_from_season_mapping(season_link, ppc_link, mill_link)
 
 
 @frappe.whitelist()

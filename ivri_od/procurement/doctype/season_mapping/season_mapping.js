@@ -3,15 +3,19 @@
 
 frappe.ui.form.on("Season Mapping", {
 	refresh(frm) {
+		fetch_target_allocation(frm);
 		fetch_grn_paddy_procured(frm);
 	},
 	season(frm) {
+		fetch_target_allocation(frm);
 		fetch_grn_paddy_procured(frm);
 	},
 	ppc_name(frm) {
+		fetch_target_allocation(frm);
 		fetch_grn_paddy_procured(frm);
 	},
 	mill_name(frm) {
+		fetch_target_allocation(frm);
 		fetch_grn_paddy_procured(frm);
 	},
 	season_quantity(frm) {
@@ -30,6 +34,32 @@ frappe.ui.form.on("Season Mapping Collection Point", {
 		fetch_grn_paddy_procured(frm);
 	},
 });
+
+function fetch_target_allocation(frm) {
+	if (!frm.doc.season || !frm.doc.ppc_name || !frm.doc.mill_name) {
+		return;
+	}
+	frappe.call({
+		method: "ivri_od.procurement.doctype.season_mapping.season_mapping.fetch_target_allocation",
+		args: {
+			season: frm.doc.season,
+			ppc_name: frm.doc.ppc_name,
+			mill_name: frm.doc.mill_name,
+		},
+		callback(r) {
+			const data = r.message || {};
+			if (!data.target_quantity && data.target_quantity !== 0) {
+				return;
+			}
+			if (!Object.keys(data).length) {
+				return;
+			}
+			frm.set_value("season_quantity", data.target_quantity);
+			frm.set_value("agent_name", data.agent_name || "");
+			frm.set_value("chhatni", data.chhatni || 0);
+		},
+	});
+}
 
 function fetch_grn_paddy_procured(frm) {
 	if (!frm.doc.season || !frm.doc.ppc_name || !frm.doc.mill_name) {

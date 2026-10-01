@@ -49,8 +49,10 @@ def _ensure_app_desktop_icon():
 			{
 				"parent_icon": "",
 				"idx": 2,
-				"hidden": 1,
+				"hidden": 0,
 				"app": "ivri_od",
+				"link_type": "Workspace Sidebar",
+				"link_to": "Procurement",
 			},
 			update_modified=False,
 		)

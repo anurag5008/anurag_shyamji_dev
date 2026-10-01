@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "hash",
+ "creation": "2026-09-30 16:09:41.843996",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "season",
+  "ppc_name",
+  "target_quantity",
+  "column_break_1",
+  "agent_name",
+  "mill_name",
+  "chhatni",
+  "latest_chutney_section",
+  "latest_chutney_kg_per_quintal",
+  "latest_chutney_percentage",
+  "column_break_chutney",
+  "latest_chutney_season",
+  "latest_chutney_assign"
+ ],
+ "fields": [
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "ppc_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PPC Name",
+   "options": "PPC Master",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "target_quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Target Quantity",
+   "non_negative": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "agent_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Agent Name",
+   "options": "Agent Master",
+   "reqd": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "mill_name",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Mill Name",
+   "options": "Mill Master",
+   "reqd": 1
+  },
+  {
+   "description": "Defaults from Chhatni Assign when Season, PPC, or Mill changes; you can edit this value.",
+   "fieldname": "chhatni",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Chhatni (Kg per Quintal)",
+   "non_negative": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "latest_chutney_section",
+   "fieldtype": "Section Break",
+   "label": "Latest Chutney"
+  },
+  {
+   "description": "From the latest Chatney Assign for this PPC and Mill.",
+   "fieldname": "latest_chutney_kg_per_quintal",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Latest Chutney (Kg per Quintal)",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_chutney_percentage",
+   "fieldtype": "Percent",
+   "label": "Latest Chutney Percentage",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_chutney",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "latest_chutney_season",
+   "fieldtype": "Link",
+   "label": "Latest Chutney Season",
+   "options": "Season Master",
+   "read_only": 1
+  },
+  {
+   "fieldname": "latest_chutney_assign",
+   "fieldtype": "Link",
+   "label": "Latest Chhatni Assign",
+   "options": "Chhatni Assign",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-01 11:52:50.230382",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Target Allocation",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "search_fields": "season,ppc_name,agent_name,mill_name",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

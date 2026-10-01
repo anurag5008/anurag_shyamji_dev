@@ -11,7 +11,6 @@ from frappe.modules.import_file import import_file_by_path
 
 PROCUREMENT_DOCTYPES = [
 	("Mill Master", "factory"),
-	("Society Master", "users"),
 	("PPC Master", "map-pin"),
 	("Season Master", "calendar"),
 	("Season Mapping", "calendar"),
@@ -30,8 +29,7 @@ PROCUREMENT_DOCTYPES = [
 
 def execute():
 	_ensure_procurement_workspace_title()
-	_rebuild_procurement_workspace_from_json()
-	_rebuild_procurement_sidebar()
+	_force_import_procurement_workspace()
 	_force_import_sidebar_only()
 	frappe.clear_cache()
 

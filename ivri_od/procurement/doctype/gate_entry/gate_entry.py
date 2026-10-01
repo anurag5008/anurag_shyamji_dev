@@ -4,13 +4,19 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import get_datetime, now_datetime
+from frappe.utils import format_datetime, get_datetime, now_datetime
 
 from ivri_od.procurement.mill_gate import (
 	get_open_gate_entry_in_for_vehicle,
 	get_vehicles_inside_mill,
 	is_gate_in_inside_mill,
 	normalize_vehicle_no,
+)
+from ivri_od.procurement.pass_print import (
+	qr_content_gate_entry,
+	qr_image_html,
+	render_template_file,
+	send_pdf_download,
 )
 
 
@@ -231,6 +237,37 @@ class GateEntry(Document):
 def get_inside_mill_vehicle_autocomplete(txt="", limit=25):
 	vehicles = get_vehicles_inside_mill(txt=txt, limit=limit)
 	return [{"value": v, "label": v, "description": ""} for v in vehicles]
+
+
+def _render_gate_entry_pass_html(doc, for_pdf: bool = False) -> str:
+	entry_dt = doc.entry_datetime
+	entry_datetime_display = format_datetime(entry_dt) if entry_dt else "—"
+	qr_text = qr_content_gate_entry(doc, entry_datetime_display)
+	return render_template_file(
+		("procurement", "doctype", "gate_entry", "gate_entry_pass.html"),
+		{
+			"doc": doc,
+			"entry_datetime_display": entry_datetime_display,
+			"qr_image": qr_image_html(qr_text),
+			"qr_text": qr_text,
+			"for_pdf": for_pdf,
+		},
+	)
+
+
+@frappe.whitelist()
+def get_gate_entry_pass_html(name: str) -> str:
+	doc = frappe.get_doc("Gate Entry", name)
+	doc.check_permission("print")
+	return _render_gate_entry_pass_html(doc)
+
+
+@frappe.whitelist()
+def download_gate_entry_pass_pdf(name: str):
+	doc = frappe.get_doc("Gate Entry", name)
+	doc.check_permission("print")
+	html = _render_gate_entry_pass_html(doc, for_pdf=True)
+	send_pdf_download(html, f"{doc.name}-gate-pass.pdf")
 
 
 @frappe.whitelist()

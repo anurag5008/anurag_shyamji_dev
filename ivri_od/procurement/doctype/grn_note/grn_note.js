@@ -13,8 +13,18 @@ frappe.ui.form.on("GRN Note", {
 		setup_qc_bag_details_grid(frm);
 		setup_entry_details_grid(frm);
 		sync_grn_no_display(frm);
+		sync_purchase_heading(frm);
+		sync_gate_exit_fields(frm);
+		if (!frm.doc.is_local_procurement && (frm.doc.pass_unique_key || "").trim() && !(frm.doc.mill_name || "").trim()) {
+			load_transit_pass_details(frm);
+		}
 	},
 	pass_unique_key(frm) {
+		const key = (frm.doc.pass_unique_key || "").trim();
+		if (!key && frm.is_new()) {
+			frm.set_value("mill_name", "");
+			frm.set_value("chhatni", 0);
+		}
 		load_transit_pass_details(frm);
 		setup_rst_no_autocomplete(frm, true);
 		if (frm.doc.rst_no) {
@@ -24,7 +34,61 @@ frappe.ui.form.on("GRN Note", {
 	rst_no(frm) {
 		load_rst_details(frm);
 	},
+	ppc_name(frm) {
+		if (frm.is_new()) {
+			refresh_grn_chhatni(frm);
+		}
+	},
 });
+
+function sync_gate_exit_fields(frm) {
+	if (frm.is_new() || !frm.doc.name || frm._gate_exit_synced) {
+		return;
+	}
+	frm._gate_exit_synced = true;
+	frappe.call({
+		method: "ivri_od.procurement.doctype.grn_note.grn_note.sync_gate_exit_on_grn",
+		args: { grn_name: frm.doc.name },
+		callback(r) {
+			const data = r.message || {};
+			if ((frm.doc.gate_exit || "") !== (data.gate_exit || "")) {
+				frm.reload_doc();
+			}
+		},
+	});
+}
+
+function sync_purchase_heading(frm) {
+	const local = !!frm.doc.is_local_procurement;
+	const heading = local ? __("Local Paddy Purchase") : __("Government Paddy Purchase");
+	frm.set_df_property("grn_section", "label", local ? __("GRN") : heading);
+
+	const section = frm.fields_dict.grn_section;
+	const head = section && (section.head || (section.wrapper && section.wrapper.find(".section-head")));
+	if (head && head.length) {
+		head.html(local ? __("GRN") : heading);
+		head.css(
+			local
+				? {}
+				: {
+						"font-size": "22px",
+						"font-weight": "700",
+					}
+		);
+	}
+
+	const banner = frm.fields_dict.local_paddy_heading;
+	if (!banner) {
+		return;
+	}
+	banner.$wrapper.find(".control-label").hide();
+	banner.$wrapper.find(".html-content, .control-input-wrapper, .form-group").first().html(
+		`<div style="font-size:32px;font-weight:700;line-height:1.15;margin:8px 0 16px;">${frappe.utils.escape_html(
+			heading
+		)}</div>`
+	);
+	banner.$wrapper.toggle(!!local);
+}
 
 function sync_grn_no_display(frm) {
 	if (frm.is_new() && !(frm.doc.grn_no || "").trim()) {
@@ -116,6 +180,10 @@ function load_transit_pass_details(frm) {
 				return;
 			}
 			frm.set_value("cmr_season", data.cmr_season || "");
+			frm.set_value("mill_name", data.mill_name || "");
+			if (frm.is_new()) {
+				frm.set_value("chhatni", data.chhatni || 0);
+			}
 			frm.set_value("transit_pass_no", data.transit_pass_no || "");
 			frm.set_value("transit_pass_date", data.transit_pass_date || "");
 			frm.set_value("tp_quantity", data.tp_quantity || 0);
@@ -124,11 +192,35 @@ function load_transit_pass_details(frm) {
 			if (data.entry_details) {
 				set_entry_details(frm, data.entry_details);
 			}
+			if (frm.is_new()) {
+				refresh_grn_chhatni(frm);
+			}
+		},
+	});
+}
+
+function refresh_grn_chhatni(frm) {
+	if (!frm.is_new() || frm.doc.is_local_procurement) {
+		return;
+	}
+	frappe.call({
+		method: "ivri_od.procurement.doctype.grn_note.grn_note.fetch_chhatni_for_grn",
+		args: {
+			pass_unique_key: frm.doc.pass_unique_key || "",
+			mill_name: frm.doc.mill_name || "",
+			ppc: frm.doc.ppc || "",
+			ppc_name: frm.doc.ppc_name || "",
+			cmr_season: frm.doc.cmr_season || "",
+		},
+		callback(r) {
+			frm.set_value("chhatni", flt(r.message));
 		},
 	});
 }
 
 const RST_FETCH_FIELDS = [
+	"is_local_procurement",
+	"local_procurement_note",
 	"weigh_bridge_measurement",
 	"gross_vehicle_weight",
 	"gross_weight",
@@ -141,6 +233,8 @@ const RST_FETCH_FIELDS = [
 	"driver_name",
 	"arrival_date",
 	"arrival_time",
+	"gate_exit",
+	"gate_exit_date",
 	"gate_out_time",
 	"quality_check",
 	"qc_sample_no",
@@ -150,6 +244,8 @@ const RST_FETCH_FIELDS = [
 	"unloader_name",
 	"unloading_point",
 	"ppc_name",
+	"is_farmer_or_agent",
+	"agent_name",
 	"paddy_type",
 	"paddy_quality",
 	"qc_decision",
@@ -203,6 +299,10 @@ async function apply_rst_fetch_data(frm, data) {
 	if (data.qc_bag_details) {
 		set_qc_bag_details(frm, data.qc_bag_details);
 	}
+	if (frm.is_new()) {
+		refresh_grn_chhatni(frm);
+	}
+	sync_purchase_heading(frm);
 }
 
 function setup_qc_bag_details_grid(frm) {

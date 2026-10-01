@@ -331,6 +331,148 @@ function update_progress(
 }
 
 
+function normalize_ppas_season_key(value) {
+    return String(value || "")
+        .trim()
+        .replace(/\s+/g, "")
+        .toLowerCase();
+}
+
+
+function store_ppas_season_catalog(frm, seasons) {
+    const catalog = {
+        by_key: {},
+        names: [],
+    };
+
+    if (Array.isArray(seasons)) {
+        for (const item of seasons) {
+            if (typeof item === "string" && item.trim()) {
+                const name = item.trim();
+                const entry = { name };
+                catalog.by_key[normalize_ppas_season_key(name)] = entry;
+                catalog.names.push(name);
+                continue;
+            }
+
+            if (!item || typeof item !== "object") {
+                continue;
+            }
+
+            const name =
+                item.name ||
+                item.season ||
+                item.label ||
+                item.season_name;
+
+            if (!name) {
+                continue;
+            }
+
+            const entry = {
+                name,
+                configuration_id:
+                    item.configuration_id ||
+                    item.id ||
+                    item.season_id ||
+                    item.value,
+            };
+
+            catalog.by_key[normalize_ppas_season_key(name)] = entry;
+            catalog.names.push(name);
+        }
+    } else if (seasons && typeof seasons === "object") {
+        for (const [name, configuration_id] of Object.entries(seasons)) {
+            const entry = {
+                name,
+                configuration_id,
+            };
+            catalog.by_key[normalize_ppas_season_key(name)] = entry;
+            catalog.names.push(name);
+        }
+    }
+
+    frm.__ppas_season_catalog = catalog;
+    return catalog;
+}
+
+
+function resolve_ppas_season_choice(frm, season) {
+    const catalog = frm.__ppas_season_catalog || { by_key: {} };
+    const key = normalize_ppas_season_key(season);
+
+    if (catalog.by_key[key]) {
+        return catalog.by_key[key];
+    }
+
+    for (const entry of Object.values(catalog.by_key)) {
+        if (entry.name === season) {
+            return entry;
+        }
+    }
+
+    return { name: season };
+}
+
+
+async function read_ppas_agent_error(response, fallback) {
+    let detail = fallback;
+
+    try {
+        const payload = await response.json();
+        detail =
+            payload.error ||
+            payload.message ||
+            fallback;
+    } catch (error) {
+        // Keep fallback message.
+    }
+
+    return detail;
+}
+
+
+async function sync_ppas_season_catalog(frm) {
+    const response = await fetch(`${PPAS_AGENT}/seasons`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        cache: "no-store",
+    });
+
+    if (!response.ok) {
+        throw new Error(
+            await read_ppas_agent_error(
+                response,
+                `PPAS Agent HTTP ${response.status}`
+            )
+        );
+    }
+
+    const result = await response.json();
+
+    if (!result.success) {
+        throw new Error(
+            result.error ||
+                result.message ||
+                "Unable to refresh PPAS seasons."
+        );
+    }
+
+    const catalog = store_ppas_season_catalog(frm, result.seasons || []);
+
+    if (!catalog.names.length) {
+        throw new Error("No PPAS seasons found.");
+    }
+
+    frm.set_df_property("season", "options", catalog.names.join("\n"));
+    frm.refresh_field("season");
+
+    return catalog;
+}
+
+
 function pick_ppas_row_array(payload) {
     if (!payload || typeof payload !== "object") {
         return [];
@@ -848,7 +990,10 @@ async function load_ppas_sessions_action(frm) {
                     if (!response.ok) {
 
                         throw new Error(
-                            `PPAS Agent HTTP ${response.status}`
+                            await read_ppas_agent_error(
+                                response,
+                                `PPAS Agent HTTP ${response.status}`
+                            )
                         );
                     }
 
@@ -860,46 +1005,19 @@ async function load_ppas_sessions_action(frm) {
                     if (!result.success) {
 
                         throw new Error(
+                            result.error ||
                             result.message ||
                             "Unable to connect to PPAS."
                         );
                     }
 
 
-                    let seasons =
-                        result.seasons || [];
+                    const catalog = store_ppas_season_catalog(
+                        frm,
+                        result.seasons || []
+                    );
 
-
-                    if (
-                        !Array.isArray(seasons)
-                    ) {
-
-                        seasons =
-                            Object.entries(
-                                seasons
-                            ).map(
-                                ([name, id]) => ({
-                                    name:
-                                        name,
-
-                                    id:
-                                        id
-                                })
-                            );
-                    }
-
-
-                    const names =
-                        seasons
-                            .map(
-                                item =>
-                                    item.name ||
-                                    item.season ||
-                                    item.label ||
-                                    item.season_name
-                            )
-                            .filter(Boolean);
-
+                    const names = catalog.names;
 
                     if (!names.length) {
 
@@ -1090,13 +1208,38 @@ async function extract_data_action(frm) {
                     dialog =
                         create_progress_dialog();
 
+                    await ensure_agent(dialog);
+
+                    update_progress(
+                        dialog,
+                        `
+                        <b>
+                            Checking PPAS session...
+                        </b>
+                        <br><br>
+                        Verifying seasons for extraction.
+                        `,
+                        0,
+                        0
+                    );
+
+                    await sync_ppas_season_catalog(frm);
+
+                    const season_choice = resolve_ppas_season_choice(
+                        frm,
+                        season
+                    );
+
+                    const season_for_agent =
+                        season_choice.name || season;
+
 
                     update_progress(
                         dialog,
 
                         `
                         <b>
-                            Extracting ${season}...
+                            Extracting ${season_for_agent}...
                         </b>
 
                         <br><br>
@@ -1112,6 +1255,15 @@ async function extract_data_action(frm) {
                     // =================================================
                     // GET PPAS DATA
                     // =================================================
+
+                    const extract_body = {
+                        season: season_for_agent,
+                    };
+
+                    if (season_choice.configuration_id) {
+                        extract_body.configuration_id =
+                            season_choice.configuration_id;
+                    }
 
                     const response =
                         await fetch(
@@ -1130,11 +1282,7 @@ async function extract_data_action(frm) {
                                 },
 
                                 body:
-                                    JSON.stringify({
-
-                                        season:
-                                            season
-                                    })
+                                    JSON.stringify(extract_body)
                             }
                         );
 
@@ -1142,7 +1290,10 @@ async function extract_data_action(frm) {
                     if (!response.ok) {
 
                         throw new Error(
-                            `PPAS Agent HTTP ${response.status}`
+                            await read_ppas_agent_error(
+                                response,
+                                `PPAS Agent HTTP ${response.status}`
+                            )
                         );
                     }
 
@@ -1154,6 +1305,7 @@ async function extract_data_action(frm) {
                     if (!result.success) {
 
                         throw new Error(
+                            result.error ||
                             result.message ||
                             "PPAS extraction failed."
                         );
@@ -1206,7 +1358,7 @@ async function extract_data_action(frm) {
 
                     const rows = await resolve_ppas_extract_rows(
                         result,
-                        season
+                        season_for_agent
                     );
 
 

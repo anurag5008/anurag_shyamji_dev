@@ -2,6 +2,7 @@
 // For license information, please see license.txt
 
 frappe.query_reports["TP Mandi Quantity Fulfillment"] = {
+	collapsible_filters: true,
 	filters: [
 		{
 			fieldname: "season",

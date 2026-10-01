@@ -7,6 +7,10 @@ from frappe.model.document import Document
 from frappe.utils import cint, flt
 
 from ivri_od.procurement.bag_balance import get_weigh_bridge_bags_for_tp
+from ivri_od.procurement.doctype.rst_details.rst_details import (
+	get_rst_agent_name,
+	is_private_procurement_rst,
+)
 from ivri_od.procurement.mill_gate import (
 	get_open_gate_entry_in_for_vehicle,
 	get_vehicles_inside_mill,
@@ -164,7 +168,9 @@ class WeighBridgeMeasurement(Document):
 				)
 
 	def validate(self):
+		self._apply_rst_private_procurement_mode()
 		self._sync_source_mode_fields()
+		self._sync_agent_name_from_rst_details()
 		self._validate_pass_unique_key()
 		self._validate_farmer_or_agent_source()
 		self._normalize_truck_numbers()
@@ -186,24 +192,73 @@ class WeighBridgeMeasurement(Document):
 			self.tp_weight = 0
 			self.truck_no_in_tp = ""
 			self.same_truck_as_transit_pass = 0
-			self.actual_truck_no = ""
 			self.pacs_name = ""
+			if not (self.actual_truck_no or "").strip() and (self.vehicle_no or "").strip():
+				self.actual_truck_no = normalize_vehicle_no(self.vehicle_no)
+			self.vehicle_no = ""
 		else:
 			self.vehicle_no = ""
+			self.agent_name = ""
+
+	def _apply_rst_private_procurement_mode(self):
+		rst_link = (self.demo_rst_data or "").strip()
+		if not rst_link or not frappe.db.exists("RST Details", rst_link):
+			return
+		rst = frappe.get_doc("RST Details", rst_link)
+		if not is_private_procurement_rst(rst):
+			return
+		self.is_farmer_or_agent = 1
+		self.pass_unique_key = ""
+		self.transit_pass_no = ""
+		self.tp_weight = 0
+		self.truck_no_in_tp = ""
+		self.same_truck_as_transit_pass = 0
+		self.pacs_name = ""
+		self.vehicle_no = ""
+		rst_vehicle = normalize_vehicle_no(rst.vehicle_no)
+		if rst_vehicle:
+			self.actual_truck_no = rst_vehicle
+		if is_private_procurement_rst(rst):
+			self.agent_name = ""
+		else:
+			agent = get_rst_agent_name(demo_rst_data=rst_link, rst_no=self.rst_no)
+			if agent:
+				self.agent_name = agent
+
+	def _sync_agent_name_from_rst_details(self):
+		if not is_farmer_or_agent_source(self):
+			return
+		rst_link = (self.demo_rst_data or "").strip()
+		if rst_link and frappe.db.exists("RST Details", rst_link):
+			rst = frappe.get_doc("RST Details", rst_link)
+			if is_private_procurement_rst(rst):
+				self.agent_name = ""
+				return
+		agent = get_rst_agent_name(demo_rst_data=self.demo_rst_data, rst_no=self.rst_no)
+		if agent:
+			self.agent_name = agent
 
 	def _validate_farmer_or_agent_source(self):
 		if not is_farmer_or_agent_source(self):
 			return
-		vehicle = normalize_vehicle_no(self.vehicle_no)
+		vehicle = normalize_vehicle_no(self.actual_truck_no)
 		if not vehicle:
-			frappe.throw(_("Enter Vehicle No."))
+			frappe.throw(_("Enter Actual Truck No."))
+		self.actual_truck_no = vehicle
+		self.vehicle_no = ""
+		if self.demo_rst_data and frappe.db.exists("RST Details", self.demo_rst_data):
+			self.agent_name = ""
+		elif not (self.agent_name or "").strip():
+			frappe.throw(_("Select Agent Name for farmer / agent procurement."))
+		# Local procurement from RST: WBM is created before gate/QC; gate is linked when available.
+		if self.demo_rst_data and frappe.db.exists("RST Details", self.demo_rst_data):
+			return
 		if not get_open_gate_entry_in_for_vehicle(vehicle):
 			frappe.throw(
 				_("Vehicle {0} has no open Gate Entry (In) inside the mill.").format(
 					frappe.bold(vehicle)
 				)
 			)
-		self.vehicle_no = vehicle
 
 	def _validate_pass_unique_key(self):
 		if is_farmer_or_agent_source(self):
@@ -317,6 +372,8 @@ class WeighBridgeMeasurement(Document):
 			self.rst_no = self.rst_no.strip()
 
 	def _sync_actual_truck(self):
+		if is_farmer_or_agent_source(self):
+			return
 		if not self.same_truck_as_transit_pass:
 			self.actual_truck_no = ""
 
@@ -482,7 +539,7 @@ class WeighBridgeMeasurement(Document):
 
 def get_effective_truck_no(doc) -> str:
 	if is_farmer_or_agent_source(doc):
-		return normalize_vehicle_no(doc.get("vehicle_no"))
+		return normalize_vehicle_no(doc.get("actual_truck_no") or doc.get("vehicle_no"))
 	actual = (doc.get("actual_truck_no") or "").strip().upper()
 	if actual:
 		return actual
@@ -741,32 +798,67 @@ def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 	return data
 
 
+def is_local_procurement_wbm(wbm_name: str) -> bool:
+	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		return False
+	row = frappe.db.get_value(
+		"Weigh Bridge Measurement",
+		wbm_name,
+		["is_farmer_or_agent", "pass_unique_key"],
+		as_dict=True,
+	)
+	return bool(cint(row.is_farmer_or_agent)) and not (row.pass_unique_key or "").strip()
+
+
 def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	"""Create one GRN Note on WBM creation when the load is eligible."""
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		return
+	if frappe.db.exists("GRN Note", {"weigh_bridge_measurement": wbm_name}):
+		return
+
+	local = is_local_procurement_wbm(wbm_name)
+	if local:
+		_create_local_grn_for_wbm(wbm_name)
+		return
+
 	wbm = frappe.db.get_value(
 		"Weigh Bridge Measurement",
 		wbm_name,
-		["quality_test", "pass_unique_key", "rst_no", "tare_weight"],
+		[
+			"quality_test",
+			"pass_unique_key",
+			"rst_no",
+			"tare_weight",
+			"is_farmer_or_agent",
+			"agent_name",
+			"demo_rst_data",
+		],
 		as_dict=True,
 	)
 	if not wbm or wbm.quality_test not in ("Accepted", "Partially Accepted"):
 		return
 	if not flt(wbm.tare_weight):
 		return
-	if not (wbm.pass_unique_key or "").strip() or not (wbm.rst_no or "").strip():
+	if not (wbm.rst_no or "").strip():
 		return
-	if frappe.db.exists("GRN Note", {"weigh_bridge_measurement": wbm_name}):
+	if not (wbm.pass_unique_key or "").strip():
 		return
 
 	try:
+		farmer_agent = cint(wbm.is_farmer_or_agent)
+		agent_name = (wbm.agent_name or "").strip() or get_rst_agent_name(
+			demo_rst_data=wbm.demo_rst_data, rst_no=wbm.rst_no
+		) or ""
 		grn = frappe.get_doc(
 			{
 				"doctype": "GRN Note",
-				"pass_unique_key": wbm.pass_unique_key,
+				"pass_unique_key": (wbm.pass_unique_key or "").strip(),
 				"rst_no": wbm.rst_no,
 				"weigh_bridge_measurement": wbm_name,
+				"is_local_procurement": 0,
+				"is_farmer_or_agent": 1 if farmer_agent else 0,
+				"agent_name": agent_name if farmer_agent else "",
 			}
 		)
 		grn.insert(ignore_permissions=True)
@@ -777,6 +869,31 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 		)
 		frappe.msgprint(
 			_("Quality Test is accepted, but the GRN Note could not be created: {0}").format(str(exc)),
+			title=_("Automatic GRN Note Error"),
+			indicator="red",
+			alert=True,
+		)
+
+
+def _create_local_grn_for_wbm(wbm_name: str):
+	from ivri_od.procurement.doctype.grn_note.grn_note import grn_dict_for_local_wbm
+
+	payload = grn_dict_for_local_wbm(wbm_name)
+	if not payload:
+		return
+	try:
+		grn = frappe.get_doc(payload)
+		grn.flags.auto_local_grn = True
+		grn.insert(ignore_permissions=True)
+	except Exception as exc:
+		frappe.log_error(
+			message=frappe.get_traceback(),
+			title=f"Automatic local GRN Note creation failed for {wbm_name}",
+		)
+		frappe.msgprint(
+			_("Weigh Bridge was saved, but the local GRN Note could not be created: {0}").format(
+				str(exc)
+			),
 			title=_("Automatic GRN Note Error"),
 			indicator="red",
 			alert=True,

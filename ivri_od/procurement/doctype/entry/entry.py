@@ -4,7 +4,14 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt
+from frappe.utils import flt, format_datetime, get_datetime
+
+from ivri_od.procurement.pass_print import (
+	qr_content_entry,
+	qr_image_html,
+	render_template_file,
+	send_pdf_download,
+)
 
 
 class Entry(Document):
@@ -107,3 +114,41 @@ class Entry(Document):
 
 	def _update_total_amount(self):
 		self.total_amount = flt(self.entry_quantity) * flt(self.entry_price_per_quintal)
+
+
+def _entry_datetime_display(doc) -> str:
+	if doc.entry_date and doc.entry_time:
+		return format_datetime(get_datetime(f"{doc.entry_date} {doc.entry_time}"))
+	if doc.entry_date:
+		return format_datetime(get_datetime(str(doc.entry_date)))
+	return "—"
+
+
+def _render_entry_pass_html(doc, for_pdf: bool = False) -> str:
+	entry_datetime_display = _entry_datetime_display(doc)
+	qr_text = qr_content_entry(doc, entry_datetime_display)
+	return render_template_file(
+		("procurement", "doctype", "entry", "entry_pass.html"),
+		{
+			"doc": doc,
+			"entry_datetime_display": entry_datetime_display,
+			"qr_image": qr_image_html(qr_text),
+			"qr_text": qr_text,
+			"for_pdf": for_pdf,
+		},
+	)
+
+
+@frappe.whitelist()
+def get_entry_pass_html(name: str) -> str:
+	doc = frappe.get_doc("Entry", name)
+	doc.check_permission("print")
+	return _render_entry_pass_html(doc)
+
+
+@frappe.whitelist()
+def download_entry_pass_pdf(name: str):
+	doc = frappe.get_doc("Entry", name)
+	doc.check_permission("print")
+	html = _render_entry_pass_html(doc, for_pdf=True)
+	send_pdf_download(html, f"{doc.name}-entry-pass.pdf")

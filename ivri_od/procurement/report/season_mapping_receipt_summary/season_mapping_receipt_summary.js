@@ -1,6 +1,7 @@
 // Copyright (c) 2026, Profezzo and contributors
 
 frappe.query_reports["Season Mapping Receipt Summary"] = {
+	collapsible_filters: true,
 	filters: [
 		{
 			fieldname: "season",

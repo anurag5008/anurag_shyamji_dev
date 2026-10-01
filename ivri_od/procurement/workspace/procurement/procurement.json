@@ -1,298 +1,379 @@
 {
  "app": "ivri_od",
- "content": "[{\"id\":\"prc_header_quick\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Quick Access</b></span>\",\"col\":12}},{\"id\":\"prc_quick_01\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Daily Planning\",\"col\":4}},{\"id\":\"prc_quick_02\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Entry\",\"col\":4}},{\"id\":\"prc_quick_03\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Gate Exit\",\"col\":4}},{\"id\":\"prc_quick_04\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Weigh Bridge Measurement\",\"col\":4}},{\"id\":\"prc_quick_05\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Quality Check\",\"col\":4}},{\"id\":\"prc_quick_06\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"GRN Note\",\"col\":4}},{\"id\":\"prc_quick_07\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Season Mapping\",\"col\":4}},{\"id\":\"prc_quick_08\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"PPAS Transit Pass\",\"col\":4}},{\"id\":\"prc_quick_09\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Season Mapping Receipt Summary\",\"col\":4}},{\"id\":\"prc_header_sections\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Browse by Task</b></span>\",\"col\":12}},{\"id\":\"prc_section_01\",\"type\":\"card\",\"data\":{\"card_name\":\"Planning & Season\",\"col\":6}},{\"id\":\"prc_section_02\",\"type\":\"card\",\"data\":{\"card_name\":\"Gate, Weighing & Quality\",\"col\":6}},{\"id\":\"prc_section_03\",\"type\":\"card\",\"data\":{\"card_name\":\"Receipt & Documentation\",\"col\":6}},{\"id\":\"prc_section_04\",\"type\":\"card\",\"data\":{\"card_name\":\"Masters & Reference Data\",\"col\":6}},{\"id\":\"prc_section_05\",\"type\":\"card\",\"data\":{\"card_name\":\"Reports\",\"col\":6}}]",
+ "charts": [],
+ "content": "[{\"id\": \"3158c4b34e\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"abc3e108ca\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"1cbc7aabfa\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"ad23d9e3f5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"56ed0cd400\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"ebcb2efe4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"903fd2ebe7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"451b9d0828\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"3ce65d48a2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"64f63d238d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"e458afb94e\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"1ed46f3940\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"4c0b491807\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"83bee4f50e\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"e3f5b346b9\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"ee330c2a52\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"742ef3b13c\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"7d01053ad0\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"242b5b5c5d\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
+ "creation": "2026-10-01 12:04:12.928182",
+ "custom_blocks": [],
+ "docstatus": 0,
  "doctype": "Workspace",
- "for_user": "",
  "hide_custom": 0,
  "icon": "building-2",
+ "idx": 0,
+ "indicator_color": "green",
  "is_hidden": 0,
  "label": "Procurement",
+ "link_type": "DocType",
  "links": [
   {
-   "label": "Planning & Season",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Masters",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
    "type": "Card Break"
   },
   {
-   "label": "Daily Planning",
-   "link_to": "Daily Planning",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "PPAS Data Extraction",
-   "link_to": "PPAS Data Extraction",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "PPAS Transit Pass",
-   "link_to": "PPAS Transit Pass",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Season Mapping",
-   "link_to": "Season Mapping",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Season Master",
-   "link_to": "Season Master",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Gate, Weighing & Quality",
-   "type": "Card Break"
-  },
-  {
-   "label": "Gate Entry",
-   "link_to": "Gate Entry",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Gate Exit",
-   "link_to": "Gate Exit",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Weigh Bridge Measurement",
-   "link_to": "Weigh Bridge Measurement",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Weigh Bridge Bag Detail",
-   "link_to": "Weigh Bridge Bag Detail",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Quality Check",
-   "link_to": "Quality Check",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Quality Check Bag Detail",
-   "link_to": "Quality Check Bag Detail",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Receipt & Documentation",
-   "type": "Card Break"
-  },
-  {
-   "label": "Entry",
-   "link_to": "Entry",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "RST Details",
-   "link_to": "RST Details",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "GRN Entry Detail",
-   "link_to": "GRN Entry Detail",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "GRN Note",
-   "link_to": "GRN Note",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
-   "label": "Masters & Reference Data",
-   "type": "Card Break"
-  },
-  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Mill Master",
+   "link_count": 0,
    "link_to": "Mill Master",
    "link_type": "DocType",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "Mill Code Detail",
-   "link_to": "Mill Code Detail",
-   "link_type": "DocType",
-   "type": "Link"
-  },
-  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "PPC Master",
+   "link_count": 0,
    "link_to": "PPC Master",
    "link_type": "DocType",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "Society Master",
-   "link_to": "Society Master",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "District Master",
+   "link_count": 0,
+   "link_to": "District Master",
    "link_type": "DocType",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "Reports",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Agent Master",
+   "link_count": 0,
+   "link_to": "Agent Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season Master",
+   "link_count": 0,
+   "link_to": "Season Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season & targets",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
    "type": "Card Break"
   },
   {
-   "label": "Mill PPC Season Quantity Summary",
-   "link_to": "Mill PPC Season Quantity Summary",
-   "link_type": "Report",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Season Mapping",
+   "link_count": 0,
+   "link_to": "Season Mapping",
+   "link_type": "DocType",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "Season Mapping Receipt Summary",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Target Allocation",
+   "link_count": 0,
+   "link_to": "Target Allocation",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Chhatni Assign",
+   "link_count": 0,
+   "link_to": "Chhatni Assign",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Daily Planning",
+   "link_count": 0,
+   "link_to": "Daily Planning",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "PPAS",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "PPAS Data Extraction",
+   "link_count": 0,
+   "link_to": "PPAS Data Extraction",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "PPAS Transit Pass",
+   "link_count": 0,
+   "link_to": "PPAS Transit Pass",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gate",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gate Entry",
+   "link_count": 0,
+   "link_to": "Gate Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Gate Exit",
+   "link_count": 0,
+   "link_to": "Gate Exit",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Weigh & quality",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Weigh Bridge Measurement",
+   "link_count": 0,
+   "link_to": "Weigh Bridge Measurement",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Quality Check",
+   "link_count": 0,
+   "link_to": "Quality Check",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Receipt & GRN",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Entry",
+   "link_count": 0,
+   "link_to": "Entry",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "RST Details",
+   "link_count": 0,
+   "link_to": "RST Details",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "GRN Note",
+   "link_count": 0,
+   "link_to": "GRN Note",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Reports",
+   "link_count": 5,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Module Overview",
+   "link_count": 0,
+   "link_to": "Procurement Module Overview",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Season Mapping Receipt",
+   "link_count": 0,
    "link_to": "Season Mapping Receipt Summary",
    "link_type": "Report",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "TP Mandi Quantity Fulfillment",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Mill PPC Season Qty",
+   "link_count": 0,
+   "link_to": "Mill PPC Season Quantity Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "TP Mandi Fulfillment",
+   "link_count": 0,
    "link_to": "TP Mandi Quantity Fulfillment",
    "link_type": "Report",
+   "onboard": 0,
    "type": "Link"
   },
   {
-   "label": "Vehicle Gate Movement Summary",
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Vehicle Gate Movement",
+   "link_count": 0,
    "link_to": "Vehicle Gate Movement Summary",
    "link_type": "Report",
+   "onboard": 0,
    "type": "Link"
   }
  ],
+ "modified": "2026-10-01 12:04:12.928182",
+ "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",
+ "number_cards": [],
+ "owner": "Administrator",
  "public": 1,
- "roles": [
-  {
-   "role": "System Manager"
-  },
-  {
-   "role": "Desk User"
-  }
- ],
- "sequence_id": 10,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
  "shortcuts": [
   {
-   "label": "Daily Planning",
-   "link_to": "Daily Planning",
-   "type": "DocType"
-  },
-  {
-   "label": "Entry",
-   "link_to": "Entry",
-   "type": "DocType"
-  },
-  {
+   "color": "Blue",
+   "doc_view": "List",
+   "icon": "log-in",
    "label": "Gate Entry",
    "link_to": "Gate Entry",
    "type": "DocType"
   },
   {
-   "label": "Gate Exit",
-   "link_to": "Gate Exit",
-   "type": "DocType"
-  },
-  {
-   "label": "GRN Entry Detail",
-   "link_to": "GRN Entry Detail",
-   "type": "DocType"
-  },
-  {
-   "label": "GRN Note",
-   "link_to": "GRN Note",
-   "type": "DocType"
-  },
-  {
-   "label": "Mill Code Detail",
-   "link_to": "Mill Code Detail",
-   "type": "DocType"
-  },
-  {
-   "label": "Mill Master",
-   "link_to": "Mill Master",
-   "type": "DocType"
-  },
-  {
-   "label": "PPC Master",
-   "link_to": "PPC Master",
-   "type": "DocType"
-  },
-  {
-   "label": "PPAS Data Extraction",
-   "link_to": "PPAS Data Extraction",
-   "type": "DocType"
-  },
-  {
+   "color": "Cyan",
+   "doc_view": "List",
+   "icon": "file-text",
    "label": "PPAS Transit Pass",
    "link_to": "PPAS Transit Pass",
    "type": "DocType"
   },
   {
+   "color": "Green",
+   "doc_view": "List",
+   "icon": "package",
+   "label": "Weigh Bridge",
+   "link_to": "Weigh Bridge Measurement",
+   "type": "DocType"
+  },
+  {
+   "color": "Yellow",
+   "doc_view": "List",
+   "icon": "clipboard-check",
    "label": "Quality Check",
    "link_to": "Quality Check",
    "type": "DocType"
   },
   {
-   "label": "Quality Check Bag Detail",
-   "link_to": "Quality Check Bag Detail",
-   "type": "DocType"
-  },
-  {
+   "color": "Grey",
+   "doc_view": "List",
+   "icon": "clipboard-list",
    "label": "RST Details",
    "link_to": "RST Details",
    "type": "DocType"
   },
   {
-   "label": "Season Mapping",
-   "link_to": "Season Mapping",
+   "color": "Orange",
+   "doc_view": "List",
+   "icon": "file-check",
+   "label": "GRN Note",
+   "link_to": "GRN Note",
    "type": "DocType"
   },
   {
-   "label": "Season Master",
-   "link_to": "Season Master",
-   "type": "DocType"
-  },
-  {
-   "label": "Society Master",
-   "link_to": "Society Master",
-   "type": "DocType"
-  },
-  {
-   "label": "Weigh Bridge Bag Detail",
-   "link_to": "Weigh Bridge Bag Detail",
-   "type": "DocType"
-  },
-  {
-   "label": "Weigh Bridge Measurement",
-   "link_to": "Weigh Bridge Measurement",
-   "type": "DocType"
-  },
-  {
-   "label": "Mill PPC Season Quantity Summary",
-   "link_to": "Mill PPC Season Quantity Summary",
-   "type": "Report"
-  },
-  {
-   "label": "Season Mapping Receipt Summary",
-   "link_to": "Season Mapping Receipt Summary",
-   "type": "Report"
-  },
-  {
-   "label": "TP Mandi Quantity Fulfillment",
-   "link_to": "TP Mandi Quantity Fulfillment",
-   "type": "Report"
-  },
-  {
-   "label": "Vehicle Gate Movement Summary",
-   "link_to": "Vehicle Gate Movement Summary",
+   "color": "Purple",
+   "doc_view": "List",
+   "icon": "layout-grid",
+   "label": "Module Overview",
+   "link_to": "Procurement Module Overview",
+   "report_ref_doctype": "Season Master",
    "type": "Report"
   }
  ],

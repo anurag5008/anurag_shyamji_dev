@@ -54,6 +54,11 @@ function compact_wbm_form_layout(frm) {
 }
 
 frappe.ui.form.on("Weigh Bridge Measurement", {
+	setup(frm) {
+		frm.set_query("agent_name", () => ({
+			filters: { is_active: 1 },
+		}));
+	},
 	onload(frm) {
 		inject_wbm_form_styles();
 		setup_pass_unique_key_autocomplete(frm);
@@ -92,6 +97,9 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		load_transit_pass_details(frm);
 	},
 	same_truck_as_transit_pass(frm) {
+		if (frm.doc.is_farmer_or_agent) {
+			return;
+		}
 		if (!frm.doc.same_truck_as_transit_pass) {
 			frm.set_value("actual_truck_no", "");
 		} else {
@@ -166,6 +174,7 @@ function wbm_qc_sync_args(frm) {
 function clear_wbm_tp_fields(frm) {
 	if (!frm.doc.is_farmer_or_agent) {
 		frm.set_value("vehicle_no", "");
+		frm.set_value("agent_name", "");
 		return;
 	}
 	frm.set_value("pass_unique_key", "");
@@ -173,14 +182,34 @@ function clear_wbm_tp_fields(frm) {
 	frm.set_value("tp_weight", 0);
 	frm.set_value("pacs_name", "");
 	frm.set_value("truck_no_in_tp", "");
+	frm.set_value("vehicle_no", "");
 	frm.set_value("same_truck_as_transit_pass", 0);
-	frm.set_value("actual_truck_no", "");
+	copy_rst_vehicle_to_actual_truck(frm);
+}
+
+function copy_rst_vehicle_to_actual_truck(frm) {
+	const rst = frm.doc.demo_rst_data;
+	if (!rst) {
+		return;
+	}
+	frappe.db.get_value("RST Details", rst, "vehicle_no", (r) => {
+		const vehicle = (r && r.vehicle_no ? r.vehicle_no : "").trim().toUpperCase();
+		if (vehicle && (frm.doc.actual_truck_no || "").trim().toUpperCase() !== vehicle) {
+			frm.set_value("actual_truck_no", vehicle);
+		}
+	});
 }
 
 function toggle_wbm_source_mode_ui(frm) {
+	frm.set_df_property(
+		"actual_truck_no",
+		"read_only",
+		Boolean(frm.doc.is_farmer_or_agent && frm.doc.demo_rst_data)
+	);
 	if (frm.doc.is_farmer_or_agent) {
 		frm.remove_custom_button(__("Same as TP"), __("Truck"));
 		frm.remove_custom_button(__("Different Truck"), __("Truck"));
+		copy_rst_vehicle_to_actual_truck(frm);
 	} else {
 		setup_truck_buttons(frm);
 	}
@@ -201,7 +230,7 @@ function setup_farmer_vehicle_autocomplete(frm, reload = false) {
 	if (!frm.doc.is_farmer_or_agent) {
 		return;
 	}
-	const field = frm.fields_dict.vehicle_no;
+	const field = frm.fields_dict.actual_truck_no;
 	if (!field) {
 		return;
 	}
@@ -265,6 +294,9 @@ function setup_pass_unique_key_autocomplete(frm) {
 }
 
 function setup_actual_truck_autocomplete(frm, reload = false) {
+	if (frm.doc.is_farmer_or_agent) {
+		return;
+	}
 	const field = frm.fields_dict.actual_truck_no;
 	if (!field) {
 		return;

@@ -5,6 +5,8 @@ app_description = "To manage rice mill of odisha"
 app_email = "rabadajit66@gmail.com"
 app_license = "mit"
 
+after_migrate = ["ivri_od.procurement.procurement_workspace.ensure_procurement_workspace_after_migrate"]
+
 # Apps
 # ------------------
 
@@ -26,8 +28,6 @@ add_to_apps_screen = [
 
 # include js, css files in header of desk.html
 # app_include_css = "/assets/ivri_od/css/ivri_od.css"
-# app_include_js = "/assets/ivri_od/js/ivri_od.js"
-
 # include js, css files in header of web template
 # web_include_css = "/assets/ivri_od/css/ivri_od.css"
 # web_include_js = "/assets/ivri_od/js/ivri_od.js"
@@ -43,7 +43,7 @@ add_to_apps_screen = [
 # page_js = {"page" : "public/js/file.js"}
 
 # include js in doctype views
-# doctype_js = {"doctype" : "public/js/doctype.js"}
+doctype_js = {"Report": "public/js/procurement_report_redirect.js"}
 # doctype_list_js = {"doctype" : "public/js/doctype_list.js"}
 # doctype_tree_js = {"doctype" : "public/js/doctype_tree.js"}
 # doctype_calendar_js = {"doctype" : "public/js/doctype_calendar.js"}

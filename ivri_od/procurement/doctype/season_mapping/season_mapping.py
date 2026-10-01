@@ -9,9 +9,35 @@ from ivri_od.procurement.doctype.ppas_transit_pass.pass_unique_key import short_
 from ivri_od.procurement.doctype.season_master.season_master import get_or_create_season_master
 
 
+def get_target_allocation_summary(season, ppc_name, mill_name) -> dict:
+	"""Quantity and agent entered on Target Allocation for this season, PPC, and mill."""
+	season = (season or "").strip()
+	ppc_name = (ppc_name or "").strip()
+	mill_name = (mill_name or "").strip()
+	if not (season and ppc_name and mill_name):
+		return {}
+
+	rows = frappe.get_all(
+		"Target Allocation",
+		filters={"season": season, "ppc_name": ppc_name, "mill_name": mill_name},
+		fields=["target_quantity", "agent_name", "chhatni"],
+	)
+	if not rows:
+		return {}
+
+	agents = {(row.agent_name or "").strip() for row in rows if (row.agent_name or "").strip()}
+	chhatni_values = [flt(row.chhatni) for row in rows if flt(row.chhatni)]
+	return {
+		"target_quantity": flt(sum(flt(row.target_quantity) for row in rows)),
+		"agent_name": next(iter(agents)) if len(agents) == 1 else "",
+		"chhatni": chhatni_values[0] if chhatni_values else 0,
+	}
+
+
 class SeasonMapping(Document):
 	def validate(self):
 		self.sync_season_year_from_master()
+		self.fetch_from_target_allocation()
 		self.calculate_collection_point_quantities()
 
 		existing = frappe.db.exists(
@@ -28,6 +54,15 @@ class SeasonMapping(Document):
 			frappe.throw(
 				f"Season Mapping already exists for this Mill, PPC, Season and Year: {existing}"
 			)
+
+	def fetch_from_target_allocation(self):
+		summary = get_target_allocation_summary(self.season, self.ppc_name, self.mill_name)
+		if not summary:
+			self.chhatni = 0
+			return
+		self.season_quantity = summary["target_quantity"]
+		self.agent_name = summary.get("agent_name") or ""
+		self.chhatni = flt(summary.get("chhatni"))
 
 	def calculate_collection_point_quantities(self):
 		paddy_procured = get_grn_paddy_procured(self.season, self.ppc_name, self.mill_name)
@@ -60,6 +95,30 @@ class SeasonMapping(Document):
 		year = frappe.db.get_value("Season Master", self.season, "year")
 		if year:
 			self.season_year = str(year).strip()
+
+
+@frappe.whitelist()
+def fetch_target_allocation(season, ppc_name, mill_name):
+	return get_target_allocation_summary(season, ppc_name, mill_name)
+
+
+def get_chhatni_from_season_mapping(season, ppc_name, mill_name) -> float:
+	season = (season or "").strip()
+	ppc_name = (ppc_name or "").strip()
+	mill_name = (mill_name or "").strip()
+	if not (season and ppc_name and mill_name):
+		return 0.0
+	value = frappe.db.get_value(
+		"Season Mapping",
+		{"season": season, "ppc_name": ppc_name, "mill_name": mill_name},
+		"chhatni",
+	)
+	return flt(value) if value is not None else 0.0
+
+
+@frappe.whitelist()
+def fetch_chhatni_from_season_mapping(season, ppc_name, mill_name):
+	return get_chhatni_from_season_mapping(season, ppc_name, mill_name)
 
 
 @frappe.whitelist()

@@ -11,6 +11,9 @@
   "code",
   "ppc_name",
   "column_break_1",
+  "district",
+  "agent",
+  "column_break_location",
   "is_active",
   "title"
  ],
@@ -39,6 +42,28 @@
   },
   {
    "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "District",
+   "options": "District Master"
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "agent",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Agent Name",
+   "options": "Agent Master"
+  },
+  {
+   "fieldname": "column_break_location",
    "fieldtype": "Column Break"
   },
   {
@@ -95,7 +120,7 @@
   }
  ],
  "quick_entry": 1,
- "search_fields": "ppc_name,title",
+ "search_fields": "ppc_name,title,district,agent",
  "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
  "sort_field": "modified",

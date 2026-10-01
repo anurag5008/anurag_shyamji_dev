@@ -12,7 +12,9 @@
   "column_break_1",
   "ppc_name",
   "mill_name",
+  "agent_name",
   "season_quantity",
+  "chhatni",
   "rice_yield",
   "collection_point_section",
   "collection_point_details"
@@ -62,13 +64,31 @@
    "reqd": 1
   },
   {
+   "description": "Fetched from Target Allocation for this Season, PPC, and Mill.",
+   "fieldname": "agent_name",
+   "fieldtype": "Link",
+   "label": "Agent Name",
+   "options": "Agent Master",
+   "read_only": 1
+  },
+  {
    "allow_in_quick_entry": 1,
+   "description": "Fetched from Target Allocation quantity for this Season, PPC, and Mill.",
    "fieldname": "season_quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
    "label": "Season Quantity",
    "non_negative": 1,
    "reqd": 1
+  },
+  {
+   "description": "Fetched from Target Allocation for this Season, PPC, and Mill.",
+   "fieldname": "chhatni",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Chhatni (Kg per Quintal)",
+   "non_negative": 1,
+   "read_only": 1
   },
   {
    "fieldname": "rice_yield",
@@ -90,7 +110,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-16 04:30:00.000000",
+ "modified": "2026-09-30 16:10:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Season Mapping",
