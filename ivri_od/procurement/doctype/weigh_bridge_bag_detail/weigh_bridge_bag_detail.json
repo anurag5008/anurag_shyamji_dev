@@ -1,16 +1,12 @@
 {
  "actions": [],
- "creation": "2026-09-19 06:15:00.000000",
+ "creation": "2026-09-21 23:51:28.289504",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
   "jute_bags",
-  "weight_per_jute_kg",
-  "jute_total_qt",
   "plastic_bags",
-  "weight_per_plastic_kg",
-  "plastic_total_qt",
   "gunny_weight_qt"
  ],
  "fields": [
@@ -25,49 +21,11 @@
   },
   {
    "columns": 1,
-   "fieldname": "weight_per_jute_kg",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Jute Wt (KG/Bag)",
-   "non_negative": 1,
-   "precision": "2"
-  },
-  {
-   "columns": 1,
-   "fieldname": "jute_total_qt",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Jute Total (QT)",
-   "non_negative": 1,
-   "precision": "2",
-   "read_only": 1
-  },
-  {
-   "columns": 1,
    "fieldname": "plastic_bags",
    "fieldtype": "Int",
    "in_list_view": 1,
    "label": "Plastic Bags",
    "non_negative": 1,
-   "read_only": 1
-  },
-  {
-   "columns": 1,
-   "fieldname": "weight_per_plastic_kg",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Plastic Wt (KG/Bag)",
-   "non_negative": 1,
-   "precision": "2"
-  },
-  {
-   "columns": 1,
-   "fieldname": "plastic_total_qt",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Plastic Total (QT)",
-   "non_negative": 1,
-   "precision": "2",
    "read_only": 1
   },
   {
@@ -83,12 +41,13 @@
  ],
  "istable": 1,
  "links": [],
- "modified": "2026-09-21 10:10:00.000000",
+ "modified": "2026-10-06 11:56:27.954909",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Weigh Bridge Bag Detail",
  "owner": "Administrator",
  "permissions": [],
+ "row_format": "Dynamic",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": []

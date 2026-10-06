@@ -154,8 +154,14 @@ MODULE_CATALOG = [
 	{
 		"area": "Analytics",
 		"component_type": "Report",
-		"name": "Mill PPC Season Quantity Summary",
-		"description": "Assigned vs received quantity by mill, PPC, and season.",
+		"name": "Abstract Report",
+		"description": "Assigned, received, and balance quantity by mill and PPC.",
+	},
+	{
+		"area": "Analytics",
+		"component_type": "Report",
+		"name": "Abstract Physical",
+		"description": "Physical paddy, entry, TP, and chhatni by PPC.",
 	},
 	{
 		"area": "Analytics",
@@ -168,6 +174,12 @@ MODULE_CATALOG = [
 		"component_type": "Report",
 		"name": "Vehicle Gate Movement Summary",
 		"description": "Gate-in to gate-out movement timeline.",
+	},
+	{
+		"area": "Analytics",
+		"component_type": "Report",
+		"name": "Pass RST WBM Summary",
+		"description": "RST count and received qty per pass; drill down to weigh bridge entries.",
 	},
 ]
 

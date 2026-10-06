@@ -4,8 +4,9 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import format_datetime, get_datetime, now_datetime
+from frappe.utils import cint, format_datetime, get_datetime, now_datetime
 
+from ivri_od.procurement.datetime_fields import ensure_doc_datetime
 from ivri_od.procurement.mill_gate import (
 	get_open_gate_entry_in_for_vehicle,
 	get_vehicles_inside_mill,
@@ -18,6 +19,19 @@ from ivri_od.procurement.pass_print import (
 	render_template_file,
 	send_pdf_download,
 )
+
+GATE_ENTRY_PARTY_NAME_FIELDS = ("party_name", "custom_party_name")
+
+
+def _party_name_from_record(data) -> str:
+	if not data:
+		return ""
+	getter = data.get if isinstance(data, dict) else lambda key, default=None: data.get(key, default)
+	for fieldname in GATE_ENTRY_PARTY_NAME_FIELDS:
+		value = (getter(fieldname) or "").strip()
+		if value:
+			return value
+	return ""
 
 
 class GateEntry(Document):
@@ -36,15 +50,13 @@ class GateEntry(Document):
 	def _sync_gate_in_datetime(self):
 		if self.in_out != "In":
 			return
-		if self.entry_datetime:
-			value = get_datetime(self.entry_datetime)
-		elif self.entry_date and self.entry_time:
-			value = get_datetime(f"{self.entry_date} {self.entry_time}")
-		else:
-			value = now_datetime()
-		self.entry_datetime = value
-		self.entry_date = value.date()
-		self.entry_time = value.time().replace(microsecond=0)
+		ensure_doc_datetime(
+			self,
+			"entry_datetime",
+			default_now=True,
+			date_field="entry_date",
+			time_field="entry_time",
+		)
 
 	def _sync_weighment_flag(self):
 		if self.in_out != "In":
@@ -110,6 +122,17 @@ class GateEntry(Document):
 			self.driver_name = self.driver_name.strip()
 		if self.gate_entry_in:
 			self.gate_entry_in = self.gate_entry_in.strip()
+		self._sync_party_name_fields()
+
+	def _sync_party_name_fields(self):
+		party = (self.get("party_name") or "").strip()
+		custom = (self.get("custom_party_name") or "").strip()
+		if custom and not party:
+			self.party_name = custom
+		elif party and not custom and self.meta.has_field("custom_party_name"):
+			self.custom_party_name = party
+		elif party:
+			self.party_name = party
 
 	def _clear_fields_by_movement(self):
 		if self.in_out == "In":
@@ -239,15 +262,47 @@ def get_inside_mill_vehicle_autocomplete(txt="", limit=25):
 	return [{"value": v, "label": v, "description": ""} for v in vehicles]
 
 
+def party_name_for_gate_entry(gate_entry_name: str, doc=None) -> str:
+	"""Party name on Gate Entry, else from the latest linked Quality Check."""
+	name = (gate_entry_name or "").strip()
+	if not name:
+		return ""
+
+	on_doc = _party_name_from_record(doc)
+	if on_doc:
+		return on_doc
+
+	for fieldname in GATE_ENTRY_PARTY_NAME_FIELDS:
+		stored = frappe.db.get_value("Gate Entry", name, fieldname)
+		if (stored or "").strip():
+			return stored.strip()
+
+	qc_rows = frappe.get_all(
+		"Quality Check",
+		filters={"gate_entry": name},
+		fields=["is_farmer_or_agent", "farmer_name", "staff_name"],
+		order_by="modified desc",
+		limit=1,
+	)
+	if not qc_rows:
+		return ""
+	qc = qc_rows[0]
+	if cint(qc.is_farmer_or_agent):
+		return (qc.farmer_name or "").strip()
+	return (qc.staff_name or "").strip()
+
+
 def _render_gate_entry_pass_html(doc, for_pdf: bool = False) -> str:
 	entry_dt = doc.entry_datetime
 	entry_datetime_display = format_datetime(entry_dt) if entry_dt else "—"
-	qr_text = qr_content_gate_entry(doc, entry_datetime_display)
+	party_name = party_name_for_gate_entry(doc.name, doc=doc)
+	qr_text = qr_content_gate_entry(doc, entry_datetime_display, party_name=party_name)
 	return render_template_file(
 		("procurement", "doctype", "gate_entry", "gate_entry_pass.html"),
 		{
 			"doc": doc,
 			"entry_datetime_display": entry_datetime_display,
+			"party_name": party_name,
 			"qr_image": qr_image_html(qr_text),
 			"qr_text": qr_text,
 			"for_pdf": for_pdf,

@@ -173,6 +173,28 @@ def get_qc_for_vehicle_open_visit(vehicle_no: str) -> dict | None:
 	return rows[0] if rows else None
 
 
+def get_quality_check_for_vehicle(vehicle_no: str) -> dict | None:
+	"""Latest Quality Check for this vehicle (open visit first, then any recent QC)."""
+	vehicle_no = normalize_vehicle_no(vehicle_no)
+	if not vehicle_no:
+		return None
+	qc = get_qc_for_vehicle_open_visit(vehicle_no)
+	if qc:
+		return qc
+	rows = frappe.db.sql(
+		"""
+		SELECT qc.name, qc.vehicle_no, qc.gate_entry, qc.qc_decision
+		FROM `tabQuality Check` qc
+		WHERE UPPER(TRIM(qc.vehicle_no)) = %s
+		ORDER BY qc.modified DESC, qc.creation DESC
+		LIMIT 1
+		""",
+		vehicle_no,
+		as_dict=True,
+	)
+	return rows[0] if rows else None
+
+
 def get_quality_check_for_vehicle_open_visit(vehicle_no: str) -> str | None:
 	qc = get_qc_for_vehicle_open_visit(vehicle_no)
 	return qc.name if qc else None

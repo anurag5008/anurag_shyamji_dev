@@ -1,4 +1,4 @@
-frappe.query_reports["Mill PPC Season Quantity Summary"] = {
+frappe.query_reports["Abstract Physical"] = {
 	collapsible_filters: true,
 	filters: [
 		{
@@ -12,12 +12,6 @@ frappe.query_reports["Mill PPC Season Quantity Summary"] = {
 			label: __("PPC Name"),
 			fieldtype: "Link",
 			options: "PPC Master",
-		},
-		{
-			fieldname: "mill_name",
-			label: __("Mill"),
-			fieldtype: "Link",
-			options: "Mill Master",
 		},
 	],
 };

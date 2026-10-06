@@ -77,6 +77,10 @@ class TargetAllocation(Document):
 		self.latest_chutney_kg_per_quintal = flt(data.chutney_quantity_kg_per_quintal)
 		self.latest_chutney_percentage = flt(data.chutney_percentage)
 
+		# Default Chhatni from assign when not set on this Target Allocation.
+		if not flt(self.chhatni):
+			self.chhatni = flt(data.chutney_quantity_kg_per_quintal)
+
 
 @frappe.whitelist()
 def fetch_latest_chutney(ppc_name, mill_name, season=None):

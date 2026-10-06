@@ -16,10 +16,11 @@
   "pacs_name",
   "tp_weight",
   "column_break_tp",
+  "no_of_bags",
   "weighment_section",
-  "measurement_date",
-  "measurement_time",
+  "date",
   "rst_no",
+  "tp_status",
   "quality_check",
   "quality_test",
   "truck_section",
@@ -30,8 +31,8 @@
   "actual_truck_no",
   "load_section",
   "commodity",
-  "no_of_bags",
   "gunny_type",
+  "total_bags",
   "column_break_load",
   "load_weight",
   "tare_weight",
@@ -69,7 +70,7 @@
    "default": "0",
    "fieldname": "is_farmer_or_agent",
    "fieldtype": "Check",
-   "label": "From Farmer or Agent"
+   "label": "Local Paddy Purchase"
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent",
@@ -78,7 +79,7 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Agent Name",
+   "label": "Party Name",
    "mandatory_depends_on": "eval:doc.is_farmer_or_agent && !doc.demo_rst_data",
    "options": "Agent Master",
    "read_only_depends_on": "eval:doc.demo_rst_data"
@@ -109,7 +110,7 @@
    "depends_on": "eval:!doc.is_farmer_or_agent",
    "fieldname": "pacs_name",
    "fieldtype": "Data",
-   "label": "PACS Name",
+   "label": "PPC Name",
    "read_only": 1
   },
   {
@@ -132,28 +133,21 @@
    "label": "Weighment"
   },
   {
-   "default": "Today",
-   "fieldname": "measurement_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Date",
-   "reqd": 1
-  },
-  {
-   "default": "Now",
-   "fieldname": "measurement_time",
-   "fieldtype": "Time",
-   "in_list_view": 1,
-   "label": "Time",
-   "reqd": 1
-  },
-  {
    "fieldname": "rst_no",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "RST No"
+  },
+  {
+   "description": "From RST: party matched on transit pass but TP No not linked yet.",
+   "fieldname": "tp_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP Status",
+   "options": "\nTP Received\nTP Not Received\nLocal Procurement",
+   "read_only": 1
   },
   {
    "fieldname": "slno_of_qc",
@@ -245,7 +239,7 @@
   {
    "fieldname": "no_of_bags",
    "fieldtype": "Int",
-   "label": "No of Bags",
+   "label": "Bags (In No.)",
    "non_negative": 1
   },
   {
@@ -255,21 +249,21 @@
   {
    "fieldname": "load_weight",
    "fieldtype": "Float",
-   "label": "Gross Vehicle Weight (QT)",
+   "label": "Load Weight (QT)",
    "non_negative": 1,
    "precision": "3"
   },
   {
    "fieldname": "tare_weight",
    "fieldtype": "Float",
-   "label": "Tare Vehicle Weight (QT)",
+   "label": "Tare Weight (QT)",
    "non_negative": 1,
    "precision": "3"
   },
   {
    "fieldname": "gross_weight",
    "fieldtype": "Float",
-   "label": "Gross Paddy Weight (QT)",
+   "label": "Gross Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
@@ -285,6 +279,7 @@
   },
   {
    "default": "0",
+   "description": "Subtracted from net paddy weight (gross \u2212 gunny \u2212 deduction).",
    "fieldname": "deduction",
    "fieldtype": "Float",
    "label": "Deduction (QT)",
@@ -295,7 +290,7 @@
    "fieldname": "net_weight",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Net Paddy Weight (QT)",
+   "label": "Net Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
@@ -307,8 +302,7 @@
    "fieldtype": "Float",
    "label": "Gunny Weight (QT)",
    "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
+   "precision": "3"
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
@@ -316,6 +310,15 @@
    "fieldtype": "Table",
    "label": "Bag Details (from QC)",
    "options": "Weigh Bridge Bag Detail"
+  },
+  {
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "description": "Sum of Jute Bags and Plastic Bags from Bag Details (from QC).",
+   "fieldname": "total_bags",
+   "fieldtype": "Int",
+   "label": "Total Bags",
+   "non_negative": 1,
+   "read_only": 1
   },
   {
    "fieldname": "total_jute_empty_qt",
@@ -338,11 +341,19 @@
   {
    "fieldname": "section_break_rnxd",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Date & Time",
+   "read_only": 1,
+   "reqd": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-30 06:40:00.000000",
+ "modified": "2026-10-06 11:53:58.157186",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Weigh Bridge Measurement",
@@ -377,7 +388,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "pass_unique_key,transit_pass_no,rst_no,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
+ "search_fields": "pass_unique_key,transit_pass_no,rst_no,tp_status,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

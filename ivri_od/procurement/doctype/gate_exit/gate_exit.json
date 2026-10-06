@@ -29,7 +29,7 @@
   {"fieldname": "truck_pic", "fieldtype": "Attach Image", "label": "Vehicle Image"},
   {"fieldname": "column_break_1", "fieldtype": "Column Break"},
   {"fieldname": "driver_name", "fieldtype": "Data", "label": "Driver Name", "read_only": 1},
-  {"default": "Now", "fieldname": "exit_datetime", "fieldtype": "Datetime", "in_list_view": 1, "label": "Gate Exit Date & Time", "reqd": 1}
+  {"default": "Now", "fieldname": "exit_datetime", "fieldtype": "Datetime", "in_list_view": 1, "label": "Date & Time", "read_only": 1, "reqd": 1}
  ],
  "index_web_pages_for_search": 1,
  "links": [],

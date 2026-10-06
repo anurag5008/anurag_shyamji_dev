@@ -4,9 +4,12 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, flt
+from frappe.utils import cint, flt, get_datetime, get_time, getdate
+
+from ivri_od.procurement.datetime_fields import ensure_doc_datetime
 
 from ivri_od.procurement.bag_balance import get_weigh_bridge_bags_for_tp
+from ivri_od.procurement.grn_tp_fulfillment import refresh_tp_fulfillment_for_pass
 from ivri_od.procurement.doctype.rst_details.rst_details import (
 	get_rst_agent_name,
 	is_private_procurement_rst,
@@ -15,6 +18,7 @@ from ivri_od.procurement.mill_gate import (
 	get_open_gate_entry_in_for_vehicle,
 	get_vehicles_inside_mill,
 	get_qc_for_vehicle_open_visit,
+	get_quality_check_for_vehicle,
 	get_qc_sl_no,
 	get_quality_check_for_vehicle_open_visit,
 	get_weighment_vehicles_inside_mill,
@@ -23,8 +27,67 @@ from ivri_od.procurement.mill_gate import (
 
 
 PENDING_QC = "Pending QC"
+REJECTED_QC = "Rejected"
 KG_PER_QUINTAL = 100
 QTY_MAX_DECIMALS = 3
+
+
+def effective_quality_test_for_wbm(
+	qc_name: str,
+	*,
+	tare_weight=None,
+	wbm_name: str | None = None,
+) -> str:
+	qc_name = (qc_name or "").strip()
+	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
+		return PENDING_QC
+
+	decision = (frappe.db.get_value("Quality Check", qc_name, "qc_decision") or "").strip()
+	if not decision:
+		return PENDING_QC
+
+	tare = flt(tare_weight)
+	if not tare and wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		tare = flt(frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "tare_weight"))
+
+	if tare:
+		from ivri_od.procurement.doctype.quality_check.quality_check import (
+			is_full_paddy_return_from_qc,
+		)
+
+		if is_full_paddy_return_from_qc(qc_name):
+			return REJECTED_QC
+
+	if decision in ("Accepted", "Partially Accepted"):
+		return decision
+	return PENDING_QC
+
+
+def apply_wbm_quality_outcome_from_qc(doc) -> None:
+	qc_name = (doc.quality_check or "").strip()
+	if not qc_name:
+		return
+	doc.quality_test = effective_quality_test_for_wbm(
+		qc_name,
+		tare_weight=doc.tare_weight,
+		wbm_name=doc.name if not doc.is_new() else None,
+	)
+	if doc.quality_test == REJECTED_QC:
+		doc.net_weight = 0
+
+
+def persist_wbm_quality_and_net_after_qc_sync(wbm_name: str) -> None:
+	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		return
+	doc = frappe.get_doc("Weigh Bridge Measurement", wbm_name)
+	doc._update_weights()
+	apply_wbm_quality_outcome_from_qc(doc)
+	frappe.db.set_value(
+		"Weigh Bridge Measurement",
+		wbm_name,
+		{"quality_test": doc.quality_test, "net_weight": doc.net_weight},
+		update_modified=True,
+	)
 
 
 def _trim_qty(value, max_decimals: int = QTY_MAX_DECIMALS) -> float:
@@ -142,14 +205,63 @@ def is_farmer_or_agent_source(doc) -> bool:
 	return bool(cint(doc.get("is_farmer_or_agent")))
 
 
+TP_STATUS_RECEIVED = "TP Received"
+TP_STATUS_NOT_RECEIVED = "TP Not Received"
+TP_STATUS_LOCAL = "Local Procurement"
+
+
+def compute_wbm_tp_status(doc) -> str:
+	"""RST party on transit pass but no TP No → TP Not Received; pass linked → TP Received."""
+	from ivri_od.procurement.doctype.rst_details.rst_details import (
+		is_private_procurement_rst,
+		party_found_awaiting_tp,
+	)
+
+	rst_link = (getattr(doc, "demo_rst_data", None) or "").strip()
+	if rst_link and frappe.db.exists("RST Details", rst_link):
+		rst = frappe.get_doc("RST Details", rst_link)
+		if is_private_procurement_rst(rst):
+			return TP_STATUS_LOCAL
+		if party_found_awaiting_tp(rst):
+			return TP_STATUS_NOT_RECEIVED
+		if (getattr(doc, "pass_unique_key", None) or "").strip():
+			return TP_STATUS_RECEIVED
+		if (rst.tp_no or "").strip():
+			return TP_STATUS_RECEIVED
+		return TP_STATUS_NOT_RECEIVED
+
+	if cint(getattr(doc, "is_farmer_or_agent", 0)) and not (
+		getattr(doc, "pass_unique_key", None) or ""
+	).strip():
+		return TP_STATUS_LOCAL
+	if (getattr(doc, "pass_unique_key", None) or "").strip():
+		return TP_STATUS_RECEIVED
+	if rst_link:
+		return TP_STATUS_NOT_RECEIVED
+	return ""
+
+
 class WeighBridgeMeasurement(Document):
 	def after_insert(self):
 		# Create the GRN when a newly inserted WBM is already eligible.
 		_ensure_grn_note_for_weigh_bridge(self.name)
+		wbm_name = self.name
+		frappe.db.after_commit(lambda: _ensure_grn_note_for_weigh_bridge(wbm_name))
+		self._schedule_procurement_rollup_sync()
 
 	def on_update(self):
 		# Recheck when RST adds a TP key or tare/QC values make this WBM eligible.
 		_ensure_grn_note_for_weigh_bridge(self.name)
+		self._schedule_procurement_rollup_sync()
+
+	def _schedule_procurement_rollup_sync(self):
+		if is_farmer_or_agent_source(self):
+			return
+		key = (self.pass_unique_key or "").strip()
+		if not key:
+			return
+		frappe.db.after_commit(lambda k=key: _sync_procurement_rollups_for_pass(k))
+		frappe.db.after_commit(lambda k=key: refresh_tp_fulfillment_for_pass(k))
 
 	def on_trash(self):
 		if self.demo_rst_data and frappe.db.exists("RST Details", self.demo_rst_data):
@@ -168,18 +280,22 @@ class WeighBridgeMeasurement(Document):
 				)
 
 	def validate(self):
+		self._sync_weighment_datetime()
 		self._apply_rst_private_procurement_mode()
+		self._sync_rst_no_from_rst_details()
+		self._sync_tp_status()
 		self._sync_source_mode_fields()
 		self._sync_agent_name_from_rst_details()
 		self._validate_pass_unique_key()
 		self._validate_farmer_or_agent_source()
 		self._normalize_truck_numbers()
 		self._sync_actual_truck()
-		self._sync_quality_check_link()
 		self._sync_gate_entry_link()
+		self._sync_quality_check_link()
 		self._sync_bag_details_from_qc()
 		self._sync_gunny_type_fields()
 		self._update_weights()
+		apply_wbm_quality_outcome_from_qc(self)
 		self._validate_weigh_bridge_bags()
 		self._validate_bag_detail_weights()
 		self._validate_quality_and_tare()
@@ -199,6 +315,27 @@ class WeighBridgeMeasurement(Document):
 		else:
 			self.vehicle_no = ""
 			self.agent_name = ""
+
+	def _sync_rst_no_from_rst_details(self):
+		rst_link = (self.demo_rst_data or "").strip()
+		if not rst_link or not frappe.db.exists("RST Details", rst_link):
+			return
+		rst_no = (frappe.db.get_value("RST Details", rst_link, "rst_no") or "").strip()
+		if rst_no:
+			self.rst_no = rst_no
+
+	def _sync_tp_status(self):
+		self.tp_status = compute_wbm_tp_status(self)
+
+	def _sync_weighment_datetime(self):
+		ensure_doc_datetime(self, "date", default_now=True)
+		if not self.date:
+			return
+		dt = get_datetime(self.date)
+		if self.meta.has_field("measurement_date"):
+			self.measurement_date = getdate(dt)
+		if self.meta.has_field("measurement_time"):
+			self.measurement_time = get_time(dt).replace(microsecond=0)
 
 	def _apply_rst_private_procurement_mode(self):
 		rst_link = (self.demo_rst_data or "").strip()
@@ -295,6 +432,7 @@ class WeighBridgeMeasurement(Document):
 		qc_name = (self.quality_check or "").strip()
 		if not qc_name:
 			self.bag_weight_details = []
+			self._sync_total_bags_from_qc_table()
 			return
 
 		saved = _saved_bag_weights(self.bag_weight_details)
@@ -312,6 +450,7 @@ class WeighBridgeMeasurement(Document):
 			row.jute_total_qt = row_data["jute_total_qt"]
 			row.plastic_total_qt = row_data["plastic_total_qt"]
 			row.gunny_weight_qt = row_data["gunny_weight_qt"]
+		self._sync_total_bags_from_qc_table()
 
 	def _persist_bag_details_from_qc(self):
 		"""Write QC bag lines to DB without blocking on Gunny Cut weight validation."""
@@ -330,36 +469,50 @@ class WeighBridgeMeasurement(Document):
 			row.weight_per_plastic_kg = _trim_qty(row.weight_per_plastic_kg)
 
 	def _sync_quality_check_link(self):
-		vehicle = get_effective_truck_no(self)
-		if not vehicle:
-			self.quality_check = ""
-			self.quality_test = PENDING_QC
-			self.slno_of_qc = 0
-			self.gate_entry = ""
-			return
-
-		qc = get_qc_for_vehicle_open_visit(vehicle)
+		qc = self._resolve_quality_check_for_wbm()
 		if not qc:
 			self.quality_check = ""
 			self.quality_test = PENDING_QC
 			self.slno_of_qc = 0
 			return
 
-		self.quality_check = qc.name
-		self.slno_of_qc = get_qc_sl_no(qc.name)
-		decision = (qc.qc_decision or "").strip()
-		self.quality_test = decision if decision else PENDING_QC
-		if cint(frappe.db.get_value("Quality Check", qc.name, "is_farmer_or_agent")):
+		qc_name = qc.get("name") if isinstance(qc, dict) else qc.name
+		self.quality_check = qc_name
+		self.slno_of_qc = get_qc_sl_no(qc_name)
+		self.quality_test = effective_quality_test_for_wbm(
+			qc_name,
+			tare_weight=self.tare_weight,
+			wbm_name=self.name if not self.is_new() else None,
+		)
+		if cint(frappe.db.get_value("Quality Check", qc_name, "is_farmer_or_agent")):
 			self.is_farmer_or_agent = 1
 
+	def _resolve_quality_check_for_wbm(self):
+		gate_entry = (self.gate_entry or "").strip()
+		if gate_entry:
+			rows = frappe.get_all(
+				"Quality Check",
+				filters={"gate_entry": gate_entry},
+				fields=["name", "qc_decision"],
+				order_by="modified desc, creation desc",
+				limit=1,
+			)
+			if rows:
+				return rows[0]
+
+		for vehicle in _qc_lookup_vehicle_candidates(self):
+			qc = get_quality_check_for_vehicle(vehicle)
+			if qc:
+				return qc
+		return None
+
 	def _sync_gate_entry_link(self):
-		vehicle = get_effective_truck_no(self)
-		if not vehicle:
-			self.gate_entry = ""
-			return
-		self.gate_entry = resolve_gate_entry_for_wbm_vehicle(
-			vehicle, self.quality_check
-		)
+		gate_entry = ""
+		for vehicle in _qc_lookup_vehicle_candidates(self):
+			gate_entry = resolve_gate_entry_for_wbm_vehicle(vehicle, self.quality_check)
+			if gate_entry:
+				break
+		self.gate_entry = gate_entry or ""
 
 	def _normalize_truck_numbers(self):
 		if self.truck_no_in_tp:
@@ -374,7 +527,11 @@ class WeighBridgeMeasurement(Document):
 	def _sync_actual_truck(self):
 		if is_farmer_or_agent_source(self):
 			return
-		if not self.same_truck_as_transit_pass:
+		if self.same_truck_as_transit_pass:
+			tp_truck = (self.truck_no_in_tp or "").strip().upper()
+			if tp_truck:
+				self.actual_truck_no = tp_truck
+		elif not self.same_truck_as_transit_pass:
 			self.actual_truck_no = ""
 
 	def _validate_actual_truck_weighment(self):
@@ -428,6 +585,9 @@ class WeighBridgeMeasurement(Document):
 			total += cint(row.jute_bags) + cint(row.plastic_bags)
 		return total
 
+	def _sync_total_bags_from_qc_table(self):
+		self.total_bags = self._total_bags_from_qc_table()
+
 	def _validate_bag_detail_weights(self):
 		if self.demo_rst_data:
 			return
@@ -460,11 +620,7 @@ class WeighBridgeMeasurement(Document):
 				)
 
 		if rows and self._total_bags_from_qc_table() > 0 and flt(self.gunny_weight) <= 0:
-			frappe.throw(
-				_(
-					"Enter Jute and/or Plastic weight per bag in Bag Details (from QC) for Gunny Cut."
-				)
-			)
+			frappe.throw(_("Enter Gunny Weight (QT) or bag weights in Bag Details for Gunny Cut."))
 
 	def _sync_gunny_type_fields(self):
 		gunny_type = (self.gunny_type or "").strip()
@@ -503,12 +659,13 @@ class WeighBridgeMeasurement(Document):
 			return 0.0
 
 		table_qt = self._gunny_weight_from_bag_table()
-		if table_qt > 0:
-			return table_qt
-
-		return 0.0
+		manual = flt(self.gunny_weight)
+		if manual > 0:
+			return manual
+		return table_qt
 
 	def _update_weights(self):
+		self._sync_total_bags_from_qc_table()
 		load_weight = flt(self.load_weight)
 		tare_weight = flt(self.tare_weight)
 
@@ -537,13 +694,28 @@ class WeighBridgeMeasurement(Document):
 			frappe.throw(_("Enter Actual Truck No when it differs from the Transit Pass."))
 
 
+def _qc_lookup_vehicle_candidates(doc) -> list[str]:
+	"""Truck numbers to match Quality Check / Gate Entry (TP truck first when same-as-TP)."""
+	seen: set[str] = set()
+	out: list[str] = []
+	for raw in (
+		(doc.get("truck_no_in_tp") if cint(doc.get("same_truck_as_transit_pass")) else None),
+		doc.get("truck_no_in_tp"),
+		doc.get("actual_truck_no"),
+		doc.get("vehicle_no"),
+	):
+		v = normalize_vehicle_no(raw)
+		if v and v not in seen:
+			seen.add(v)
+			out.append(v)
+	return out
+
+
 def get_effective_truck_no(doc) -> str:
 	if is_farmer_or_agent_source(doc):
 		return normalize_vehicle_no(doc.get("actual_truck_no") or doc.get("vehicle_no"))
-	actual = (doc.get("actual_truck_no") or "").strip().upper()
-	if actual:
-		return actual
-	return (doc.get("truck_no_in_tp") or "").strip().upper()
+	candidates = _qc_lookup_vehicle_candidates(doc)
+	return candidates[0] if candidates else ""
 
 
 def resolve_gate_entry_for_wbm_vehicle(
@@ -599,66 +771,99 @@ def get_quality_check_for_wbm(
 	quality_check=None,
 	is_farmer_or_agent=None,
 	vehicle_no=None,
+	same_truck_as_transit_pass=None,
 ):
-	resolved = get_effective_truck_no(
-		{
-			"actual_truck_no": actual_truck_no,
-			"truck_no_in_tp": truck_no_in_tp,
-			"is_farmer_or_agent": is_farmer_or_agent,
-			"vehicle_no": vehicle_no,
-		}
-	)
-	if not resolved:
-		return {
-			"quality_check": "",
-			"quality_test": PENDING_QC,
-			"vehicle_no": "",
-			"slno_of_qc": 0,
-			"bag_details": [],
-			"gate_entry": "",
-		}
+	lookup_doc = {
+		"actual_truck_no": actual_truck_no,
+		"truck_no_in_tp": truck_no_in_tp,
+		"is_farmer_or_agent": is_farmer_or_agent,
+		"vehicle_no": vehicle_no,
+		"same_truck_as_transit_pass": same_truck_as_transit_pass,
+	}
 
-	qc = get_qc_for_vehicle_open_visit(resolved)
+	wbm_gate = ""
+	if wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		wbm_gate = (frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "gate_entry") or "").strip()
+
+	if wbm_gate:
+		qc_by_gate = frappe.db.get_value(
+			"Quality Check",
+			{"gate_entry": wbm_gate},
+			["name", "vehicle_no", "qc_decision"],
+			as_dict=True,
+		)
+		if qc_by_gate:
+			return _quality_check_payload_for_wbm(
+				qc_by_gate.name,
+				normalize_vehicle_no(qc_by_gate.vehicle_no) or get_effective_truck_no(lookup_doc),
+				wbm_name,
+				wbm_gate,
+			)
+
+	resolved = get_effective_truck_no(lookup_doc)
 	linked_qc = (quality_check or "").strip()
-	if not qc and wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+	if wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		linked_qc = linked_qc or (
 			frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "quality_check") or ""
 		).strip()
 
+	qc = None
+	matched_vehicle = resolved
+	for vehicle in _qc_lookup_vehicle_candidates(lookup_doc):
+		qc = get_quality_check_for_vehicle(vehicle)
+		if qc:
+			matched_vehicle = normalize_vehicle_no(qc.get("vehicle_no")) or vehicle
+			break
+
 	if not qc and linked_qc and frappe.db.exists("Quality Check", linked_qc):
-		row = frappe.db.get_value(
-			"Quality Check",
-			linked_qc,
-			["name", "vehicle_no", "qc_decision"],
-			as_dict=True,
+		return _quality_check_payload_for_wbm(
+			linked_qc, matched_vehicle or resolved, wbm_name, wbm_gate
 		)
-		if row and (row.vehicle_no or "").strip().upper() == resolved:
-			qc = row
 
 	if not qc:
+		fallback_vehicle = resolved or (_qc_lookup_vehicle_candidates(lookup_doc) or [""])[0]
 		return {
 			"quality_check": "",
 			"quality_test": PENDING_QC,
-			"vehicle_no": resolved,
+			"vehicle_no": fallback_vehicle,
 			"slno_of_qc": 0,
 			"bag_details": [],
-			"gate_entry": resolve_gate_entry_for_wbm_vehicle(resolved, linked_qc),
+			"gate_entry": resolve_gate_entry_for_wbm_vehicle(fallback_vehicle, linked_qc)
+			if fallback_vehicle
+			else "",
 		}
 
-	decision = (qc.qc_decision or "").strip()
+	qc_name = (qc.get("name") or "").strip()
+	return _quality_check_payload_for_wbm(qc_name, matched_vehicle, wbm_name, wbm_gate)
+
+
+def _quality_check_payload_for_wbm(
+	qc_name: str,
+	resolved_vehicle: str,
+	wbm_name: str | None,
+	preferred_gate: str = "",
+) -> dict:
 	saved_rows: list[dict] = []
 	if wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		doc = frappe.get_doc("Weigh Bridge Measurement", wbm_name)
 		saved_rows = _saved_bag_weights(doc.bag_weight_details)
-	bag_details = build_bag_details_from_qc(qc.name, saved_rows)
-	qc_modified = frappe.db.get_value("Quality Check", qc.name, "modified")
-	qc_name = (getattr(qc, "name", None) or "").strip()
-	gate_entry = resolve_gate_entry_for_wbm_vehicle(resolved, qc_name)
+	quality_test = effective_quality_test_for_wbm(
+		qc_name,
+		tare_weight=frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "tare_weight")
+		if wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name)
+		else None,
+		wbm_name=wbm_name,
+	)
+	bag_details = build_bag_details_from_qc(qc_name, saved_rows)
+	qc_modified = frappe.db.get_value("Quality Check", qc_name, "modified")
+	gate_entry = (preferred_gate or "").strip() or resolve_gate_entry_for_wbm_vehicle(
+		resolved_vehicle, qc_name
+	)
 	return {
-		"quality_check": qc.name,
-		"quality_test": decision if decision else PENDING_QC,
-		"vehicle_no": resolved,
-		"slno_of_qc": get_qc_sl_no(qc.name),
+		"quality_check": qc_name,
+		"quality_test": quality_test,
+		"vehicle_no": resolved_vehicle,
+		"slno_of_qc": get_qc_sl_no(qc_name),
 		"bag_details": bag_details,
 		"qc_modified": str(qc_modified) if qc_modified else "",
 		"gate_entry": gate_entry,
@@ -680,46 +885,76 @@ def get_bag_details_from_qc(quality_check, wbm_name=None):
 	return build_bag_details_from_qc(qc_name, saved_rows)
 
 
+def _wbm_names_matching_vehicle(vehicle_no: str) -> list[str]:
+	vehicle_no = normalize_vehicle_no(vehicle_no)
+	if not vehicle_no:
+		return []
+	return frappe.db.sql(
+		"""
+		SELECT name
+		FROM `tabWeigh Bridge Measurement`
+		WHERE UPPER(TRIM(IFNULL(actual_truck_no, ''))) = %s
+			OR UPPER(TRIM(IFNULL(truck_no_in_tp, ''))) = %s
+			OR UPPER(TRIM(IFNULL(vehicle_no, ''))) = %s
+		""",
+		(vehicle_no, vehicle_no, vehicle_no),
+		pluck=True,
+	)
+
+
+def find_wbm_names_for_quality_sync(vehicle_no: str, quality_check: str = "") -> list[str]:
+	"""WBMs for this QC: same vehicle on any truck field, or same gate entry as QC."""
+	names: set[str] = set(_wbm_names_matching_vehicle(vehicle_no))
+	qc_name = (quality_check or "").strip()
+	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
+		return list(names)
+
+	gate_entry = (frappe.db.get_value("Quality Check", qc_name, "gate_entry") or "").strip()
+	if gate_entry:
+		names.update(
+			frappe.get_all(
+				"Weigh Bridge Measurement",
+				filters={"gate_entry": gate_entry},
+				pluck="name",
+			)
+		)
+		ge_vehicle = frappe.db.get_value("Gate Entry", gate_entry, "vehicle_no")
+		if ge_vehicle:
+			names.update(_wbm_names_matching_vehicle(ge_vehicle))
+	return list(names)
+
+
 def sync_weigh_bridge_quality_for_vehicle(
 	vehicle_no: str,
 	*,
 	quality_check: str = "",
 	quality_test: str = PENDING_QC,
 ):
-	"""Update all WBM rows whose effective truck matches this vehicle."""
-	vehicle_no = (vehicle_no or "").strip().upper()
-	if not vehicle_no:
-		return
-
-	names = frappe.db.sql(
-		"""
-		SELECT name
-		FROM `tabWeigh Bridge Measurement`
-		WHERE UPPER(TRIM(IFNULL(actual_truck_no, ''))) = %s
-			OR (
-				IFNULL(actual_truck_no, '') = ''
-				AND UPPER(TRIM(IFNULL(truck_no_in_tp, ''))) = %s
-			)
-		""",
-		(vehicle_no, vehicle_no),
-		pluck=True,
-	)
+	"""Update WBM rows linked to this vehicle / gate entry when Quality Check changes."""
+	vehicle_no = normalize_vehicle_no(vehicle_no)
+	names = find_wbm_names_for_quality_sync(vehicle_no, quality_check)
 	if not names:
 		return
 
+	gate_entry = ""
+	if quality_check and frappe.db.exists("Quality Check", quality_check):
+		gate_entry = (frappe.db.get_value("Quality Check", quality_check, "gate_entry") or "").strip()
+
 	for name in names:
-		frappe.db.set_value(
-			"Weigh Bridge Measurement",
-			name,
-			{
-				"quality_check": quality_check or "",
-				"quality_test": quality_test or PENDING_QC,
-				"slno_of_qc": get_qc_sl_no(quality_check) if quality_check else 0,
-			},
-			update_modified=False,
-		)
+		effective_test = quality_test or PENDING_QC
+		if quality_check:
+			effective_test = effective_quality_test_for_wbm(quality_check, wbm_name=name)
+		values = {
+			"quality_check": quality_check or "",
+			"quality_test": effective_test,
+			"slno_of_qc": get_qc_sl_no(quality_check) if quality_check else 0,
+		}
+		if gate_entry:
+			values["gate_entry"] = gate_entry
+		frappe.db.set_value("Weigh Bridge Measurement", name, values, update_modified=True)
 		if quality_check:
 			_ensure_wbm_bag_details_from_qc(name)
+		persist_wbm_quality_and_net_after_qc_sync(name)
 		_ensure_grn_note_for_weigh_bridge(name)
 
 
@@ -792,6 +1027,7 @@ def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 			update_modified=False,
 		)
 
+	persist_wbm_quality_and_net_after_qc_sync(name)
 	_ensure_grn_note_for_weigh_bridge(name)
 
 	_ensure_wbm_bag_details_from_qc(name, data)
@@ -811,56 +1047,31 @@ def is_local_procurement_wbm(wbm_name: str) -> bool:
 
 
 def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
-	"""Create one GRN Note on WBM creation when the load is eligible."""
+	"""Create or update GRN Note when the WBM is eligible (RST-linked or manual entry)."""
+	from ivri_od.procurement.doctype.grn_note.grn_note import (
+		build_auto_grn_doc_dict,
+		sync_grn_from_weigh_bridge,
+	)
+
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		return
-	if frappe.db.exists("GRN Note", {"weigh_bridge_measurement": wbm_name}):
+
+	if frappe.db.exists(
+		"GRN Note",
+		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
+	):
+		sync_grn_from_weigh_bridge(wbm_name)
 		return
 
-	local = is_local_procurement_wbm(wbm_name)
-	if local:
-		_create_local_grn_for_wbm(wbm_name)
-		return
-
-	wbm = frappe.db.get_value(
-		"Weigh Bridge Measurement",
-		wbm_name,
-		[
-			"quality_test",
-			"pass_unique_key",
-			"rst_no",
-			"tare_weight",
-			"is_farmer_or_agent",
-			"agent_name",
-			"demo_rst_data",
-		],
-		as_dict=True,
-	)
-	if not wbm or wbm.quality_test not in ("Accepted", "Partially Accepted"):
-		return
-	if not flt(wbm.tare_weight):
-		return
-	if not (wbm.rst_no or "").strip():
-		return
-	if not (wbm.pass_unique_key or "").strip():
+	payload = build_auto_grn_doc_dict(wbm_name)
+	if not payload:
 		return
 
 	try:
-		farmer_agent = cint(wbm.is_farmer_or_agent)
-		agent_name = (wbm.agent_name or "").strip() or get_rst_agent_name(
-			demo_rst_data=wbm.demo_rst_data, rst_no=wbm.rst_no
-		) or ""
-		grn = frappe.get_doc(
-			{
-				"doctype": "GRN Note",
-				"pass_unique_key": (wbm.pass_unique_key or "").strip(),
-				"rst_no": wbm.rst_no,
-				"weigh_bridge_measurement": wbm_name,
-				"is_local_procurement": 0,
-				"is_farmer_or_agent": 1 if farmer_agent else 0,
-				"agent_name": agent_name if farmer_agent else "",
-			}
-		)
+		grn = frappe.get_doc(payload)
+		grn.flags.auto_from_wbm = True
+		if cint(payload.get("is_local_procurement")):
+			grn.flags.auto_local_grn = True
 		grn.insert(ignore_permissions=True)
 	except Exception as exc:
 		frappe.log_error(
@@ -868,36 +1079,58 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 			title=f"Automatic GRN Note creation failed for {wbm_name}",
 		)
 		frappe.msgprint(
-			_("Quality Test is accepted, but the GRN Note could not be created: {0}").format(str(exc)),
+			_("Weigh Bridge was saved, but the GRN Note could not be created: {0}").format(str(exc)),
 			title=_("Automatic GRN Note Error"),
 			indicator="red",
 			alert=True,
 		)
 
 
-def _create_local_grn_for_wbm(wbm_name: str):
-	from ivri_od.procurement.doctype.grn_note.grn_note import grn_dict_for_local_wbm
+def grn_pending_reasons_for_wbm(wbm_name: str) -> list[str]:
+	reasons: list[str] = []
+	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		return [_("Weigh Bridge Measurement not found.")]
+	if frappe.db.exists(
+		"GRN Note",
+		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
+	):
+		return []
 
-	payload = grn_dict_for_local_wbm(wbm_name)
-	if not payload:
-		return
-	try:
-		grn = frappe.get_doc(payload)
-		grn.flags.auto_local_grn = True
-		grn.insert(ignore_permissions=True)
-	except Exception as exc:
-		frappe.log_error(
-			message=frappe.get_traceback(),
-			title=f"Automatic local GRN Note creation failed for {wbm_name}",
-		)
-		frappe.msgprint(
-			_("Weigh Bridge was saved, but the local GRN Note could not be created: {0}").format(
-				str(exc)
-			),
-			title=_("Automatic GRN Note Error"),
-			indicator="red",
-			alert=True,
-		)
+	wbm = frappe.db.get_value(
+		"Weigh Bridge Measurement",
+		wbm_name,
+		["tare_weight", "pass_unique_key", "rst_no", "is_farmer_or_agent"],
+		as_dict=True,
+	)
+	if not wbm:
+		return [_("Weigh Bridge Measurement not found.")]
+	if not flt(wbm.tare_weight):
+		reasons.append(_("Enter tare weight on the weigh bridge."))
+	if is_local_procurement_wbm(wbm_name):
+		if not (wbm.rst_no or "").strip():
+			reasons.append(_("Enter RST No."))
+	else:
+		if not (wbm.pass_unique_key or "").strip():
+			reasons.append(_("Select Pass Unique Key."))
+		if not (wbm.rst_no or "").strip():
+			reasons.append(_("Enter RST No."))
+	return reasons
+
+
+@frappe.whitelist()
+def ensure_grn_note_for_weigh_bridge(wbm_name: str):
+	"""Called after manual WBM save / QC sync so GRN is created when eligibility is met."""
+	wbm_name = (wbm_name or "").strip()
+	if not wbm_name:
+		return {}
+	_ensure_grn_note_for_weigh_bridge(wbm_name)
+	grn_name = frappe.db.get_value(
+		"GRN Note",
+		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
+		"name",
+	)
+	pending = grn_pending_reasons_for_wbm(wbm_name) if not grn_name else []
+	return {"grn_name": grn_name or "", "pending_reasons": pending, "synced": bool(grn_name)}
 
 
 def _ensure_wbm_bag_details_from_qc(name: str, data: dict | None = None):
@@ -974,26 +1207,42 @@ def refresh_wbm_bag_details_from_qc(name):
 
 
 @frappe.whitelist()
-def get_pass_unique_key_autocomplete(txt="", limit=25):
+def get_pass_unique_key_autocomplete(txt="", limit=200, **kwargs):
+	del kwargs
 	txt = (txt or "").strip()
-	limit = frappe.utils.cint(limit) or 25
-	conditions = "IFNULL(pass_unique_key, '') != ''"
-	values = [limit]
+	limit = min(frappe.utils.cint(limit) or 200, 300)
 	if txt:
-		conditions += " AND pass_unique_key LIKE %s"
-		values.insert(0, f"%{txt}%")
-
-	keys = frappe.db.sql(
-		f"""
-		SELECT pass_unique_key
-		FROM `tabPPAS Transit Pass`
-		WHERE {conditions}
-		ORDER BY pass_unique_key
-		LIMIT %s
-		""",
-		tuple(values),
-		pluck=True,
-	)
+		keys = frappe.db.sql(
+			"""
+			SELECT pass_unique_key
+			FROM `tabPPAS Transit Pass`
+			WHERE IFNULL(pass_unique_key, '') != ''
+				AND (
+					pass_unique_key LIKE %(txt)s
+					OR IFNULL(transit_pass_no, '') LIKE %(txt)s
+					OR IFNULL(ppc, '') LIKE %(txt)s
+					OR name LIKE %(txt)s
+				)
+			ORDER BY
+				CASE WHEN pass_unique_key = %(exact)s THEN 0 ELSE 1 END,
+				pass_unique_key
+			LIMIT %(limit)s
+			""",
+			{"txt": f"%{txt}%", "exact": txt, "limit": limit},
+			pluck=True,
+		)
+	else:
+		keys = frappe.db.sql(
+			"""
+			SELECT pass_unique_key
+			FROM `tabPPAS Transit Pass`
+			WHERE IFNULL(pass_unique_key, '') != ''
+			ORDER BY pass_unique_key
+			LIMIT %(limit)s
+			""",
+			{"limit": limit},
+			pluck=True,
+		)
 	return [{"value": key, "label": key, "description": ""} for key in keys]
 
 
@@ -1039,3 +1288,9 @@ def pass_unique_key_query(doctype, txt, searchfield, start, page_len, filters):
 		""",
 		(txt, start, page_len),
 	)
+
+
+def _sync_procurement_rollups_for_pass(pass_unique_key: str) -> None:
+	from ivri_od.procurement.procurement_sync import sync_procurement_from_pass
+
+	sync_procurement_from_pass((pass_unique_key or "").strip())

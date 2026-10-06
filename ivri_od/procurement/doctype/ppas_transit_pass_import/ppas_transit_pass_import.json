@@ -76,10 +76,12 @@
    "label": "Import Items"
   },
   {
+   "cannot_add_rows": 1,
    "fieldname": "import_items",
    "fieldtype": "Table",
    "label": "Import Items",
-   "options": "PPAS Transit Pass Import Item"
+   "options": "PPAS Transit Pass Import Item",
+   "reqd": 0
   }
  ],
  "links": [],

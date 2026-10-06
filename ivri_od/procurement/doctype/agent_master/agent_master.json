@@ -75,7 +75,7 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "search_fields": "agent_name",
  "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,

@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"3158c4b34e\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"abc3e108ca\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"1cbc7aabfa\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"ad23d9e3f5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"56ed0cd400\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"ebcb2efe4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"903fd2ebe7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"451b9d0828\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"3ce65d48a2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"64f63d238d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"e458afb94e\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"1ed46f3940\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"4c0b491807\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"83bee4f50e\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"e3f5b346b9\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"ee330c2a52\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"742ef3b13c\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"7d01053ad0\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"242b5b5c5d\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"0cf917208e\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"79a303e7f3\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"25218b00b6\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"0cf1d6ca7c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"acfdfe2080\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"2367e73143\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Manual PPAS Import\", \"col\": 3}}, {\"id\": \"2e9ad21b8f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"ab1bf10e80\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"d9f7980ead\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"d63b40592c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"72b210e601\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"d1f9395c01\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"e8a18ff215\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"8a6718c5a0\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"ebc7363461\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"747dca0679\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"6cfecf32e7\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"487371d0c8\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"ad2742d11a\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"ca6077c670\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
  "creation": "2026-10-01 12:04:12.928182",
  "custom_blocks": [],
  "docstatus": 0,
@@ -77,20 +77,10 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Season & targets",
-   "link_count": 4,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Season Mapping",
-   "link_count": 0,
-   "link_to": "Season Mapping",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
   },
   {
    "hidden": 0,
@@ -262,7 +252,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 5,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -280,9 +270,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Season Mapping Receipt",
+   "label": "Abstract Report",
    "link_count": 0,
-   "link_to": "Season Mapping Receipt Summary",
+   "link_to": "Abstract Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -290,9 +280,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Mill PPC Season Qty",
+   "label": "Abstract Physical",
    "link_count": 0,
-   "link_to": "Mill PPC Season Quantity Summary",
+   "link_to": "Abstract Physical",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
@@ -310,6 +300,16 @@
   {
    "hidden": 0,
    "is_query_report": 1,
+   "label": "Mandi Book",
+   "link_count": 0,
+   "link_to": "Mandi Book",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
    "label": "Vehicle Gate Movement",
    "link_count": 0,
    "link_to": "Vehicle Gate Movement Summary",
@@ -318,7 +318,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-01 12:04:12.928182",
+ "modified": "2026-10-06 12:41:16.901767",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",
@@ -343,6 +343,14 @@
    "icon": "file-text",
    "label": "PPAS Transit Pass",
    "link_to": "PPAS Transit Pass",
+   "type": "DocType"
+  },
+  {
+   "color": "Teal",
+   "doc_view": "List",
+   "icon": "clipboard",
+   "label": "Manual PPAS Import",
+   "link_to": "PPAS Transit Pass Import",
    "type": "DocType"
   },
   {

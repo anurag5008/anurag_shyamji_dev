@@ -71,7 +71,6 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 	(
 		"Season & targets",
 		[
-			("Season Mapping", "DocType"),
 			("Target Allocation", "DocType"),
 			("Chhatni Assign", "DocType"),
 			("Daily Planning", "DocType"),
@@ -111,19 +110,34 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"Reports",
 		[
 			("Procurement Module Overview", "Report"),
-			("Season Mapping Receipt Summary", "Report"),
-			("Mill PPC Season Quantity Summary", "Report"),
+			("Abstract Report", "Report"),
+			("Abstract Physical", "Report"),
 			("TP Mandi Quantity Fulfillment", "Report"),
+			("Mandi Book", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
 		],
 	),
 ]
 
+# Hidden from Procurement desk (doctype remains available via search / links).
+HIDDEN_WORKSPACE_LINKS: tuple[tuple[str, str], ...] = (
+	("Season Mapping", "DocType"),
+	("Season Mapping Receipt Summary", "Report"),
+	("Chhatni Tracking", "Report"),
+	("Pass RST WBM Summary", "Report"),
+)
+
+PASS_RST_REPORT = "Pass RST WBM Summary"
+PASS_RST_SIDEBAR_LABEL = "Pass RST & WBM"
+PASS_RST_QUERY_URL = "/app/query-report/Pass%20RST%20WBM%20Summary"
+
 QUERY_REPORTS = {
 	"Procurement Module Overview",
 	"Season Mapping Receipt Summary",
-	"Mill PPC Season Quantity Summary",
+	"Abstract Report",
+	"Abstract Physical",
 	"TP Mandi Quantity Fulfillment",
+	"Mandi Book",
 	"Vehicle Gate Movement Summary",
 }
 
@@ -171,11 +185,75 @@ def build_workspace_content() -> str:
 
 def ensure_procurement_workspace_after_migrate():
 	"""Rebuild Procurement workspace from code (shortcuts + PPAS links stay in sync)."""
+	sync_procurement_desk_ui()
+
+
+def sync_procurement_desk_ui():
+	"""Install reports, rebuild workspace, sidebar, and clear desk cache (callable from patches)."""
+	from ivri_od.procurement.procurement_reports import ensure_standard_procurement_reports
+
+	ensure_standard_procurement_reports()
 	apply_procurement_workspace()
+	_import_procurement_sidebar()
+	_cleanup_hidden_workspace_links()
+	frappe.clear_cache()
+	_clear_procurement_desk_cache()
+
+
+def _import_procurement_sidebar():
 	sidebar_path = os.path.join(frappe.get_app_path("ivri_od"), "workspace_sidebar", "procurement.json")
 	if os.path.exists(sidebar_path):
 		import_file_by_path(sidebar_path, force=True, ignore_version=True)
-	frappe.clear_cache()
+
+
+def _cleanup_hidden_workspace_links():
+	if not frappe.db.exists("Workspace", "Procurement"):
+		return
+	for link_to, link_type in HIDDEN_WORKSPACE_LINKS:
+		frappe.db.delete(
+			"Workspace Link",
+			{"parent": "Procurement", "link_to": link_to, "link_type": link_type},
+		)
+		shortcut_type = "Report" if link_type == "Report" else "DocType"
+		frappe.db.delete(
+			"Workspace Shortcut",
+			{"parent": "Procurement", "link_to": link_to, "type": shortcut_type},
+		)
+	if frappe.db.exists("Workspace Sidebar", "Procurement"):
+		frappe.db.sql(
+			"""
+			DELETE FROM `tabWorkspace Sidebar Item`
+			WHERE parent = 'Procurement'
+				AND (
+					(link_to = 'Season Mapping' AND link_type = 'DocType')
+					OR link_to IN (
+						'Season Mapping Receipt Summary',
+						'Chhatni Tracking',
+						'Pass RST WBM Summary'
+					)
+					OR label IN (
+						'Season Mapping',
+						'Season Mapping Receipt',
+						'Chhatni Tracking',
+						'Pass RST & WBM'
+					)
+					OR url LIKE %s
+					OR url LIKE %s
+					OR url LIKE %s
+				)
+			""",
+			(
+				"%Season%20Mapping%20Receipt%",
+				"%Chhatni%20Tracking%",
+				"%Pass%20RST%20WBM%20Summary%",
+			),
+		)
+	frappe.db.commit()
+
+
+def _clear_procurement_desk_cache():
+	frappe.cache.delete_key("bootinfo")
+	frappe.cache.delete_key("user_perm_can_read")
 
 
 def apply_procurement_workspace():
@@ -201,6 +279,8 @@ def apply_procurement_workspace():
 
 	doc.shortcuts = []
 	for row in WORKSPACE_SHORTCUTS:
+		if not _workspace_target_exists(row["link_to"], row["type"]):
+			continue
 		child = doc.append("shortcuts", {})
 		child.label = row["label"]
 		child.type = row["type"]
@@ -213,18 +293,25 @@ def apply_procurement_workspace():
 
 	doc.links = []
 	for card_name, items in WORKSPACE_CARDS:
+		valid_items = [
+			(link_to, link_type)
+			for link_to, link_type in items
+			if _workspace_target_exists(link_to, link_type)
+		]
+		if not valid_items:
+			continue
 		doc.append(
 			"links",
 			{
 				"type": "Card Break",
 				"label": card_name,
-				"link_count": len(items),
+				"link_count": len(valid_items),
 				"hidden": 0,
 				"is_query_report": 0,
 				"onboard": 0,
 			},
 		)
-		for link_to, link_type in items:
+		for link_to, link_type in valid_items:
 			is_report = link_type == "Report"
 			doc.append(
 				"links",
@@ -240,8 +327,20 @@ def apply_procurement_workspace():
 			)
 
 	doc.flags.ignore_permissions = True
+	doc.flags.ignore_links = True
 	doc.save(ignore_version=True)
 	frappe.db.commit()
+
+
+def _workspace_target_exists(link_to: str, link_type: str) -> bool:
+	link_to = (link_to or "").strip()
+	if not link_to:
+		return False
+	if link_type == "DocType":
+		return bool(frappe.db.exists("DocType", link_to))
+	if link_type == "Report":
+		return bool(frappe.db.exists("Report", link_to))
+	return True
 
 
 def _link_label(link_to: str, link_type: str) -> str:
@@ -250,7 +349,9 @@ def _link_label(link_to: str, link_type: str) -> str:
 	return {
 		"Procurement Module Overview": "Module Overview",
 		"Season Mapping Receipt Summary": "Season Mapping Receipt",
-		"Mill PPC Season Quantity Summary": "Mill PPC Season Qty",
+		"Abstract Report": "Abstract Report",
+		"Abstract Physical": "Abstract Physical",
 		"TP Mandi Quantity Fulfillment": "TP Mandi Fulfillment",
+		"Mandi Book": "Mandi Book",
 		"Vehicle Gate Movement Summary": "Vehicle Gate Movement",
 	}.get(link_to, link_to)

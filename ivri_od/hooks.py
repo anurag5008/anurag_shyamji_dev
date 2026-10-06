@@ -7,6 +7,8 @@ app_license = "mit"
 
 after_migrate = ["ivri_od.procurement.procurement_workspace.ensure_procurement_workspace_after_migrate"]
 
+boot_session = ["ivri_od.procurement.boot_session.extend_procurement_boot"]
+
 # Apps
 # ------------------
 
@@ -27,6 +29,7 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
+app_include_js = "/assets/ivri_od/js/disable_quick_entry.js"
 # app_include_css = "/assets/ivri_od/css/ivri_od.css"
 # include js, css files in header of web template
 # web_include_css = "/assets/ivri_od/css/ivri_od.css"
@@ -138,13 +141,11 @@ doctype_js = {"Report": "public/js/procurement_report_redirect.js"}
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"DocType": {
+		"on_update": "ivri_od.form_layout.sync_saved_field_order",
+	}
+}
 
 # Scheduled Tasks
 # ---------------

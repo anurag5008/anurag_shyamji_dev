@@ -6,6 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import cint
 
+from ivri_od.procurement.datetime_fields import ensure_doc_datetime
 from ivri_od.procurement.mill_gate import GATE_ENTRY_INSIDE_MILL, get_open_gate_entry_in_for_vehicle, is_gate_in_inside_mill
 from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
 	PENDING_QC,
@@ -17,17 +18,51 @@ def is_farmer_or_agent_qc(doc) -> bool:
 	return bool(cint(doc.get("is_farmer_or_agent")))
 
 
+def derive_qc_decision_from_returned_bags(paddy_returned) -> str:
+	if cint(paddy_returned) <= 0:
+		return "Accepted"
+	return "Partially Accepted"
+
+
+def is_full_paddy_return_from_qc(qc_name: str) -> bool:
+	qc_name = (qc_name or "").strip()
+	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
+		return False
+	row = frappe.db.get_value(
+		"Quality Check",
+		qc_name,
+		["paddy_returned", "paddy_received_in_pkt"],
+		as_dict=True,
+	)
+	if not row:
+		return False
+	received = cint(row.paddy_received_in_pkt)
+	returned = cint(row.paddy_returned)
+	return received > 0 and returned >= received
+
+
 class QualityCheck(Document):
 	def validate(self):
+		ensure_doc_datetime(
+			self,
+			"qc_datetime",
+			default_now=True,
+			date_field="qc_date",
+			time_field="qc_time",
+		)
 		self._sync_farmer_or_agent_mode()
 		self._validate_gate_entry()
-		self._validate_party_name()
+		self._validate_farmer_or_agent_fields()
+		self._sync_qc_decision_from_returned_bags()
 		self._validate_qc_decision()
 		self._normalize_fields()
+		self._sync_paddy_type_from_old_new_bags()
+		self._validate_old_new_bags()
 		self._validate_type_of_pkt()
 
 	def on_update(self):
 		_sync_weigh_bridge_quality_from_qc(self)
+		_sync_party_name_to_gate_entry(self)
 
 	def _validate_gate_entry(self):
 		gate_entry = (self.gate_entry or "").strip()
@@ -95,8 +130,6 @@ class QualityCheck(Document):
 
 	def _sync_farmer_or_agent_mode(self):
 		if is_farmer_or_agent_qc(self):
-			self.party_name = ""
-			self.society_name = ""
 			self.unloading_point = ""
 			self.staff_name = ""
 		else:
@@ -110,7 +143,7 @@ class QualityCheck(Document):
 		if self.farmer_name:
 			self.farmer_name = self.farmer_name.strip()
 
-	def _validate_party_name(self):
+	def _validate_farmer_or_agent_fields(self):
 		if is_farmer_or_agent_qc(self):
 			farmer = (self.farmer_name or "").strip()
 			self.farmer_name = farmer
@@ -118,25 +151,100 @@ class QualityCheck(Document):
 				frappe.throw(_("Enter Farmer Name."))
 			return
 
-		party = (self.party_name or "").strip()
-		self.party_name = party
-		if not party:
-			frappe.throw(_("Select PPC Name."))
-		if not frappe.db.exists("PPC Master", party):
-			frappe.throw(_("PPC Name {0} is not in PPC Master.").format(frappe.bold(party)))
+		staff = (self.staff_name or "").strip()
+		self.staff_name = staff
+		if not staff:
+			frappe.throw(_("Enter Staff."))
+
+		unloading = (self.unloading_point or "").strip()
+		self.unloading_point = unloading
+		if not unloading:
+			frappe.throw(_("Enter Unloading Point."))
+
+	def _sync_qc_decision_from_returned_bags(self):
+		self.qc_decision = derive_qc_decision_from_returned_bags(self.paddy_returned)
 
 	def _validate_qc_decision(self):
 		decision = (self.qc_decision or "").strip()
 		self.qc_decision = decision
 		if not decision:
-			frappe.throw(_("Select Quality Test (Accepted, Partially Accepted, or Rejected)."))
-		if decision not in ("Accepted", "Partially Accepted", "Rejected"):
+			frappe.throw(_("Quality Test could not be determined from returned bags."))
+		if decision not in ("Accepted", "Partially Accepted"):
 			frappe.throw(_("Invalid Quality Test."))
 
+	def _sync_paddy_type_from_old_new_bags(self):
+		filled = [row for row in (self.old_new_bags or []) if _is_old_new_bag_row_filled(row)]
+		if len(filled) == 1:
+			row = filled[0]
+			self.paddy_type = _("Old {0}, New {1}").format(cint(row.old_bags), cint(row.new_bags))
+		else:
+			self.paddy_type = ""
+
+	def _validate_old_new_bags(self):
+		_validate_qc_child_table_single_filled_row(
+			self.old_new_bags,
+			_("Paddy Type (In Bags)"),
+			_("Old Paddy Bags / New Paddy Bags"),
+			_is_old_new_bag_row_filled,
+		)
+
 	def _validate_type_of_pkt(self):
-		rows = [row for row in (self.type_of_pkt or []) if row.jute_pkt_no or row.no_of_plastic_bag]
-		if not rows:
-			frappe.throw(_("Add at least one row in Type of Bags (Jute Bag No / No of Plastic Bag)."))
+		_validate_qc_child_table_single_filled_row(
+			self.type_of_pkt,
+			_("Type of Bags"),
+			_("Jute Bag No / No of Plastic Bag"),
+			_is_type_of_pkt_row_filled,
+		)
+
+
+def _is_old_new_bag_row_filled(row) -> bool:
+	return bool(cint(row.old_bags) or cint(row.new_bags))
+
+
+def _is_type_of_pkt_row_filled(row) -> bool:
+	return bool(cint(row.jute_pkt_no) or cint(row.no_of_plastic_bag))
+
+
+def _validate_qc_child_table_single_filled_row(rows, table_label, field_hint, is_filled):
+	rows = list(rows or [])
+	filled = [row for row in rows if is_filled(row)]
+
+	if len(filled) > 1:
+		frappe.throw(
+			_("Only one row can be filled in {0}. Remove extra rows with data.").format(table_label)
+		)
+
+	if len(rows) > 1:
+		frappe.throw(
+			_("Only one row is allowed in {0}. Delete extra rows before saving.").format(table_label)
+		)
+
+	if not filled:
+		frappe.throw(
+			_("Enter one row in {0} ({1}).").format(table_label, field_hint)
+		)
+
+
+def qc_party_name(doc) -> str:
+	if is_farmer_or_agent_qc(doc):
+		return (doc.farmer_name or "").strip()
+	return (doc.staff_name or "").strip()
+
+
+def _sync_party_name_to_gate_entry(doc):
+	gate_entry = (doc.gate_entry or "").strip()
+	party_name = qc_party_name(doc)
+	if not gate_entry or not party_name:
+		return
+	if not frappe.db.exists("Gate Entry", gate_entry):
+		return
+	frappe.db.set_value(
+		"Gate Entry",
+		gate_entry,
+		"party_name",
+		party_name,
+		update_modified=False,
+	)
 
 
 def _sync_weigh_bridge_quality_from_qc(doc):

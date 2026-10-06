@@ -165,6 +165,12 @@ class RSTDetails(Document):
 				}
 			)
 
+		from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
+			compute_wbm_tp_status,
+		)
+
+		values["tp_status"] = compute_wbm_tp_status(frappe._dict(values))
+
 		if self.weigh_bridge_measurement and frappe.db.exists(
 			"Weigh Bridge Measurement", self.weigh_bridge_measurement
 		):

@@ -828,25 +828,137 @@ def _manual_item_from_std(std, season_text, row_status, error_message=""):
 	}
 
 
+def _iso_date_value(value):
+	"""Normalize any date-like value to YYYY-MM-DD for PPAS Transit Pass."""
+	if value is None or cstr(value).strip() == "":
+		return None
+
+	from datetime import date, datetime
+
+	from frappe.utils import getdate
+
+	if isinstance(value, (date, datetime)):
+		return getdate(value).isoformat()
+
+	raw = cstr(value).strip()
+	if re.match(r"^\d{4}-\d{2}-\d{2}$", raw):
+		return raw
+
+	parsed_date, _parsed_time = split_datetime(raw)
+	if parsed_date:
+		return parsed_date
+
+	try:
+		return getdate(raw).isoformat()
+	except Exception:
+		return None
+
+
+def _iso_time_value(value):
+	"""Normalize time-like values to HH:MM:SS for PPAS Transit Pass."""
+	if value is None or cstr(value).strip() == "":
+		return None
+
+	from datetime import time, timedelta
+
+	from frappe.utils import get_time
+
+	if isinstance(value, timedelta):
+		total_seconds = int(value.total_seconds()) % 86400
+		hours, remainder = divmod(total_seconds, 3600)
+		minutes, seconds = divmod(remainder, 60)
+		return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
+
+	if isinstance(value, time):
+		return value.strftime("%H:%M:%S")
+
+	raw = cstr(value).strip()
+	_parsed_date, parsed_time = split_datetime(raw)
+	if parsed_time:
+		return parsed_time
+
+	try:
+		return get_time(raw).strftime("%H:%M:%S")
+	except Exception:
+		time_match = re.match(r"^(\d{1,2}):(\d{2})(?::(\d{2}))?$", raw)
+		if time_match:
+			return f"{time_match.group(1).zfill(2)}:{time_match.group(2)}:{time_match.group(3) or '00'}"
+	return None
+
+
+def _serialize_import_field_value(value, field_kind="date"):
+	if field_kind == "time":
+		return _iso_time_value(value)
+	return _iso_date_value(value)
+
+
+def manual_item_from_import_child(row):
+	"""JSON-safe import row from PPAS Transit Pass Import Item (no DocType metadata)."""
+	get = row.get if isinstance(row, dict) else lambda field: getattr(row, field, None)
+	return {
+		"source_sl": cint(get("source_sl")),
+		"season": _text(get("season")),
+		"pacs": _text(get("pacs")),
+		"ppc": _text(get("ppc")),
+		"miller": _text(get("miller")),
+		"transit_pass_no": _text(get("transit_pass_no")),
+		"transit_pass_date": _serialize_import_field_value(get("transit_pass_date"), "date"),
+		"transit_pass_time": _serialize_import_field_value(get("transit_pass_time"), "time"),
+		"vehicle_no": _text(get("vehicle_no")),
+		"driver_name": _text(get("driver_name")),
+		"bag": cint(get("bag") or 0),
+		"quantity": flt(get("quantity") or 0),
+		"delay_in_days": cint(get("delay_in_days") or 0),
+		"accepted_date": _serialize_import_field_value(get("accepted_date"), "date"),
+		"accepted_time": _serialize_import_field_value(get("accepted_time"), "time"),
+		"action": _text(get("action")),
+		"row_status": _text(get("row_status")),
+		"error_message": _text(get("error_message")),
+	}
+
+
+def map_manual_item_to_ppas_data(payload, season_text):
+	"""Map saved import child row directly to PPAS Transit Pass fields (preserves dates)."""
+	return {
+		"season": season_text,
+		"sl": cint(payload.get("source_sl")),
+		"pacs": _text(payload.get("pacs")),
+		"ppc": _text(payload.get("ppc")),
+		"miller": _text(payload.get("miller")),
+		"transit_pass_no": _text(payload.get("transit_pass_no")),
+		"transit_pass_date": _iso_date_value(payload.get("transit_pass_date")),
+		"transit_pass_time": _iso_time_value(payload.get("transit_pass_time")),
+		"vehicle_no": _text(payload.get("vehicle_no")),
+		"driver_name": _text(payload.get("driver_name")),
+		"bags": cint(payload.get("bag") or 0),
+		"quantity": flt(payload.get("quantity") or 0),
+		"delay_in_days": cint(payload.get("delay_in_days") or 0),
+		"accepted_date": _iso_date_value(payload.get("accepted_date")),
+		"accepted_time": _iso_time_value(payload.get("accepted_time")),
+		"action": _text(payload.get("action")),
+	}
+
+
 def _std_row_from_manual_item(item):
 	if isinstance(item, str):
 		item = json.loads(item)
+	payload = manual_item_from_import_child(item)
 	return {
-		"Sl#": item.get("source_sl"),
-		"PACS": item.get("pacs"),
-		"PPC": item.get("ppc"),
-		"Miller": item.get("miller"),
-		"Transit Pass No.": item.get("transit_pass_no"),
-		"Transit Pass Date": item.get("transit_pass_date"),
-		"Transit Pass Time": item.get("transit_pass_time"),
-		"Vehicle No": item.get("vehicle_no"),
-		"Driver Name": item.get("driver_name"),
-		"Bag": item.get("bag"),
-		"Quantity": item.get("quantity"),
-		"Delay(In Days)": item.get("delay_in_days"),
-		"Accepted Date": item.get("accepted_date"),
-		"Accepted Time": item.get("accepted_time"),
-		"Action": item.get("action"),
+		"Sl#": payload.get("source_sl"),
+		"PACS": payload.get("pacs"),
+		"PPC": payload.get("ppc"),
+		"Miller": payload.get("miller"),
+		"Transit Pass No.": payload.get("transit_pass_no"),
+		"Transit Pass Date": payload.get("transit_pass_date"),
+		"Transit Pass Time": payload.get("transit_pass_time"),
+		"Vehicle No": payload.get("vehicle_no"),
+		"Driver Name": payload.get("driver_name"),
+		"Bag": payload.get("bag"),
+		"Quantity": payload.get("quantity"),
+		"Delay(In Days)": payload.get("delay_in_days"),
+		"Accepted Date": payload.get("accepted_date"),
+		"Accepted Time": payload.get("accepted_time"),
+		"Action": payload.get("action"),
 	}
 
 
@@ -926,7 +1038,7 @@ def process_manual_ppas_paste_api(season, paste_data, miller=None):
 
 
 @frappe.whitelist()
-def import_manual_ppas_valid_rows(season, items_json):
+def import_manual_ppas_valid_rows(season, items_json=None):
 	"""Import only Valid rows from manual paste review into PPAS Transit Pass."""
 	season_text = resolve_ppas_season_text(season)
 	if not season_text:
@@ -934,16 +1046,61 @@ def import_manual_ppas_valid_rows(season, items_json):
 
 	if isinstance(items_json, str):
 		items = json.loads(items_json)
+	elif isinstance(items_json, list):
+		items = items_json
 	else:
-		items = items_json or []
+		items = []
 
-	valid_rows = []
+	valid_payloads = []
 	for item in items:
-		if _text(item.get("row_status")) != "Valid":
+		payload = manual_item_from_import_child(item)
+		if _text(payload.get("row_status")) != "Valid":
 			continue
-		valid_rows.append(_std_row_from_manual_item(item))
+		valid_payloads.append(payload)
 
-	if not valid_rows:
+	if not valid_payloads:
 		frappe.throw(_("No valid rows to import"))
 
-	return bulk_import_from_ppas(season_text, rows=valid_rows)
+	existing_records = frappe.get_all(
+		"PPAS Transit Pass",
+		filters={"season": season_text},
+		fields=["name", "season", "ppc", "transit_pass_no"],
+		limit_page_length=0,
+	)
+	existing_map = {
+		row_identity_key(record.season, record.ppc, record.transit_pass_no): record.name
+		for record in existing_records
+	}
+
+	imported = 0
+	updated = 0
+	failed = 0
+	errors = []
+
+	for index, payload in enumerate(valid_payloads, start=1):
+		try:
+			data = _ensure_identity_fields(map_manual_item_to_ppas_data(payload, season_text))
+			key = row_identity_key(season_text, data["ppc"], data["transit_pass_no"])
+			existing_name = existing_map.get(key)
+			doc_name = _save_ppas_transit_pass(data, existing_name=existing_name)
+			if existing_name:
+				updated += 1
+			else:
+				imported += 1
+				existing_map[key] = doc_name
+			if index % 25 == 0:
+				frappe.db.commit()
+		except Exception as exc:
+			failed += 1
+			errors.append({"row": index, "error": cstr(exc)})
+
+	frappe.db.commit()
+
+	return {
+		"success": (imported + updated) > 0,
+		"total": len(valid_payloads),
+		"imported": imported,
+		"updated": updated,
+		"failed": failed,
+		"errors": errors[:20],
+	}

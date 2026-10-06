@@ -12,7 +12,9 @@
   "column_break_1",
   "mill_name",
   "chutney_quantity_kg_per_quintal",
-  "chutney_percentage"
+  "chutney_percentage",
+  "history_section",
+  "chhatni_history"
  ],
  "fields": [
   {
@@ -67,6 +69,20 @@
    "label": "Chhatni Percentage",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "history_section",
+   "fieldtype": "Section Break",
+   "label": "Chhatni Change History"
+  },
+  {
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1,
+   "fieldname": "chhatni_history",
+   "fieldtype": "Table",
+   "label": "Change Log",
+   "options": "Chhatni Assign History"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -104,7 +120,7 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "search_fields": "ppc_name,season,mill_name",
  "sort_field": "modified",
  "sort_order": "DESC",

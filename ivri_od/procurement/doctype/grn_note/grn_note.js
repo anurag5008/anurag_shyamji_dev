@@ -1,6 +1,8 @@
 // Copyright (c) 2026, Profezzo and contributors
 // For license information, please see license.txt
 
+const GRN_NOTE_PASS_BTN = "btn-grn-note-pass";
+
 frappe.ui.form.on("GRN Note", {
 	onload(frm) {
 		setup_pass_unique_key_autocomplete(frm);
@@ -16,6 +18,7 @@ frappe.ui.form.on("GRN Note", {
 		sync_purchase_heading(frm);
 		sync_gate_exit_fields(frm);
 		sync_tp_fulfillment_display(frm);
+		attach_grn_note_pass_buttons(frm);
 		if (!frm.doc.is_local_procurement && (frm.doc.pass_unique_key || "").trim() && !(frm.doc.mill_name || "").trim()) {
 			load_transit_pass_details(frm);
 		}
@@ -41,6 +44,92 @@ frappe.ui.form.on("GRN Note", {
 		}
 	},
 });
+
+$(document).on("form-refresh", (e, frm) => {
+	if (frm && frm.doctype === "GRN Note") {
+		attach_grn_note_pass_buttons(frm);
+	}
+});
+
+function attach_grn_note_pass_buttons(frm) {
+	if (!frm || !frm.page || !frm.page.inner_toolbar) {
+		return;
+	}
+	frm.page.inner_toolbar.find(`.${GRN_NOTE_PASS_BTN}`).remove();
+	const $toolbar = frm.page.inner_toolbar.removeClass("hide");
+
+	$(
+		`<button type="button" class="btn btn-primary btn-sm ellipsis ${GRN_NOTE_PASS_BTN}"></button>`
+	)
+		.text(__("Print GRN"))
+		.on("click", () => print_grn_note_pass(frm))
+		.appendTo($toolbar);
+
+	$(
+		`<button type="button" class="btn btn-default btn-sm ellipsis ${GRN_NOTE_PASS_BTN}"></button>`
+	)
+		.text(__("Download PDF"))
+		.on("click", () => download_grn_note_pass_pdf(frm))
+		.appendTo($toolbar);
+}
+
+function ensure_grn_note_saved(frm) {
+	if (frm.is_new() || !(frm.doc.name || "").trim()) {
+		frappe.msgprint({
+			title: __("Save required"),
+			message: __("Save this GRN first, then print or download with QR code."),
+			indicator: "orange",
+		});
+		return false;
+	}
+	return true;
+}
+
+function print_grn_note_pass(frm) {
+	if (!ensure_grn_note_saved(frm)) {
+		return;
+	}
+	frappe.call({
+		method: "ivri_od.procurement.doctype.grn_note.grn_note.get_grn_note_pass_html",
+		args: { name: frm.doc.name },
+		freeze: true,
+		freeze_message: __("Preparing GRN…"),
+		callback(r) {
+			if (!r.message) {
+				frappe.msgprint({
+					message: __("Could not generate GRN print."),
+					indicator: "red",
+				});
+				return;
+			}
+			const win = window.open("", "_blank");
+			if (!win) {
+				frappe.msgprint({
+					title: __("Popup blocked"),
+					message: __("Allow popups to print the GRN."),
+					indicator: "orange",
+				});
+				return;
+			}
+			win.document.open();
+			win.document.write(r.message);
+			win.document.close();
+		},
+	});
+}
+
+function download_grn_note_pass_pdf(frm) {
+	if (!ensure_grn_note_saved(frm)) {
+		return;
+	}
+	const url =
+		frappe.urllib.get_full_url(
+			"/api/method/ivri_od.procurement.doctype.grn_note.grn_note.download_grn_note_pass_pdf"
+		) +
+		"?name=" +
+		encodeURIComponent(frm.doc.name);
+	window.open(url, "_blank");
+}
 
 function sync_gate_exit_fields(frm) {
 	if (frm.is_new() || !frm.doc.name || frm._gate_exit_synced) {
@@ -186,6 +275,7 @@ function load_transit_pass_details(frm) {
 				frm.set_value("chhatni", data.chhatni || 0);
 			}
 			frm.set_value("transit_pass_no", data.transit_pass_no || "");
+			frm.set_value("transit_pass_datetime", data.transit_pass_datetime || "");
 			frm.set_value("transit_pass_date", data.transit_pass_date || "");
 			frm.set_value("tp_quantity", data.tp_quantity || 0);
 			frm.set_value("pacs", data.pacs || "");
@@ -226,17 +316,20 @@ const RST_FETCH_FIELDS = [
 	"gross_vehicle_weight",
 	"gross_weight",
 	"tare_weight",
+	"deduction",
 	"net_weight",
 	"gunny_type",
 	"gunny_weight",
+	"jute_bags",
+	"plastic_bags",
+	"total_bags",
 	"gate_entry",
 	"vehicle_no",
 	"driver_name",
-	"arrival_date",
-	"arrival_time",
+	"receipt_datetime",
+	"arrival_datetime",
 	"gate_exit",
-	"gate_exit_date",
-	"gate_out_time",
+	"gate_exit_datetime",
 	"quality_check",
 	"qc_sample_no",
 	"no_of_bags",
@@ -318,6 +411,7 @@ function sync_tp_fulfillment_display(frm) {
 			for (const fieldname of [
 				"received_quantity",
 				"tp_cumulative_received",
+				"tp_chhatni_balance",
 				"tp_fulfillment_status",
 				"chhatni_fulfillment_status",
 				"chhatni_fulfillment_remark",
@@ -377,3 +471,4 @@ function set_qc_bag_details(frm, rows) {
 	frm.refresh_field("qc_bag_details");
 	setup_qc_bag_details_grid(frm);
 }
+

@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "autoname": "hash",
- "creation": "2026-09-30 16:09:41.843996",
+ "creation": "2026-10-01 12:44:26.483270",
  "doctype": "DocType",
  "document_type": "Document",
  "engine": "InnoDB",
@@ -80,7 +80,7 @@
    "fieldname": "chhatni",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Chhatni (Kg per Quintal)",
+   "label": "Chhatni (% per Quintal)",
    "non_negative": 1
   },
   {
@@ -90,18 +90,18 @@
    "label": "Latest Chutney"
   },
   {
-   "description": "From the latest Chatney Assign for this PPC and Mill.",
+   "description": "From Chhatni Assign for this Season, PPC, and Mill.",
    "fieldname": "latest_chutney_kg_per_quintal",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Latest Chutney (Kg per Quintal)",
+   "label": "Latest Chhatni (Kg per Quintal)",
    "non_negative": 1,
    "read_only": 1
   },
   {
    "fieldname": "latest_chutney_percentage",
    "fieldtype": "Percent",
-   "label": "Latest Chutney Percentage",
+   "label": "Latest Chhatni Percentage",
    "precision": "2",
    "read_only": 1
   },
@@ -112,7 +112,7 @@
   {
    "fieldname": "latest_chutney_season",
    "fieldtype": "Link",
-   "label": "Latest Chutney Season",
+   "label": "Latest Chhatni Season",
    "options": "Season Master",
    "read_only": 1
   },
@@ -126,7 +126,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-01 11:52:50.230382",
+ "modified": "2026-10-01 17:18:18.020892",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Target Allocation",
@@ -159,7 +159,7 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "row_format": "Dynamic",
  "search_fields": "season,ppc_name,agent_name,mill_name",
  "sort_field": "modified",

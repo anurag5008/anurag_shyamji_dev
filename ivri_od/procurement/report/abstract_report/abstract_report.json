@@ -3,9 +3,9 @@
  "doctype": "Report",
  "is_standard": "Yes",
  "module": "Procurement",
- "name": "Mill PPC Season Quantity Summary",
+ "name": "Abstract Report",
  "ref_doctype": "Season Mapping",
- "report_name": "Mill PPC Season Quantity Summary",
+ "report_name": "Abstract Report",
  "report_type": "Script Report",
  "roles": [
   {"role": "System Manager"},

@@ -144,7 +144,7 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "search_fields": "season,season_year,ppc_name,mill_name",
  "sort_field": "modified",
  "sort_order": "DESC",

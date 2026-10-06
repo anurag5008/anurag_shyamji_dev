@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>{{ doc.grn_no or doc.name }} — GRN</title>
+	<style>
+		@page { size: A4 portrait; margin: 8mm; }
+		* { box-sizing: border-box; margin: 0; padding: 0; }
+		body {
+			font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-size: 8.5pt;
+			line-height: 1.35;
+			color: #1e293b;
+			background: #fff;
+		}
+		.pass {
+			width: 100%;
+			max-width: 194mm;
+			margin: 0 auto;
+			border: 1px solid #cbd5e1;
+		}
+		.top-band {
+			background: linear-gradient(120deg, #0f172a 0%, #1e40af 55%, #1e3a5f 100%);
+			color: #fff;
+			padding: 10px 14px;
+		}
+		.top-band-table { width: 100%; border-collapse: collapse; }
+		.top-band-table td { vertical-align: middle; padding: 0; }
+		.top-band-table .logo-cell { width: 1%; padding-right: 10px; }
+		.print-logo { display: block; background: #fff; border-radius: 3px; padding: 2px; max-height: 44px !important; max-width: 100px !important; }
+		.top-band .company { font-size: 12pt; font-weight: 700; letter-spacing: 0.01em; }
+		.top-band .pass-type {
+			font-size: 7pt;
+			text-transform: uppercase;
+			letter-spacing: 0.12em;
+			opacity: 0.9;
+			margin-top: 2px;
+		}
+		.top-band .qr-mini { text-align: right; width: 1%; padding-left: 8px; }
+		.top-band .qr-mini .qr-box {
+			background: #fff;
+			border-radius: 4px;
+			padding: 4px;
+			display: inline-block;
+		}
+		.top-band .qr-mini .qr-image { width: 72px !important; height: 72px !important; display: block; }
+		.doc-strip {
+			display: table;
+			width: 100%;
+			background: #f1f5f9;
+			border-bottom: 1px solid #e2e8f0;
+			padding: 6px 14px;
+		}
+		.doc-strip .doc-id {
+			display: table-cell;
+			vertical-align: middle;
+			font-size: 11pt;
+			font-weight: 800;
+			color: #0f172a;
+		}
+		.doc-strip .meta {
+			display: table-cell;
+			vertical-align: middle;
+			text-align: right;
+			font-size: 7.5pt;
+			color: #475569;
+		}
+		.badge {
+			display: inline-block;
+			padding: 2px 8px;
+			border-radius: 3px;
+			font-size: 7pt;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+			background: #dbeafe;
+			color: #1d4ed8;
+			border: 1px solid #93c5fd;
+			margin-left: 6px;
+		}
+		.fulfillment-band {
+			padding: 8px 10px;
+			background: #fffbeb;
+			border-bottom: 2px solid #f59e0b;
+		}
+		.fulfillment-band .band-title {
+			font-size: 7pt;
+			font-weight: 800;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: #92400e;
+			margin-bottom: 6px;
+		}
+		.kpi-grid {
+			width: 100%;
+			border-collapse: separate;
+			border-spacing: 6px 0;
+		}
+		.kpi-grid td {
+			vertical-align: top;
+			width: 25%;
+			background: #fff;
+			border: 1px solid #fde68a;
+			border-radius: 4px;
+			padding: 6px 8px;
+		}
+		.kpi-grid .kpi-label {
+			font-size: 6.5pt;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			color: #78716c;
+			line-height: 1.25;
+		}
+		.kpi-grid .kpi-value {
+			font-size: 13pt;
+			font-weight: 800;
+			color: #0f172a;
+			margin: 2px 0;
+			line-height: 1.1;
+		}
+		.kpi-grid .kpi-hint {
+			font-size: 6.5pt;
+			color: #64748b;
+			line-height: 1.3;
+		}
+		.pill {
+			display: inline-block;
+			margin-top: 3px;
+			padding: 2px 8px;
+			border-radius: 999px;
+			font-size: 7pt;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.04em;
+		}
+		.pill-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+		.pill-warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+		.pill-muted { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+		.pill-info { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+		.body-grid {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.body-grid > tbody > tr > td {
+			vertical-align: top;
+			width: 50%;
+			padding: 8px 10px;
+			border-bottom: 1px solid #e2e8f0;
+		}
+		.body-grid > tbody > tr > td:first-child { border-right: 1px solid #e2e8f0; }
+		.section-title {
+			font-size: 6.5pt;
+			font-weight: 800;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: #64748b;
+			margin-bottom: 4px;
+			padding-bottom: 2px;
+			border-bottom: 1px solid #e2e8f0;
+		}
+		.kv {
+			width: 100%;
+			border-collapse: collapse;
+		}
+		.kv td {
+			padding: 3px 0;
+			vertical-align: top;
+			border-bottom: 1px dotted #e2e8f0;
+		}
+		.kv tr:last-child td { border-bottom: none; }
+		.kv .k { width: 42%; font-size: 6.5pt; color: #64748b; font-weight: 600; padding-right: 6px; }
+		.kv .v { font-size: 8pt; font-weight: 600; color: #0f172a; }
+		.entry-table {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 4px;
+			font-size: 7.5pt;
+		}
+		.entry-table th {
+			text-align: left;
+			font-size: 6.5pt;
+			text-transform: uppercase;
+			color: #64748b;
+			padding: 3px 4px;
+			border: 1px solid #e2e8f0;
+			background: #f8fafc;
+		}
+		.entry-table td {
+			padding: 3px 4px;
+			border: 1px solid #e2e8f0;
+		}
+		.footer {
+			padding: 5px 14px;
+			font-size: 6.5pt;
+			color: #64748b;
+			background: #f8fafc;
+			display: table;
+			width: 100%;
+		}
+		.footer .left { display: table-cell; }
+		.footer .right { display: table-cell; text-align: right; }
+		.actions {
+			max-width: 194mm;
+			margin: 8px auto 0;
+			text-align: center;
+		}
+		.actions button {
+			font-size: 10pt;
+			padding: 6px 16px;
+			cursor: pointer;
+			border: 1px solid #0f172a;
+			background: #0f172a;
+			color: #fff;
+			border-radius: 4px;
+		}
+		@media print {
+			body { padding: 0; }
+			.pass { border: none; max-width: none; }
+			.actions { display: none !important; }
+			.fulfillment-band, .kpi-grid td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+			.top-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+		}
+	</style>
+</head>
+<body>
+	<div class="pass">
+		<div class="top-band">
+			<table class="top-band-table" cellpadding="0" cellspacing="0">
+				<tr>
+					{% if print_logo %}
+					<td class="logo-cell">{{ print_logo | safe }}</td>
+					{% endif %}
+					<td>
+						<div class="company">{{ company_name or _("Procurement") }}</div>
+						<div class="pass-type">{{ _("Goods Receipt Note (GRN)") }}</div>
+					</td>
+					<td class="qr-mini">
+						<div class="qr-box">{{ qr_image | safe }}</div>
+					</td>
+				</tr>
+			</table>
+		</div>
+
+		<div class="doc-strip">
+			<div class="doc-id">{{ doc.grn_no or doc.name }}</div>
+			<div class="meta">
+				{{ receipt_datetime_display }}
+				<span class="badge">{{ purchase_heading }}</span>
+			</div>
+		</div>
+
+		{% if not doc.is_local_procurement %}
+		<div class="fulfillment-band">
+			<div class="band-title">{{ _("TP & Chhatni Fulfillment") }}</div>
+			<table class="kpi-grid" cellpadding="0" cellspacing="0">
+				<tr>
+					<td>
+						<div class="kpi-label">{{ _("This GRN Received (QT)") }}</div>
+						<div class="kpi-value">{{ qty_received }}</div>
+						<div class="kpi-hint">{{ _("Paddy received on this GRN only (net weight + entry quantities).") }}</div>
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("Pass Total Received So Far (QT)") }}</div>
+						<div class="kpi-value">{{ qty_cumulative }}</div>
+						<div class="kpi-hint">
+							{{ _("Running total on this Pass Unique Key up to and including this GRN.") }}
+							{% if qty_tp != "—" %}
+							<br>{{ _("TP Quantity:") }} <strong>{{ qty_tp }}</strong>
+							{% endif %}
+							<br>{{ _("Received − TP + Chhatni:") }} <strong>{{ qty_tp_chhatni_balance }}</strong>
+						</div>
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("TP Status") }}</div>
+						{% set tp_status = doc.tp_fulfillment_status or "" %}
+						{% if tp_pass_fulfilled and (not tp_status or tp_status == "In Progress") %}
+						{% set tp_status = "TP Completed" %}
+						{% endif %}
+						<div class="kpi-value" style="font-size:10pt;">{{ tp_status or "—" }}</div>
+						{% if tp_status == "TP Completed" %}
+						<span class="pill pill-success">{{ _("TP Completed") }}</span>
+						{% elif tp_status == "In Progress" %}
+						<span class="pill pill-warn">{{ _("In Progress") }}</span>
+						{% endif %}
+						<div class="kpi-hint">{{ _("TP Completed when cumulative received is equal to or greater than TP quantity (overfill still completes the TP).") }}</div>
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("Chhatni Status") }}</div>
+						{% set ch_status = chhatni_display_status or doc.chhatni_fulfillment_status or "" %}
+						<div class="kpi-value" style="font-size:10pt;">{{ ch_status or "—" }}</div>
+						{% if ch_status == "Chhatni Received" or ch_status == "Over Filled Chhatni Received" %}
+						<span class="pill pill-success">{{ ch_status }}</span>
+						{% elif ch_status == "Chhatni Pending" %}
+						<span class="pill pill-warn">{{ ch_status }}</span>
+						{% elif ch_status == "Chhatni Not Received" %}
+						<span class="pill pill-muted">{{ ch_status }}</span>
+						{% elif ch_status %}
+						<span class="pill pill-info">{{ ch_status }}</span>
+						{% endif %}
+						{% if doc.chhatni_fulfillment_remark %}
+						<div class="kpi-hint" style="margin-top:4px;">{{ doc.chhatni_fulfillment_remark }}</div>
+						{% elif tp_pass_fulfilled and ch_status %}
+						<div class="kpi-hint">{{ _("Chhatni Received when Received − (TP + Chhatni) is from −0.3 to 0 QT. Any amount above 0 is Over Filled Chhatni Received.") }}</div>
+						{% else %}
+						<div class="kpi-hint">{{ _("Not calculated until TP is fully received.") }}</div>
+						{% endif %}
+					</td>
+				</tr>
+			</table>
+		</div>
+		{% endif %}
+
+		<table class="body-grid" cellpadding="0" cellspacing="0">
+			<tr>
+				<td>
+					<div class="section-title">{{ _("GRN & mill") }}</div>
+					<table class="kv">
+						{% if not doc.is_local_procurement %}
+						<tr><td class="k">{{ _("Pass Unique Key") }}</td><td class="v">{{ doc.pass_unique_key or "—" }}</td></tr>
+						<tr><td class="k">{{ _("CMR Season") }}</td><td class="v">{{ doc.cmr_season or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Chhatni (Kg/Qtl)") }}</td><td class="v">{{ doc.chhatni or "—" }}</td></tr>
+						{% endif %}
+						<tr><td class="k">{{ _("Mill Name") }}</td><td class="v">{{ doc.mill_name or "—" }}</td></tr>
+					</table>
+				</td>
+				<td>
+					{% if not doc.is_local_procurement %}
+					<div class="section-title">{{ _("Transit pass") }}</div>
+					<table class="kv">
+						<tr><td class="k">{{ _("TP No") }}</td><td class="v">{{ doc.transit_pass_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("TP Date & Time") }}</td><td class="v">{{ transit_pass_datetime_display or "—" }}</td></tr>
+						<tr><td class="k">{{ _("TP Quantity (QT)") }}</td><td class="v">{{ qty_tp }}</td></tr>
+						<tr><td class="k">{{ _("PACS") }}</td><td class="v">{{ doc.pacs or "—" }}</td></tr>
+						<tr><td class="k">{{ _("PPC") }}</td><td class="v">{{ doc.ppc or "—" }}</td></tr>
+					</table>
+					{% else %}
+					<div class="section-title">{{ _("Local procurement") }}</div>
+					<table class="kv">
+						<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Agent / Farmer") }}</td><td class="v">{{ doc.agent_name or "—" }}</td></tr>
+					</table>
+					{% endif %}
+				</td>
+			</tr>
+			<tr>
+				<td>
+					<div class="section-title">{{ _("Weighment & gate") }}</div>
+					<table class="kv">
+						<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Vehicle No") }}</td><td class="v">{{ doc.vehicle_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Driver") }}</td><td class="v">{{ doc.driver_name or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Gross (QT)") }}</td><td class="v">{{ doc.gross_weight or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Tare (QT)") }}</td><td class="v">{{ doc.tare_weight or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Deduction (QT)") }}</td><td class="v">{{ doc.deduction or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Net Paddy (QT)") }}</td><td class="v">{{ doc.net_weight or "—" }}</td></tr>
+					</table>
+				</td>
+				<td>
+					<div class="section-title">{{ _("Quality check") }}</div>
+					<table class="kv">
+						<tr><td class="k">{{ _("Quality Check") }}</td><td class="v">{{ doc.quality_check or "—" }}</td></tr>
+						<tr><td class="k">{{ _("QC Sample No") }}</td><td class="v">{{ doc.qc_sample_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Bags (In No.)") }}</td><td class="v">{{ doc.no_of_bags or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Moisture") }}</td><td class="v">{{ doc.moisture or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Dust") }}</td><td class="v">{{ doc.dust or "—" }}</td></tr>
+						<tr><td class="k">{{ _("QC Decision") }}</td><td class="v">{{ doc.qc_decision or "—" }}</td></tr>
+						<tr><td class="k">{{ _("PPC Name") }}</td><td class="v">{{ doc.ppc_name or "—" }}</td></tr>
+					</table>
+				</td>
+			</tr>
+		</table>
+
+		{% if doc.entry_details %}
+		<div style="padding: 6px 10px 8px;">
+			<div class="section-title">{{ _("Entry details") }}</div>
+			<table class="entry-table">
+				<tr>
+					<th>{{ _("Entry") }}</th>
+					<th>{{ _("Agent") }}</th>
+					<th>{{ _("Qty (QT)") }}</th>
+				</tr>
+				{% for row in doc.entry_details %}
+				<tr>
+					<td>{{ row.entry or "—" }}</td>
+					<td>{{ row.agent_name or "—" }}</td>
+					<td>{{ row.entry_quantity or "—" }}</td>
+				</tr>
+				{% endfor %}
+			</table>
+		</div>
+		{% endif %}
+
+		<div class="footer">
+			<div class="left">{{ _("Document generated on") }} {{ printed_on }}</div>
+			<div class="right">{{ _("Scan QR for full GRN details") }} · {{ doc.grn_no or doc.name }}</div>
+		</div>
+	</div>
+
+	{% if not for_pdf %}
+	<div class="actions">
+		<button type="button" onclick="window.print()">{{ _("Print") }}</button>
+	</div>
+	{% endif %}
+</body>
+</html>
