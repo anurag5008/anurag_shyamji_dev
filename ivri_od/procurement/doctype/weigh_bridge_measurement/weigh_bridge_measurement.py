@@ -152,6 +152,7 @@ def _qc_bag_lines(qc_name: str) -> list[dict]:
 def _update_bag_line_totals(row) -> float:
 	jute_kg = flt(getattr(row, "weight_per_jute_kg", 0)) * cint(getattr(row, "jute_bags", 0))
 	plastic_kg = flt(getattr(row, "weight_per_plastic_kg", 0)) * cint(getattr(row, "plastic_bags", 0))
+	row.total_bags = cint(getattr(row, "jute_bags", 0)) + cint(getattr(row, "plastic_bags", 0))
 	row.jute_total_qt = _trim_qty(jute_kg / KG_PER_QUINTAL)
 	row.plastic_total_qt = _trim_qty(plastic_kg / KG_PER_QUINTAL)
 	row.gunny_weight_qt = _trim_qty(flt(row.jute_total_qt) + flt(row.plastic_total_qt))
@@ -191,6 +192,7 @@ def build_bag_details_from_qc(
 			{
 				"jute_bags": jute_bags,
 				"plastic_bags": plastic_bags,
+				"total_bags": jute_bags + plastic_bags,
 				"weight_per_jute_kg": w_jute,
 				"weight_per_plastic_kg": w_plastic,
 				"jute_total_qt": jute_qt,
@@ -445,6 +447,7 @@ class WeighBridgeMeasurement(Document):
 			row = self.append("bag_weight_details", {})
 			row.jute_bags = row_data["jute_bags"]
 			row.plastic_bags = row_data["plastic_bags"]
+			row.total_bags = row_data["total_bags"]
 			row.weight_per_jute_kg = row_data["weight_per_jute_kg"]
 			row.weight_per_plastic_kg = row_data["weight_per_plastic_kg"]
 			row.jute_total_qt = row_data["jute_total_qt"]

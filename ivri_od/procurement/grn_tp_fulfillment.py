@@ -25,38 +25,37 @@ def required_chhatni_qt(tp_qty: float, chhatni_percentage: float) -> float:
 	return flt(flt(tp_qty) * flt(chhatni_percentage) / 100, 3)
 
 
-def received_chhatni_pct(cumulative_received: float, tp_qty: float) -> float:
-	"""(Pass total received − TP quantity) ÷ TP quantity × 100. Zero until TP is filled."""
+def received_chhatni_pct(total_deduction: float, tp_qty: float) -> float:
+	"""Chhatni % received on the TP = sum of deductions ÷ TP quantity × 100."""
 	tp_qty = flt(tp_qty)
 	if tp_qty <= 0:
 		return 0.0
-	overfill = max(flt(cumulative_received) - tp_qty, 0)
-	return flt(overfill / tp_qty * 100, 4)
+	return flt(flt(total_deduction) / tp_qty * 100, 2)
 
 
-def tp_chhatni_balance_qt(tp_qty: float, cumulative_received: float, chhatni_percentage: float) -> float:
-	"""Pass total received − (TP quantity + required chhatni).
+def tp_chhatni_balance_qt(tp_qty: float, cumulative_received: float, total_deduction: float) -> float:
+	"""Pass total received − (TP quantity + sum of deductions).
 
-	Positive: received above TP plus chhatni (over filled).
-	Zero: TP and chhatni exactly received.
-	Negative: still short of TP plus chhatni.
+	A negative result is kept as 0.
 	"""
 	tp_qty = flt(tp_qty)
 	if tp_qty <= 0:
 		return 0.0
-	required = required_chhatni_qt(tp_qty, chhatni_percentage)
-	return flt(flt(cumulative_received) - tp_qty - required, 3)
+	value = flt(cumulative_received) - tp_qty - flt(total_deduction)
+	return flt(max(value, 0), 3)
 
 
 def chhatni_fulfillment_status(
 	tp_qty: float,
 	cumulative_received: float,
 	chhatni_kg_per_quintal: float,
+	total_deduction: float = 0,
 ) -> str:
 	status, _ = evaluate_chhatni_fulfillment(
 		tp_qty,
 		cumulative_received,
 		chhatni_kg_per_quintal,
+		total_deduction,
 	)
 	return status
 
@@ -65,26 +64,27 @@ def evaluate_chhatni_fulfillment(
 	tp_qty: float,
 	cumulative_received: float,
 	chhatni_kg_per_quintal: float,
+	total_deduction: float = 0,
 ) -> tuple[str, str]:
 	tp_qty = flt(tp_qty)
 	cumulative_received = flt(cumulative_received)
 	chhatni_kg_per_quintal = flt(chhatni_kg_per_quintal)
+	total_deduction = flt(total_deduction)
 
 	if tp_qty <= 0 or cumulative_received < tp_qty:
 		return CHHATNI_NOT_RECEIVED, REMARK_TP_NOT_FILLED
 
-	overfill_qt = flt(cumulative_received - tp_qty, 3)
 	required_qt = required_chhatni_qt(tp_qty, chhatni_kg_per_quintal)
-	received_pct = received_chhatni_pct(cumulative_received, tp_qty)
+	received_pct = received_chhatni_pct(total_deduction, tp_qty)
+	gap = flt(total_deduction - required_qt, 3)
 
 	remark = _(
-		"Pass total received {0} QT minus TP {1} QT is {2} QT ({3}%). "
-		"Required chhatni is {4} QT (TP × {5}% ÷ 100)."
+		"Sum of deductions is {0} QT, which is {1}% of TP {2} QT. "
+		"Required chhatni is {3} QT (TP × {4}% ÷ 100)."
 	).format(
-		flt(cumulative_received, 3),
-		flt(tp_qty, 3),
-		flt(overfill_qt, 3),
+		flt(total_deduction, 3),
 		flt(received_pct, 2),
+		flt(tp_qty, 3),
 		flt(required_qt, 3),
 		flt(chhatni_kg_per_quintal, 2) if chhatni_kg_per_quintal > 0 else "—",
 	)
@@ -92,31 +92,27 @@ def evaluate_chhatni_fulfillment(
 	if chhatni_kg_per_quintal <= 0:
 		return CHHATNI_PENDING, remark
 
-	# 0.3 QT applies only when short. Any plus amount is over filled.
-	balance = tp_chhatni_balance_qt(tp_qty, cumulative_received, chhatni_kg_per_quintal)
+	# 0.3 QT applies only when the deduction sum is short of required chhatni.
 	threshold = flt(CHHATNI_BALANCE_THRESHOLD_QT, 3)
-	remark = _(
-		"{0} Received − (TP + chhatni) is {1} QT. Shortfall threshold is {2} QT."
-	).format(remark, flt(balance, 3), threshold)
-
-	if balance > 0:
+	if gap > 0:
 		return CHHATNI_OVER_FILLED, _(
-			"{0} Received is above TP plus chhatni, so chhatni is over filled."
+			"{0} Deduction sum is above the chhatni percentage, so chhatni is over filled."
 		).format(remark)
 
-	if balance >= -threshold:
+	if gap >= -threshold:
 		return CHHATNI_RECEIVED, _(
-			"{0} Shortfall is within {1} QT, so chhatni is received."
-		).format(remark, threshold)
+			"{0} Deduction sum meets the chhatni percentage, so chhatni is received."
+		).format(remark)
 
 	return CHHATNI_NOT_RECEIVED, _(
-		"{0} Shortfall is more than {1} QT, so chhatni is not received."
+		"{0} Deduction sum is short of the chhatni percentage by more than {1} QT, so chhatni is not received."
 	).format(remark, threshold)
 
 
 def grn_received_quantity(grn) -> float:
+	"""This GRN received = net weight + deduction + entry quantities."""
 	entry_qty = sum(flt(row.entry_quantity) for row in (grn.entry_details or []))
-	return flt(grn.net_weight) + entry_qty
+	return flt(flt(grn.net_weight) + flt(grn.deduction) + entry_qty, 3)
 
 
 def _sort_key(grn) -> tuple:
@@ -186,12 +182,14 @@ def _refresh_tp_fulfillment_for_pass(pass_unique_key: str):
 	grn_docs.sort(key=_sort_key)
 
 	cumulative = 0.0
+	deduction_sum = 0.0
 	tp_completed_grn: str | None = None
 	updates: dict[str, dict] = {}
 
 	for doc in grn_docs:
 		received = grn_received_quantity(doc)
 		cumulative = flt(cumulative + received, 3)
+		deduction_sum = flt(deduction_sum + flt(doc.deduction), 3)
 
 		tp_status = "In Progress"
 		chhatni_status = ""
@@ -205,6 +203,7 @@ def _refresh_tp_fulfillment_for_pass(pass_unique_key: str):
 				tp_qty,
 				cumulative,
 				doc.chhatni,
+				deduction_sum,
 			)
 		elif tp_qty > 0 and cumulative < tp_qty:
 			chhatni_status = CHHATNI_NOT_RECEIVED
@@ -213,7 +212,9 @@ def _refresh_tp_fulfillment_for_pass(pass_unique_key: str):
 		updates[doc.name] = {
 			"received_quantity": received,
 			"tp_cumulative_received": cumulative,
-			"tp_chhatni_balance": tp_chhatni_balance_qt(tp_qty, cumulative, doc.chhatni),
+			"tp_chhatni_balance": tp_chhatni_balance_qt(tp_qty, cumulative, deduction_sum),
+			"chhatni_received_pct": received_chhatni_pct(deduction_sum, tp_qty),
+			"tp_cumulative_deduction": deduction_sum,
 			"tp_fulfillment_status": tp_status,
 			"chhatni_fulfillment_status": chhatni_status,
 			"chhatni_fulfillment_remark": chhatni_remark,
@@ -227,6 +228,8 @@ def clear_tp_fulfillment_fields(grn):
 	grn.received_quantity = 0
 	grn.tp_cumulative_received = 0
 	grn.tp_chhatni_balance = 0
+	grn.chhatni_received_pct = 0
+	grn.tp_cumulative_deduction = 0
 	grn.tp_fulfillment_status = ""
 	grn.chhatni_fulfillment_status = ""
 	grn.chhatni_fulfillment_remark = ""

@@ -191,10 +191,11 @@ def get_data(filters):
 			total_received = flt(sum(flt(doc.net_weight) for doc in docs), 3)
 
 		chhatni_assigned = _assigned_chhatni(docs)
+		total_deduction = flt(sum(flt(doc.deduction) for doc in docs), 3)
 		tp_complete = _tp_is_complete(docs, tp_qty, total_received)
 		if tp_complete:
-			chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned)
-			balance = tp_chhatni_balance_qt(tp_qty, total_received, chhatni_assigned)
+			chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned, total_deduction)
+			balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
 			extra = flt(max(total_received - tp_qty, 0), 3)
 			tp_status = _("TP Completed")
 		else:
@@ -423,14 +424,14 @@ def _tp_is_complete(docs, tp_qty: float, total_received: float) -> bool:
 	return tp_qty > 0 and total_received >= tp_qty
 
 
-def _chhatni_status(docs, tp_qty: float, total_received: float, chhatni_assigned: float) -> str:
+def _chhatni_status(docs, tp_qty: float, total_received: float, chhatni_assigned: float, total_deduction: float) -> str:
 	for doc in reversed(docs):
 		if (doc.tp_fulfillment_status or "").strip() != "TP Completed":
 			continue
 		stored = (doc.chhatni_fulfillment_status or "").strip()
 		if stored:
 			return stored
-	status, _remark = evaluate_chhatni_fulfillment(tp_qty, total_received, chhatni_assigned)
+	status, _remark = evaluate_chhatni_fulfillment(tp_qty, total_received, chhatni_assigned, total_deduction)
 	return status or "0"
 
 

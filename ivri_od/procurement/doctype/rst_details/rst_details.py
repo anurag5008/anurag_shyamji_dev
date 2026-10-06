@@ -3,6 +3,8 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from ivri_od.procurement.datetime_fields import ensure_doc_datetime
+
 from ivri_od.procurement.mill_gate import normalize_vehicle_no
 from ivri_od.procurement.transit_pass_resolve import (
 	find_transit_passes_by_tp_and_ppc,
@@ -14,6 +16,7 @@ from ivri_od.procurement.transit_pass_resolve import (
 
 class RSTDetails(Document):
 	def validate(self):
+		ensure_doc_datetime(self, "entry_datetime", date_field="entry_date", time_field="entry_time")
 		self._validate_unique_rst_no()
 		self._sync_mill_and_agent_from_transit_pass()
 		self._validate_mill_name()

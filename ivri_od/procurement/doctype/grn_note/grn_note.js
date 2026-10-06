@@ -13,6 +13,7 @@ frappe.ui.form.on("GRN Note", {
 		setup_pass_unique_key_autocomplete(frm);
 		setup_rst_no_autocomplete(frm);
 		setup_qc_bag_details_grid(frm);
+		setup_old_new_bags_grid(frm);
 		setup_entry_details_grid(frm);
 		sync_grn_no_display(frm);
 		sync_purchase_heading(frm);
@@ -141,7 +142,10 @@ function sync_gate_exit_fields(frm) {
 		args: { grn_name: frm.doc.name },
 		callback(r) {
 			const data = r.message || {};
-			if ((frm.doc.gate_exit || "") !== (data.gate_exit || "")) {
+			const changed = ["gate_exit", "gate_exit_datetime", "party_name", "mobile_no"].some(
+				(fieldname) => (frm.doc[fieldname] || "") !== (data[fieldname] || "")
+			);
+			if (changed) {
 				frm.reload_doc();
 			}
 		},
@@ -326,11 +330,14 @@ const RST_FETCH_FIELDS = [
 	"gate_entry",
 	"vehicle_no",
 	"driver_name",
+	"mobile_no",
+	"party_name",
 	"receipt_datetime",
 	"arrival_datetime",
 	"gate_exit",
 	"gate_exit_datetime",
 	"quality_check",
+	"qc_datetime",
 	"qc_sample_no",
 	"no_of_bags",
 	"moisture",
@@ -393,6 +400,9 @@ async function apply_rst_fetch_data(frm, data) {
 	if (data.qc_bag_details) {
 		set_qc_bag_details(frm, data.qc_bag_details);
 	}
+	if (data.old_new_bags) {
+		set_old_new_bags(frm, data.old_new_bags);
+	}
 	if (frm.is_new()) {
 		refresh_grn_chhatni(frm);
 	}
@@ -412,6 +422,8 @@ function sync_tp_fulfillment_display(frm) {
 				"received_quantity",
 				"tp_cumulative_received",
 				"tp_chhatni_balance",
+				"chhatni_received_pct",
+				"tp_cumulative_deduction",
 				"tp_fulfillment_status",
 				"chhatni_fulfillment_status",
 				"chhatni_fulfillment_remark",
@@ -425,11 +437,18 @@ function sync_tp_fulfillment_display(frm) {
 }
 
 function setup_qc_bag_details_grid(frm) {
-	const grid = frm.fields_dict.qc_bag_details?.grid;
-	if (!grid || grid._grn_qc_bag_grid_ready) {
+	lock_child_grid(frm.fields_dict.qc_bag_details?.grid, "_grn_qc_bag_grid_ready");
+}
+
+function setup_old_new_bags_grid(frm) {
+	lock_child_grid(frm.fields_dict.old_new_bags?.grid, "_grn_old_new_bags_ready");
+}
+
+function lock_child_grid(grid, flag) {
+	if (!grid || grid[flag]) {
 		return;
 	}
-	grid._grn_qc_bag_grid_ready = true;
+	grid[flag] = true;
 	grid.wrapper.find(".grid-add-row").hide();
 	grid.wrapper.find(".grid-remove-rows").hide();
 }
@@ -470,5 +489,16 @@ function set_qc_bag_details(frm, rows) {
 	});
 	frm.refresh_field("qc_bag_details");
 	setup_qc_bag_details_grid(frm);
+}
+
+function set_old_new_bags(frm, rows) {
+	frm.clear_table("old_new_bags");
+	(rows || []).forEach((row) => {
+		const child = frm.add_child("old_new_bags");
+		child.old_bags = row.old_bags || 0;
+		child.new_bags = row.new_bags || 0;
+	});
+	frm.refresh_field("old_new_bags");
+	setup_old_new_bags_grid(frm);
 }
 

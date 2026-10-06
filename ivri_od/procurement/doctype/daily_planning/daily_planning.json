@@ -10,14 +10,14 @@
   "naming_series",
   "plan_date",
   "ppc_name",
-  "pacs_name",
   "column_break_1",
+  "pacs_name",
   "season_name",
   "truck_section",
   "trucks_sent",
-  "average_truck_capacity",
-  "column_break_2",
   "estimated_paddy",
+  "column_break_2",
+  "average_truck_capacity",
   "trucks_loaded",
   "trucks_remaining"
  ],
@@ -91,7 +91,6 @@
   {
    "allow_in_quick_entry": 1,
    "default": "250",
-   "description": "Default capacity in Quintal",
    "fieldname": "average_truck_capacity",
    "fieldtype": "Float",
    "label": "Average Truck Capacity (Quintal)",
@@ -112,7 +111,6 @@
   },
   {
    "default": "0",
-   "description": "From PPAS Transit Pass: same Transit Pass Date and PPC (1 pass = 1 truck)",
    "fieldname": "trucks_loaded",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -122,7 +120,6 @@
   },
   {
    "default": "0",
-   "description": "Trucks Sent minus Trucks Loaded (still to come for this date and PPC)",
    "fieldname": "trucks_remaining",
    "fieldtype": "Int",
    "in_list_view": 1,

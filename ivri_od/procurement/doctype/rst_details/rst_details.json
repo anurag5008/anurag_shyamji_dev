@@ -11,20 +11,23 @@
   "rst_no",
   "vehicle_no",
   "party_name",
+  "commodity",
+  "tp_no",
+  "tp_status",
+  "column_break_rst",
+  "entry_datetime",
+  "entry_date",
+  "entry_time",
+  "mill_name",
+  "agent_name",
+  "weigh_bridge_measurement",
+  "column_break_rst_2",
   "gross_vehicle_weight_qt",
   "tare_vehicle_weight_qt",
   "gross_paddy_weight_qt",
   "deduction_qt",
   "gunny_weight_qt",
-  "net_paddy_weight_qt",
-  "commodity",
-  "entry_date",
-  "entry_time",
-  "tp_no",
-  "tp_status",
-  "mill_name",
-  "agent_name",
-  "weigh_bridge_measurement"
+  "net_paddy_weight_qt"
  ],
  "fields": [
   {
@@ -44,7 +47,6 @@
    "label": "Vehicle No"
   },
   {
-   "description": "Matched to Transit Pass PPC. Farmer/agent only when this name is not on any transit pass and TP No is empty. If it is on a pass and TP No is empty, farmer/agent stays unticked until TP No is filled.",
    "fieldname": "party_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -93,14 +95,16 @@
    "default": "Today",
    "fieldname": "entry_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
-   "label": "Date"
+   "in_list_view": 0,
+   "label": "Date",
+   "hidden": 1
   },
   {
    "default": "Now",
    "fieldname": "entry_time",
    "fieldtype": "Time",
-   "label": "Time"
+   "label": "Time",
+   "hidden": 1
   },
   {
    "fieldname": "tp_no",
@@ -124,14 +128,12 @@
    "precision": "3"
   },
   {
-   "description": "Fetched from Transit Pass only when Party Name is found and TP No is filled. Not mandatory while TP No is empty.",
    "fieldname": "mill_name",
    "fieldtype": "Data",
    "label": "Mill No",
    "reqd": 0
   },
   {
-   "description": "From PPC Master when Party Name matches Transit Pass PPC. Not used when party is not on pass (agent is set on Weigh Bridge from Party Name).",
    "fieldname": "agent_name",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -145,6 +147,20 @@
    "label": "Weigh Bridge Measurement",
    "options": "Weigh Bridge Measurement",
    "read_only": 1
+  },
+  {
+   "fieldname": "column_break_rst",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_rst_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "entry_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date & Time"
   }
  ],
  "index_web_pages_for_search": 1,

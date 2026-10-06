@@ -133,6 +133,8 @@ class GRNNote(Document):
 				"received_quantity",
 				"tp_cumulative_received",
 				"tp_chhatni_balance",
+				"chhatni_received_pct",
+				"tp_cumulative_deduction",
 				"tp_fulfillment_status",
 				"chhatni_fulfillment_status",
 				"chhatni_fulfillment_remark",
@@ -143,6 +145,8 @@ class GRNNote(Document):
 			self.received_quantity = flt(row.received_quantity)
 			self.tp_cumulative_received = flt(row.tp_cumulative_received)
 			self.tp_chhatni_balance = flt(row.tp_chhatni_balance)
+			self.chhatni_received_pct = flt(row.chhatni_received_pct)
+			self.tp_cumulative_deduction = flt(row.tp_cumulative_deduction)
 			self.tp_fulfillment_status = row.tp_fulfillment_status or ""
 			self.chhatni_fulfillment_status = row.chhatni_fulfillment_status or ""
 			self.chhatni_fulfillment_remark = row.chhatni_fulfillment_remark or ""
@@ -458,6 +462,7 @@ class GRNNote(Document):
 				"paddy_returned",
 				"driver_name",
 				"gate_entry",
+				"qc_datetime",
 			],
 			as_dict=True,
 		)
@@ -468,10 +473,10 @@ class GRNNote(Document):
 		self.dust = flt(qc.dust)
 		self.unloader_name = (qc.staff_name or "").strip()
 		self.unloading_point = (qc.unloading_point or "").strip()
-		self.party_name = ""
 		self.paddy_type = (qc.paddy_type or "").strip()
 		self.paddy_quality = (qc.paddy_quality or "").strip()
 		self.qc_decision = (qc.qc_decision or "").strip()
+		self.qc_datetime = get_datetime(qc.qc_datetime) if qc.qc_datetime else None
 		self.paddy_received_in_pkt = cint(qc.paddy_received_in_pkt)
 		self.paddy_returned = cint(qc.paddy_returned)
 		if not self.no_of_bags:
@@ -487,6 +492,14 @@ class GRNNote(Document):
 			self.driver_name = qc.driver_name.strip()
 
 		self._apply_qc_bag_details(qc_name)
+		self._apply_qc_old_new_bags(qc_name)
+
+	def _apply_qc_old_new_bags(self, qc_name: str):
+		self.old_new_bags = []
+		for row in _qc_old_new_bag_rows(qc_name):
+			child = self.append("old_new_bags", {})
+			child.old_bags = cint(row.get("old_bags"))
+			child.new_bags = cint(row.get("new_bags"))
 
 	def _apply_qc_bag_details(self, qc_name: str):
 		self.qc_bag_details = []
@@ -503,13 +516,24 @@ class GRNNote(Document):
 		self.arrival_datetime = None
 		self.arrival_date = None
 		self.arrival_time = None
+		self.party_name = ""
+		self.mobile_no = ""
 		if not gate_entry or not frappe.db.exists("Gate Entry", gate_entry):
 			return
 
 		ge = frappe.db.get_value(
 			"Gate Entry",
 			gate_entry,
-			["entry_datetime", "entry_date", "entry_time", "driver_name", "vehicle_no", "in_out"],
+			[
+				"entry_datetime",
+				"entry_date",
+				"entry_time",
+				"driver_name",
+				"vehicle_no",
+				"party_name",
+				"mobile_no",
+				"in_out",
+			],
 			as_dict=True,
 		)
 		if not ge:
@@ -524,7 +548,15 @@ class GRNNote(Document):
 		gate_in_row = frappe.db.get_value(
 			"Gate Entry",
 			gate_in,
-			["entry_datetime", "entry_date", "entry_time", "driver_name", "vehicle_no"],
+			[
+				"entry_datetime",
+				"entry_date",
+				"entry_time",
+				"driver_name",
+				"vehicle_no",
+				"party_name",
+				"mobile_no",
+			],
 			as_dict=True,
 		)
 		if gate_in_row:
@@ -543,6 +575,8 @@ class GRNNote(Document):
 				self.driver_name = (gate_in_row.driver_name or "").strip()
 			if not (self.vehicle_no or "").strip():
 				self.vehicle_no = normalize_vehicle_no(gate_in_row.vehicle_no)
+			self.party_name = (gate_in_row.party_name or "").strip()
+			self.mobile_no = (gate_in_row.mobile_no or "").strip()
 
 		exit_row = _latest_gate_exit(gate_in, self.vehicle_no or (gate_in_row.vehicle_no if gate_in_row else ""))
 		if not exit_row or not exit_row.exit_datetime:
@@ -594,6 +628,8 @@ def sync_gate_exit_on_grn(grn_name: str | None = None):
 			"gate_exit_datetime": None,
 			"gate_exit_date": None,
 			"gate_out_time": None,
+			"party_name": "",
+			"mobile_no": "",
 		}
 	doc = frappe.get_doc("GRN Note", grn_name)
 	doc._apply_gate_entry((doc.gate_entry or "").strip())
@@ -606,6 +642,8 @@ def sync_gate_exit_on_grn(grn_name: str | None = None):
 			"arrival_datetime": doc.arrival_datetime,
 			"arrival_date": doc.arrival_date,
 			"arrival_time": doc.arrival_time,
+			"party_name": doc.party_name or "",
+			"mobile_no": doc.mobile_no or "",
 		},
 		update_modified=False,
 	)
@@ -615,6 +653,8 @@ def sync_gate_exit_on_grn(grn_name: str | None = None):
 		"gate_exit_date": doc.gate_exit_date,
 		"gate_out_time": doc.gate_out_time,
 		"arrival_datetime": doc.arrival_datetime,
+		"party_name": doc.party_name or "",
+		"mobile_no": doc.mobile_no or "",
 	}
 
 
@@ -701,6 +741,8 @@ def sync_grn_from_weigh_bridge(wbm_name: str) -> str | None:
 					"received_quantity",
 					"tp_cumulative_received",
 					"tp_chhatni_balance",
+					"chhatni_received_pct",
+					"tp_cumulative_deduction",
 					"tp_fulfillment_status",
 					"chhatni_fulfillment_status",
 					"chhatni_fulfillment_remark",
@@ -864,6 +906,22 @@ def _resolve_wbm_for_rst(rst_no: str, pass_unique_key: str | None = None) -> str
 		limit=1,
 	)
 	return names[0] if names else None
+
+
+def _qc_old_new_bag_rows(qc_name: str) -> list[dict]:
+	qc_name = (qc_name or "").strip()
+	if not qc_name:
+		return []
+	return frappe.get_all(
+		"Quality Check Old New Bag Detail",
+		filters={
+			"parent": qc_name,
+			"parenttype": "Quality Check",
+			"parentfield": "old_new_bags",
+		},
+		fields=["old_bags", "new_bags"],
+		order_by="idx asc",
+	)
 
 
 def _qc_bag_rows(qc_name: str) -> list[dict]:
@@ -1038,12 +1096,17 @@ def _grn_details_from_rst(
 		"gate_entry": doc.gate_entry,
 		"vehicle_no": doc.vehicle_no,
 		"driver_name": doc.driver_name,
+		"mobile_no": doc.mobile_no,
+		"party_name": doc.party_name,
+		"arrival_datetime": doc.arrival_datetime,
+		"gate_exit_datetime": doc.gate_exit_datetime,
 		"arrival_date": doc.arrival_date,
 		"arrival_time": doc.arrival_time,
 		"gate_exit": doc.gate_exit,
 		"gate_exit_date": doc.gate_exit_date,
 		"gate_out_time": doc.gate_out_time,
 		"quality_check": doc.quality_check,
+		"qc_datetime": doc.qc_datetime,
 		"qc_sample_no": doc.qc_sample_no,
 		"no_of_bags": doc.no_of_bags,
 		"moisture": doc.moisture,
@@ -1064,6 +1127,13 @@ def _grn_details_from_rst(
 				"no_of_plastic_bag": cint(row.no_of_plastic_bag),
 			}
 			for row in (doc.qc_bag_details or [])
+		],
+		"old_new_bags": [
+			{
+				"old_bags": cint(row.old_bags),
+				"new_bags": cint(row.new_bags),
+			}
+			for row in (doc.old_new_bags or [])
 		],
 		"jute_bags": cint(doc.jute_bags),
 		"plastic_bags": cint(doc.plastic_bags),
@@ -1112,6 +1182,8 @@ def refresh_tp_fulfillment_on_grn(name):
 			"received_quantity",
 			"tp_cumulative_received",
 			"tp_chhatni_balance",
+			"chhatni_received_pct",
+			"tp_cumulative_deduction",
 			"tp_fulfillment_status",
 			"chhatni_fulfillment_status",
 			"chhatni_fulfillment_remark",
@@ -1215,6 +1287,7 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 			tp_qty,
 			tp_cumulative,
 			flt(doc.chhatni),
+			flt(doc.deduction),
 		)
 
 	return render_template_file(
@@ -1222,11 +1295,15 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 		{
 			"doc": doc,
 			"receipt_datetime_display": receipt_datetime_display,
+			"qc_datetime_display": format_datetime(doc.qc_datetime) if doc.qc_datetime else "—",
+			"gate_exit_datetime_display": format_datetime(doc.gate_exit_datetime) if doc.gate_exit_datetime else "—",
 			"transit_pass_datetime_display": _grn_transit_pass_datetime_display(doc),
 			"purchase_heading": purchase_heading,
 			"qty_received": _format_grn_qty(doc.received_quantity),
 			"qty_cumulative": _format_grn_qty(doc.tp_cumulative_received),
 			"qty_tp_chhatni_balance": _format_grn_qty(doc.tp_chhatni_balance),
+			"qty_chhatni_received_pct": _format_grn_qty(doc.chhatni_received_pct),
+			"qty_tp_cumulative_deduction": _format_grn_qty(doc.tp_cumulative_deduction),
 			"qty_tp": _format_grn_qty(doc.tp_quantity),
 			"tp_pass_fulfilled": tp_pass_fulfilled,
 			"chhatni_display_status": chhatni_display_status,

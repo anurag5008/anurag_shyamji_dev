@@ -7,6 +7,7 @@
  "field_order": [
   "jute_bags",
   "plastic_bags",
+  "total_bags",
   "gunny_weight_qt"
  ],
  "fields": [
@@ -29,10 +30,19 @@
    "read_only": 1
   },
   {
+   "columns": 2,
+   "fieldname": "total_bags",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Total Bags",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
    "columns": 1,
    "fieldname": "gunny_weight_qt",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Row Total (QT)",
    "non_negative": 1,
    "precision": "2",

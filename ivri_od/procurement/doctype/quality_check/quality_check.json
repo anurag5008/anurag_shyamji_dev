@@ -11,6 +11,7 @@
   "qc_datetime",
   "qc_date",
   "qc_time",
+  "column_break_qc_head",
   "is_farmer_or_agent",
   "farmer_name",
   "gate_section",
@@ -25,8 +26,10 @@
   "paddy_returned",
   "column_break_paddy",
   "paddy_quality",
+  "paddy_type",
   "quality_params_section",
   "moisture",
+  "column_break_params",
   "dust",
   "qc_decision_section",
   "qc_decision",
@@ -86,7 +89,6 @@
    "label": "Vehicle"
   },
   {
-   "description": "Checking quality of this vehicle",
    "fieldname": "vehicle_no",
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
@@ -221,6 +223,14 @@
    "fieldtype": "Table",
    "label": "Type of Bags",
    "options": "Quality Check Bag Detail"
+  },
+  {
+   "fieldname": "column_break_qc_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_params",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,

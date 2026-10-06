@@ -154,7 +154,8 @@ def get_data(filters):
 
 		tp_filled = _("Yes") if tp_qty > 0 and total_received >= tp_qty else _("No")
 		received_minus_tp = flt(max(total_received - tp_qty, 0), 3)
-		received_pct = received_chhatni_pct(total_received, tp_qty)
+		total_deduction = flt(grn.get("total_deduction"))
+		received_pct = received_chhatni_pct(total_deduction, tp_qty)
 
 		if tp_qty > 0 and total_received < tp_qty:
 			chhatni_status = _("Chhatni Not Received")
@@ -167,6 +168,7 @@ def get_data(filters):
 					tp_qty,
 					total_received,
 					chhatni_rate,
+					total_deduction,
 				) or _("Chhatni Pending")
 		else:
 			chhatni_status = ""
@@ -228,6 +230,7 @@ def _build_grn_summary_by_pass() -> dict[str, dict]:
 			pass_unique_key,
 			MAX(tp_cumulative_received) AS total_received,
 			SUM(received_quantity) AS sum_received,
+			SUM(deduction) AS total_deduction,
 			MAX(tp_quantity) AS tp_qty_grn,
 			MAX(CASE WHEN tp_fulfillment_status = 'TP Completed' THEN chhatni END) AS procurement_chhatni,
 			MAX(CASE WHEN tp_fulfillment_status = 'TP Completed' THEN chhatni_fulfillment_status END)

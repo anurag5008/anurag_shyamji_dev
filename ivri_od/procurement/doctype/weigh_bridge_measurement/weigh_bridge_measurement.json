@@ -14,12 +14,13 @@
   "transit_pass_section",
   "pass_unique_key",
   "pacs_name",
-  "tp_weight",
   "column_break_tp",
+  "tp_weight",
   "no_of_bags",
   "weighment_section",
   "date",
   "rst_no",
+  "column_break_weighment",
   "tp_status",
   "quality_check",
   "quality_test",
@@ -37,6 +38,7 @@
   "load_weight",
   "tare_weight",
   "gross_weight",
+  "column_break_load_2",
   "gunny_weight",
   "deduction",
   "net_weight",
@@ -44,9 +46,9 @@
   "transit_pass_no",
   "total_jute_empty_qt",
   "total_plastic_empty_qt",
+  "vehicle_no",
   "section_break_rnxd",
-  "bag_weight_details",
-  "vehicle_no"
+  "bag_weight_details"
  ],
  "fields": [
   {
@@ -74,7 +76,6 @@
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent",
-   "description": "Not used for local paddy procurement. Party name is not saved in Agent Master.",
    "fieldname": "agent_name",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -140,7 +141,6 @@
    "label": "RST No"
   },
   {
-   "description": "From RST: party matched on transit pass but TP No not linked yet.",
    "fieldname": "tp_status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -218,7 +218,6 @@
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent || doc.same_truck_as_transit_pass",
-   "description": "From RST Vehicle No when From Farmer or Agent is ticked. Otherwise the truck that differs from the transit pass.",
    "fieldname": "actual_truck_no",
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
@@ -279,7 +278,6 @@
   },
   {
    "default": "0",
-   "description": "Subtracted from net paddy weight (gross \u2212 gunny \u2212 deduction).",
    "fieldname": "deduction",
    "fieldtype": "Float",
    "label": "Deduction (QT)",
@@ -297,7 +295,6 @@
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
-   "description": "Sum of empty bag weight from Bag Details (QT, up to 3 decimals).",
    "fieldname": "gunny_weight",
    "fieldtype": "Float",
    "label": "Gunny Weight (QT)",
@@ -313,9 +310,9 @@
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
-   "description": "Sum of Jute Bags and Plastic Bags from Bag Details (from QC).",
    "fieldname": "total_bags",
    "fieldtype": "Int",
+   "hidden": 1,
    "label": "Total Bags",
    "non_negative": 1,
    "read_only": 1
@@ -349,11 +346,19 @@
    "label": "Date & Time",
    "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_weighment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_load_2",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-06 11:53:58.157186",
+ "modified": "2026-10-06 15:55:56.936740",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Weigh Bridge Measurement",

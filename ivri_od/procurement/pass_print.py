@@ -154,7 +154,9 @@ def qr_content_grn_note(doc, receipt_datetime_display: str) -> str:
 		_qr_line("QC Decision", doc.qc_decision),
 		_qr_line("This GRN Received (QT)", doc.received_quantity),
 		_qr_line("Pass Total Received So Far (QT)", doc.tp_cumulative_received),
-		_qr_line("Received (QT) − TP + Chhatni", doc.tp_chhatni_balance),
+		_qr_line("Received (QT) - TP + Chhatni", doc.tp_chhatni_balance),
+		_qr_line("Progressive Deduction Total (QT)", doc.tp_cumulative_deduction),
+		_qr_line("Chhatni % Received", doc.chhatni_received_pct),
 		_qr_line("TP Status", doc.tp_fulfillment_status),
 		_qr_line("Chhatni Status", doc.chhatni_fulfillment_status),
 		_qr_line("Chhatni Note", doc.chhatni_fulfillment_remark),
@@ -175,10 +177,22 @@ def qr_content_grn_note(doc, receipt_datetime_display: str) -> str:
 	return body
 
 
+def _qr_encoder_text(data: str) -> str:
+	"""pyqrcode encodes as Latin-1. Unicode dashes in labels raise UnicodeEncodeError."""
+	text = (
+		(data or "")
+		.replace("\u2212", "-")
+		.replace("\u2013", "-")
+		.replace("\u2014", "-")
+	)
+	return text.encode("iso-8859-1", errors="replace").decode("iso-8859-1")
+
+
 def qr_image_html(data: str, size: int = 168) -> str:
 	"""PNG embedded as base64 — scans reliably from PDF (SVG often breaks in wkhtmltopdf)."""
 	from pyqrcode import create as qrcreate
 
+	data = _qr_encoder_text(data)
 	stream = BytesIO()
 	# High correction when payload is longer (full details)
 	error_level = "H" if len(data) > 200 else "M"

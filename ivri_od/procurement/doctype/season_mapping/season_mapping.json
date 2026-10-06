@@ -8,13 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "season",
-  "season_year",
-  "column_break_1",
   "ppc_name",
   "mill_name",
+  "column_break_1",
   "agent_name",
   "season_quantity",
   "chhatni",
+  "column_break_sm",
+  "season_year",
   "rice_yield",
   "collection_point_section",
   "collection_point_details"
@@ -64,7 +65,6 @@
    "reqd": 1
   },
   {
-   "description": "Fetched from Target Allocation for this Season, PPC, and Mill.",
    "fieldname": "agent_name",
    "fieldtype": "Link",
    "label": "Agent Name",
@@ -73,7 +73,6 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "description": "Fetched from Target Allocation quantity for this Season, PPC, and Mill.",
    "fieldname": "season_quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -82,7 +81,6 @@
    "reqd": 1
   },
   {
-   "description": "Fetched from Target Allocation for this Season, PPC, and Mill.",
    "fieldname": "chhatni",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -106,6 +104,10 @@
    "fieldtype": "Table",
    "label": "Collection Point Details",
    "options": "Season Mapping Collection Point"
+  },
+  {
+   "fieldname": "column_break_sm",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,

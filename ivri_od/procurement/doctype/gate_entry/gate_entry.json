@@ -12,16 +12,17 @@
   "inside_mill",
   "gate_section",
   "in_purpose",
-  "purpose",
   "going_to_weighment",
+  "column_break_purpose",
+  "purpose",
   "vehicle_section",
   "vehicle_no",
-  "truck_pic",
   "driver_name",
   "party_name",
-  "mobile_no",
   "column_break_1",
+  "mobile_no",
   "entry_datetime",
+  "truck_pic",
   "entry_date",
   "entry_time",
   "out_details_section",
@@ -72,18 +73,18 @@
   },
   {
    "depends_on": "eval:doc.in_purpose=='Others'",
-    "fieldname": "purpose",
-    "fieldtype": "Small Text",
-    "label": "Purpose Details",
-    "mandatory_depends_on": "eval:doc.in_purpose=='Others'"
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose Details",
+   "mandatory_depends_on": "eval:doc.in_purpose=='Others'"
   },
   {
-    "default": "0",
-    "depends_on": "eval:doc.in_purpose",
-    "fieldname": "going_to_weighment",
-    "fieldtype": "Check",
-    "label": "Going to Weighment",
-    "read_only": 0
+   "default": "0",
+   "depends_on": "eval:doc.in_purpose",
+   "fieldname": "going_to_weighment",
+   "fieldtype": "Check",
+   "label": "Going to Weighment",
+   "read_only": 0
   },
   {
    "fieldname": "vehicle_section",
@@ -151,19 +152,19 @@
    "label": "Legacy Gate Out"
   },
   {
-    "fieldname": "out_purpose",
-    "fieldtype": "Select",
-    "hidden": 1,
-    "label": "Out Purpose",
-    "options": "\nFCI DEPO\nRRC DEPO\nOthers",
-    "mandatory_depends_on": "eval:doc.in_out=='Out'"
+   "fieldname": "out_purpose",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Out Purpose",
+   "options": "\nFCI DEPO\nRRC DEPO\nOthers",
+   "mandatory_depends_on": "eval:doc.in_out=='Out'"
   },
   {
-    "fieldname": "out_purpose_detail",
-    "fieldtype": "Small Text",
-    "hidden": 1,
-    "label": "Out Purpose Detail",
-    "mandatory_depends_on": "eval:doc.in_out=='Out' && doc.out_purpose=='Others'"
+   "fieldname": "out_purpose_detail",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Out Purpose Detail",
+   "mandatory_depends_on": "eval:doc.in_out=='Out' && doc.out_purpose=='Others'"
   },
   {
    "fieldname": "gate_entry_in",
@@ -176,6 +177,10 @@
    "fieldname": "mobile_no",
    "fieldtype": "Data",
    "label": "Mobile No"
+  },
+  {
+   "fieldname": "column_break_purpose",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,

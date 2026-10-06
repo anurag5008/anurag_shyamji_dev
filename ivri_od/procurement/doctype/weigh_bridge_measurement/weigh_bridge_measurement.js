@@ -90,6 +90,7 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		setup_truck_buttons(frm);
 		compact_wbm_form_layout(frm);
 		sync_total_bags_from_bag_table(frm);
+		frm.refresh_field("bag_weight_details");
 		sync_quality_from_qc(frm);
 	},
 	refresh(frm) {
@@ -103,6 +104,7 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		setup_refresh_bags_from_qc_button(frm);
 		compact_wbm_form_layout(frm);
 		sync_total_bags_from_bag_table(frm);
+		frm.refresh_field("bag_weight_details");
 		sync_quality_from_qc(frm);
 	},
 	is_farmer_or_agent(frm) {
@@ -281,6 +283,37 @@ function setup_bag_details_grid(frm) {
 		grid._wbm_bag_grid_ready = true;
 		grid.wrapper.find(".grid-add-row").hide();
 	}
+	ensure_bag_total_column(frm, grid);
+}
+
+function ensure_bag_total_column(frm, grid) {
+	const settings = frappe.model.user_settings[frm.doctype];
+	const cols = settings && settings.GridView && settings.GridView["Weigh Bridge Bag Detail"];
+	if (!cols) {
+		return;
+	}
+	let changed = false;
+	if (!cols.some((col) => col.fieldname === "total_bags")) {
+		const after_plastic = cols.findIndex((col) => col.fieldname === "plastic_bags");
+		cols.splice(after_plastic >= 0 ? after_plastic + 1 : cols.length, 0, {
+			fieldname: "total_bags",
+			columns: 2,
+			sticky: 0,
+		});
+		changed = true;
+	}
+	const row_total = cols.findIndex((col) => col.fieldname === "gunny_weight_qt");
+	if (row_total >= 0) {
+		cols.splice(row_total, 1);
+		changed = true;
+	}
+	if (!changed) {
+		return;
+	}
+	frappe.model.user_settings.save(frm.doctype, "GridView", settings.GridView);
+	grid.user_defined_columns = [];
+	grid.visible_columns = [];
+	grid.refresh();
 }
 
 function setup_farmer_vehicle_autocomplete(frm, reload = false) {
@@ -407,6 +440,7 @@ function apply_bag_details_table(frm, rows) {
 		const child = frm.add_child("bag_weight_details");
 		child.jute_bags = row.jute_bags || 0;
 		child.plastic_bags = row.plastic_bags || 0;
+		child.total_bags = frappe.utils.cint(child.jute_bags) + frappe.utils.cint(child.plastic_bags);
 		child.weight_per_jute_kg = trimQty(
 			row.weight_per_jute_kg || prev.weight_per_jute_kg || 0
 		);
@@ -660,8 +694,8 @@ function sum_gunny_from_bag_table(frm) {
 function sync_total_bags_from_bag_table(frm) {
 	let total = 0;
 	(frm.doc.bag_weight_details || []).forEach((row) => {
-		total +=
-			frappe.utils.cint(row.jute_bags) + frappe.utils.cint(row.plastic_bags);
+		row.total_bags = frappe.utils.cint(row.jute_bags) + frappe.utils.cint(row.plastic_bags);
+		total += row.total_bags;
 	});
 	frm.set_value("total_bags", total);
 }

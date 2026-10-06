@@ -8,9 +8,9 @@
  "engine": "InnoDB",
  "field_order": [
   "ppc_name",
-  "season",
-  "column_break_1",
   "mill_name",
+  "column_break_1",
+  "season",
   "chutney_quantity_kg_per_quintal",
   "chutney_percentage",
   "history_section",
@@ -53,7 +53,6 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "description": "Chhatni weight in kg per quintal of paddy (1 quintal = 100 kg).",
    "fieldname": "chutney_quantity_kg_per_quintal",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -62,7 +61,6 @@
    "reqd": 1
   },
   {
-   "description": "Auto: same as kg per quintal (e.g. 4 kg per quintal = 4%).",
    "fieldname": "chutney_percentage",
    "fieldtype": "Percent",
    "in_list_view": 1,

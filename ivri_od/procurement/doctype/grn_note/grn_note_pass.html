@@ -258,19 +258,31 @@
 					<td>
 						<div class="kpi-label">{{ _("This GRN Received (QT)") }}</div>
 						<div class="kpi-value">{{ qty_received }}</div>
-						<div class="kpi-hint">{{ _("Paddy received on this GRN only (net weight + entry quantities).") }}</div>
 					</td>
 					<td>
 						<div class="kpi-label">{{ _("Pass Total Received So Far (QT)") }}</div>
 						<div class="kpi-value">{{ qty_cumulative }}</div>
-						<div class="kpi-hint">
-							{{ _("Running total on this Pass Unique Key up to and including this GRN.") }}
-							{% if qty_tp != "—" %}
-							<br>{{ _("TP Quantity:") }} <strong>{{ qty_tp }}</strong>
-							{% endif %}
-							<br>{{ _("Received − TP + Chhatni:") }} <strong>{{ qty_tp_chhatni_balance }}</strong>
-						</div>
 					</td>
+					<td>
+						<div class="kpi-label">{{ _("Progressive Deduction Total (QT)") }}</div>
+						<div class="kpi-value">{{ qty_tp_cumulative_deduction }}</div>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<div class="kpi-label">{{ _("Chhatni % Received") }}</div>
+						<div class="kpi-value">{{ qty_chhatni_received_pct }}</div>
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("Received (QT) - TP + Chhatni") }}</div>
+						<div class="kpi-value">{{ qty_tp_chhatni_balance }}</div>
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("TP Quantity (QT)") }}</div>
+						<div class="kpi-value">{{ qty_tp }}</div>
+					</td>
+				</tr>
+				<tr>
 					<td>
 						<div class="kpi-label">{{ _("TP Status") }}</div>
 						{% set tp_status = doc.tp_fulfillment_status or "" %}
@@ -278,33 +290,15 @@
 						{% set tp_status = "TP Completed" %}
 						{% endif %}
 						<div class="kpi-value" style="font-size:10pt;">{{ tp_status or "—" }}</div>
-						{% if tp_status == "TP Completed" %}
-						<span class="pill pill-success">{{ _("TP Completed") }}</span>
-						{% elif tp_status == "In Progress" %}
-						<span class="pill pill-warn">{{ _("In Progress") }}</span>
-						{% endif %}
-						<div class="kpi-hint">{{ _("TP Completed when cumulative received is equal to or greater than TP quantity (overfill still completes the TP).") }}</div>
 					</td>
 					<td>
 						<div class="kpi-label">{{ _("Chhatni Status") }}</div>
 						{% set ch_status = chhatni_display_status or doc.chhatni_fulfillment_status or "" %}
 						<div class="kpi-value" style="font-size:10pt;">{{ ch_status or "—" }}</div>
-						{% if ch_status == "Chhatni Received" or ch_status == "Over Filled Chhatni Received" %}
-						<span class="pill pill-success">{{ ch_status }}</span>
-						{% elif ch_status == "Chhatni Pending" %}
-						<span class="pill pill-warn">{{ ch_status }}</span>
-						{% elif ch_status == "Chhatni Not Received" %}
-						<span class="pill pill-muted">{{ ch_status }}</span>
-						{% elif ch_status %}
-						<span class="pill pill-info">{{ ch_status }}</span>
-						{% endif %}
-						{% if doc.chhatni_fulfillment_remark %}
-						<div class="kpi-hint" style="margin-top:4px;">{{ doc.chhatni_fulfillment_remark }}</div>
-						{% elif tp_pass_fulfilled and ch_status %}
-						<div class="kpi-hint">{{ _("Chhatni Received when Received − (TP + Chhatni) is from −0.3 to 0 QT. Any amount above 0 is Over Filled Chhatni Received.") }}</div>
-						{% else %}
-						<div class="kpi-hint">{{ _("Not calculated until TP is fully received.") }}</div>
-						{% endif %}
+					</td>
+					<td>
+						<div class="kpi-label">{{ _("Chhatni Note") }}</div>
+						<div class="kpi-value" style="font-size:10pt;">{{ doc.chhatni_fulfillment_remark or "—" }}</div>
 					</td>
 				</tr>
 			</table>
@@ -350,6 +344,9 @@
 						<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Vehicle No") }}</td><td class="v">{{ doc.vehicle_no or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Driver") }}</td><td class="v">{{ doc.driver_name or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Driver Mobile No") }}</td><td class="v">{{ doc.mobile_no or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Party Name") }}</td><td class="v">{{ doc.party_name or "—" }}</td></tr>
+						<tr><td class="k">{{ _("Gate Exit Date & Time") }}</td><td class="v">{{ gate_exit_datetime_display }}</td></tr>
 						<tr><td class="k">{{ _("Gross (QT)") }}</td><td class="v">{{ doc.gross_weight or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Tare (QT)") }}</td><td class="v">{{ doc.tare_weight or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Deduction (QT)") }}</td><td class="v">{{ doc.deduction or "—" }}</td></tr>
@@ -360,6 +357,7 @@
 					<div class="section-title">{{ _("Quality check") }}</div>
 					<table class="kv">
 						<tr><td class="k">{{ _("Quality Check") }}</td><td class="v">{{ doc.quality_check or "—" }}</td></tr>
+						<tr><td class="k">{{ _("QC Date & Time") }}</td><td class="v">{{ qc_datetime_display }}</td></tr>
 						<tr><td class="k">{{ _("QC Sample No") }}</td><td class="v">{{ doc.qc_sample_no or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Bags (In No.)") }}</td><td class="v">{{ doc.no_of_bags or "—" }}</td></tr>
 						<tr><td class="k">{{ _("Moisture") }}</td><td class="v">{{ doc.moisture or "—" }}</td></tr>

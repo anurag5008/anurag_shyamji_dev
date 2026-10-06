@@ -76,7 +76,6 @@
    "reqd": 1
   },
   {
-   "description": "Defaults from Chhatni Assign when Season, PPC, or Mill changes; you can edit this value.",
    "fieldname": "chhatni",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -90,7 +89,6 @@
    "label": "Latest Chutney"
   },
   {
-   "description": "From Chhatni Assign for this Season, PPC, and Mill.",
    "fieldname": "latest_chutney_kg_per_quintal",
    "fieldtype": "Float",
    "in_list_view": 1,
