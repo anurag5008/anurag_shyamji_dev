@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 import re
 
 import frappe
@@ -41,8 +42,7 @@ def build_pass_quantity_maps():
 		key = (grn.pass_unique_key or "").strip()
 		if not key:
 			continue
-		doc = frappe.get_doc("GRN Note", grn.name)
-		received = flt(grn.received_quantity) or grn_received_quantity(doc)
+		received = flt(grn.received_quantity) or grn_received_quantity(grn)
 		received_by_key[key] = received_by_key.get(key, 0) + received
 		physical_by_key[key] = physical_by_key.get(key, 0) + flt(grn.net_weight)
 		if flt(grn.tp_quantity):
@@ -250,3 +250,124 @@ def _ppc_name(ppc_link):
 
 def _normalize(value):
 	return re.sub(r"\s+", "", value or "").casefold()
+
+
+def make_ppc_resolver(ppc_master_rows):
+	"""Build a closure to resolve any raw PPC string/code/id to its PPC Master row."""
+	ppc_master_by_name = {p.name: p for p in ppc_master_rows}
+	ppc_master_by_code = {p.code: p for p in ppc_master_rows if p.code}
+	ppc_master_by_text = {
+		p.ppc_name.strip().casefold(): p for p in ppc_master_rows if p.ppc_name
+	}
+
+	def resolve(raw_ppc: str | None):
+		raw = (raw_ppc or "").strip()
+		if not raw:
+			return None
+		if raw in ppc_master_by_name:
+			return ppc_master_by_name[raw]
+		if raw in ppc_master_by_code:
+			return ppc_master_by_code[raw]
+		if "(" in raw and raw.endswith(")"):
+			code = raw.rsplit("(", 1)[1][:-1].strip()
+			if code in ppc_master_by_code:
+				return ppc_master_by_code[code]
+			if code in ppc_master_by_name:
+				return ppc_master_by_name[code]
+			name = raw.rsplit("(", 1)[0].strip()
+			if name.casefold() in ppc_master_by_text:
+				return ppc_master_by_text[name.casefold()]
+		if raw.casefold() in ppc_master_by_text:
+			return ppc_master_by_text[raw.casefold()]
+		resolved_id = resolve_ppc_master_name(raw)
+		if resolved_id and resolved_id in ppc_master_by_name:
+			return ppc_master_by_name[resolved_id]
+		return None
+
+	return resolve
+
+
+def get_ppc_season_target_map(
+	season: str | None = None,
+	mill_name: str | None = None,
+	ppc_master_rows: list | None = None,
+) -> tuple[dict[tuple[str, str, str], float], dict[tuple[str, str], float]]:
+	"""
+	Authoritatively load targets from Target Allocation (and fallback Season Mapping).
+	Returns:
+	  target_map: (canonical_season, ppc_master_name, mill_name) -> target_quantity
+	  ppc_season_totals: (canonical_season, ppc_master_name) -> total_target_quantity
+	"""
+	from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
+
+	if ppc_master_rows is None:
+		ppc_master_rows = frappe.get_all(
+			"PPC Master",
+			fields=["name", "code", "ppc_name", "title"],
+			order_by="ppc_name asc, name asc",
+		)
+	resolve_to_ppc_master = make_ppc_resolver(ppc_master_rows)
+
+	ta_filters = {}
+	if mill_name:
+		ta_filters["mill_name"] = mill_name
+	if season:
+		canonical_s = resolve_season_master_name(season) or season.strip()
+		ta_filters["season"] = canonical_s
+
+	allocations = []
+	if frappe.db.table_exists("Target Allocation"):
+		allocations = frappe.get_all(
+			"Target Allocation",
+			filters=ta_filters,
+			fields=["season", "ppc_name", "mill_name", "target_quantity"],
+		)
+
+	sm_filters = {}
+	if mill_name:
+		sm_filters["mill_name"] = mill_name
+	if season:
+		canonical_s = resolve_season_master_name(season) or season.strip()
+		sm_filters["season"] = canonical_s
+
+	mappings = []
+	if frappe.db.table_exists("Season Mapping"):
+		mappings = frappe.get_all(
+			"Season Mapping",
+			filters=sm_filters,
+			fields=["season", "ppc_name", "mill_name", "season_quantity"],
+		)
+
+	target_map: dict[tuple[str, str, str], float] = defaultdict(float)
+	seen_allocation_keys: set[tuple[str, str, str]] = set()
+
+	for ta in allocations:
+		p = resolve_to_ppc_master(ta.ppc_name)
+		if not p:
+			continue
+		s = resolve_season_master_name(ta.season) or (ta.season or "").strip()
+		if not s:
+			continue
+		m = (ta.mill_name or "").strip()
+		key = (s, p.name, m)
+		target_map[key] += flt(ta.target_quantity)
+		seen_allocation_keys.add(key)
+
+	for sm in mappings:
+		p = resolve_to_ppc_master(sm.ppc_name)
+		if not p:
+			continue
+		s = resolve_season_master_name(sm.season) or (sm.season or "").strip()
+		if not s:
+			continue
+		m = (sm.mill_name or "").strip()
+		key = (s, p.name, m)
+		if key not in seen_allocation_keys:
+			target_map[key] += flt(sm.season_quantity)
+
+	ppc_season_totals: dict[tuple[str, str], float] = defaultdict(float)
+	for (s, p_name, m), qty in target_map.items():
+		ppc_season_totals[(s, p_name)] += flt(qty)
+
+	return target_map, ppc_season_totals
+

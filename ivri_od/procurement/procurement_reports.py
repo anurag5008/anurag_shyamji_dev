@@ -20,6 +20,7 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("abstract_report", "abstract_report.json"),
 	("abstract_physical", "abstract_physical.json"),
 	("mill_ppc_season_quantity_summary", "mill_ppc_season_quantity_summary.json"),
+	("entry_report", "entry_report.json"),
 )
 
 

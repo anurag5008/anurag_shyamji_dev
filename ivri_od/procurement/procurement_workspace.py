@@ -115,6 +115,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("TP Mandi Quantity Fulfillment", "Report"),
 			("Mandi Book", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
+			("Entry Report", "Report"),
 		],
 	),
 ]
@@ -139,6 +140,7 @@ QUERY_REPORTS = {
 	"TP Mandi Quantity Fulfillment",
 	"Mandi Book",
 	"Vehicle Gate Movement Summary",
+	"Entry Report",
 }
 
 
@@ -354,4 +356,5 @@ def _link_label(link_to: str, link_type: str) -> str:
 		"TP Mandi Quantity Fulfillment": "TP Mandi Fulfillment",
 		"Mandi Book": "Mandi Book",
 		"Vehicle Gate Movement Summary": "Vehicle Gate Movement",
+		"Entry Report": "Entry Report",
 	}.get(link_to, link_to)

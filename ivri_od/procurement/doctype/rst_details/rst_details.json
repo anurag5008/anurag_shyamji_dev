@@ -20,6 +20,7 @@
   "entry_time",
   "mill_name",
   "agent_name",
+  "local_purchase_order",
   "weigh_bridge_measurement",
   "column_break_rst_2",
   "gross_vehicle_weight_qt",
@@ -140,6 +141,14 @@
    "label": "Agent Name",
    "options": "Agent Master",
    "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.tp_status == 'Local Procurement' || !doc.tp_no",
+   "fieldname": "local_purchase_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Local Purchase Order",
+   "options": "Local Paddy Purchase Order"
   },
   {
    "fieldname": "weigh_bridge_measurement",

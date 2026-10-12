@@ -4,6 +4,7 @@
  "is_standard": "Yes",
  "module": "Procurement",
  "name": "Abstract Report",
+ "prepared_report": 0,
  "ref_doctype": "Season Mapping",
  "report_name": "Abstract Report",
  "report_type": "Script Report",

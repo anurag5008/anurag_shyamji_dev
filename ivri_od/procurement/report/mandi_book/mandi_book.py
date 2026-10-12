@@ -12,9 +12,18 @@ from frappe.utils import cint, flt
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.ppc_pass_metrics import ppc_display_name
 from ivri_od.procurement.grn_tp_fulfillment import (
+	CHHATNI_NOT_RECEIVED,
+	CHHATNI_RECEIVED,
+	EXTRA_CHHATNI_RECEIVED,
 	evaluate_chhatni_fulfillment,
+	excess_tp_received_quantity,
+	grn_received_quantity,
+	pending_tp_quantity,
+	received_chhatni_pct,
+	remaining_tp_quantity,
 	required_chhatni_qt,
 	tp_chhatni_balance_qt,
+	tp_fulfillment_status,
 )
 from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name
 
@@ -26,15 +35,15 @@ def execute(filters=None):
 
 def get_columns():
 	return [
-		{"label": _("Season"), "fieldname": "season", "fieldtype": "Data", "width": 120},
-		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 200},
+		{"label": _("Season"), "fieldname": "season", "fieldtype": "Data", "width": 110},
+		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 180},
 		{
-			"label": _("Mill Name (Code)"),
+			"label": _("Mill Name"),
 			"fieldname": "mill_name",
 			"fieldtype": "Data",
 			"width": 220,
 		},
-		{"label": _("TP No"), "fieldname": "transit_pass_no", "fieldtype": "Data", "width": 90},
+		{"label": _("TP No."), "fieldname": "transit_pass_no", "fieldtype": "Data", "width": 90},
 		{
 			"label": _("Pass Unique Key"),
 			"fieldname": "pass_unique_key",
@@ -44,80 +53,59 @@ def get_columns():
 			"hidden": 1,
 		},
 		{
-			"label": _("TP Quantity (QT)"),
+			"label": _("TP Qty"),
 			"fieldname": "tp_quantity",
 			"fieldtype": "Float",
 			"precision": 3,
-			"width": 120,
+			"width": 110,
 		},
 		{
-			"label": _("Total Quantity Received (QT)"),
+			"label": _("Total Qty Received"),
 			"fieldname": "total_received",
 			"fieldtype": "Float",
 			"precision": 3,
-			"width": 170,
+			"width": 150,
 		},
 		{
-			"label": _("Chhatni Assigned"),
-			"fieldname": "chhatni_assigned",
-			"fieldtype": "Float",
-			"precision": 2,
-			"width": 120,
-		},
-		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 120},
-		{
-			"label": _("Chhatni Status"),
-			"fieldname": "chhatni_status",
-			"fieldtype": "Data",
-			"width": 190,
-		},
-		{
-			"label": _("Received − TP + Chhatni (QT)"),
-			"fieldname": "received_minus_tp_chhatni",
-			"fieldtype": "Float",
-			"precision": 3,
-			"width": 190,
-		},
-		{
-			"label": _("Extra after TP (QT)"),
-			"fieldname": "extra_after_tp",
+			"label": _("Pending Qty (QTL)"),
+			"fieldname": "pending_qty",
 			"fieldtype": "Float",
 			"precision": 3,
 			"width": 140,
 		},
 		{
-			"label": _("Chhatni Received Qty (QT)"),
-			"fieldname": "chhatni_received_qty",
+			"label": _("Excess Received Qty (QTL)"),
+			"fieldname": "excess_received_qty",
 			"fieldtype": "Float",
 			"precision": 3,
 			"width": 170,
 		},
-		{"label": _("Jute Pkt"), "fieldname": "jute_pkt", "fieldtype": "Int", "width": 90},
-		{"label": _("Plastic Pkt"), "fieldname": "plastic_pkt", "fieldtype": "Int", "width": 100},
-		{"label": _("No. of Bags"), "fieldname": "no_of_bags", "fieldtype": "Int", "width": 100},
-		{"label": _("Total Bags"), "fieldname": "total_bags", "fieldtype": "Int", "width": 100},
+		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 110},
+		{"label": _("Jute Bags"), "fieldname": "jute_pkt", "fieldtype": "Int", "width": 95},
+		{"label": _("Plastic Bags"), "fieldname": "plastic_pkt", "fieldtype": "Int", "width": 95},
+		{"label": _("Total Bags"), "fieldname": "total_bags", "fieldtype": "Int", "width": 95},
 		{
-			"label": _("Gunny (Gross / Cut)"),
-			"fieldname": "gunny_type",
+			"label": _("Assigned Chhatni %"),
+			"fieldname": "chhatni_assigned",
+			"fieldtype": "Float",
+			"precision": 2,
+			"width": 135,
+		},
+		{
+			"label": _("Received Chhatni %"),
+			"fieldname": "actual_chhatni_pct",
+			"fieldtype": "Percent",
+			"precision": 2,
+			"width": 135,
+		},
+		{
+			"label": _("Chhatni Status"),
+			"fieldname": "chhatni_status",
 			"fieldtype": "Data",
-			"width": 150,
+			"width": 180,
 		},
-		{
-			"label": _("Gunny Weight (QT)"),
-			"fieldname": "gunny_weight",
-			"fieldtype": "Float",
-			"precision": 3,
-			"width": 130,
-		},
-		{
-			"label": _("Deduction (QT)"),
-			"fieldname": "deduction",
-			"fieldtype": "Float",
-			"precision": 3,
-			"width": 120,
-		},
-		{"label": _("RST"), "fieldname": "rst_count", "fieldtype": "Data", "width": 110},
-		{"label": _("Entry"), "fieldname": "entry_count", "fieldtype": "Data", "width": 110},
+		{"label": _("GRN Details"), "fieldname": "grn_count", "fieldtype": "Data", "width": 125},
+		{"label": _("Entry Details"), "fieldname": "entry_count", "fieldtype": "Data", "width": 125},
 	]
 
 
@@ -127,6 +115,7 @@ def get_data(filters):
 		filters={"is_local_procurement": 0, "docstatus": ["<", 2]},
 		fields=[
 			"name",
+			"grn_no",
 			"pass_unique_key",
 			"ppc",
 			"ppc_name",
@@ -137,6 +126,10 @@ def get_data(filters):
 			"chhatni",
 			"received_quantity",
 			"net_weight",
+			"gross_vehicle_weight",
+			"tare_weight",
+			"gross_weight",
+			"gunny_weight",
 			"tp_cumulative_received",
 			"tp_fulfillment_status",
 			"chhatni_fulfillment_status",
@@ -184,26 +177,19 @@ def get_data(filters):
 			continue
 
 		tp_qty = max((flt(doc.tp_quantity) for doc in docs), default=0)
-		total_received = flt(sum(flt(doc.received_quantity) for doc in docs), 3)
-		if not total_received:
-			total_received = flt(max((flt(doc.tp_cumulative_received) for doc in docs), default=0), 3)
-		if not total_received:
-			total_received = flt(sum(flt(doc.net_weight) for doc in docs), 3)
+		total_received = flt(sum(grn_received_quantity(doc) for doc in docs), 3)
 
 		chhatni_assigned = _assigned_chhatni(docs)
 		total_deduction = flt(sum(flt(doc.deduction) for doc in docs), 3)
-		tp_complete = _tp_is_complete(docs, tp_qty, total_received)
-		if tp_complete:
-			chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned, total_deduction)
-			balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
-			extra = flt(max(total_received - tp_qty, 0), 3)
-			tp_status = _("TP Completed")
-		else:
-			# Chhatni is not calculated until the transit pass quantity is fully received.
-			chhatni_status = "0"
-			balance = 0
-			extra = 0
-			tp_status = _("In Progress")
+		tp_status = tp_fulfillment_status(tp_qty, total_received)
+		tp_complete = tp_status == "TP Completed"
+		pending_qty = pending_tp_quantity(tp_qty, total_received)
+		excess_qty = excess_tp_received_quantity(tp_qty, total_received)
+		required_chhatni = required_chhatni_qt(tp_qty, chhatni_assigned)
+		actual_chhatni_pct = received_chhatni_pct(total_deduction, tp_qty) if tp_qty > 0 else 0.0
+		chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned, total_deduction)
+		balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
+		extra = excess_qty
 
 		rst_lines = _rst_lines(docs, wbm_by_name, bags_by_wbm)
 		entry_lines = entries_by_pass.get(key, [])
@@ -211,8 +197,8 @@ def get_data(filters):
 		mill_label, mill_code = _mill_label(key, sample.mill_name, mill_companies)
 		if mill_filter and mill_filter not in (mill_code, (sample.mill_name or "").strip()):
 			continue
-		if tp_complete and chhatni_status in ("Chhatni Received", "Over Filled Chhatni Received"):
-			chhatni_received_qty = required_chhatni_qt(tp_qty, chhatni_assigned)
+		if chhatni_status in (CHHATNI_RECEIVED, EXTRA_CHHATNI_RECEIVED, "Over Filled Chhatni Received"):
+			chhatni_received_qty = required_chhatni
 		else:
 			chhatni_received_qty = 0
 		gunny_types = []
@@ -228,8 +214,15 @@ def get_data(filters):
 				"pass_unique_key": key,
 				"tp_quantity": tp_qty,
 				"total_received": total_received,
-				"chhatni_assigned": chhatni_assigned,
+				"pending_qty": pending_qty,
+				"pending_quantity": pending_qty,
+				"remaining_quantity": pending_qty,
+				"excess_received_qty": excess_qty,
+				"excess_received_quantity": excess_qty,
 				"tp_status": tp_status,
+				"chhatni_assigned": chhatni_assigned,
+				"required_chhatni": required_chhatni,
+				"actual_chhatni_pct": actual_chhatni_pct,
 				"chhatni_status": chhatni_status,
 				"received_minus_tp_chhatni": balance,
 				"extra_after_tp": extra,
@@ -241,8 +234,10 @@ def get_data(filters):
 				"gunny_type": " / ".join(gunny_types),
 				"gunny_weight": flt(sum(line["gunny_weight"] for line in rst_lines), 3),
 				"deduction": flt(sum(line["deduction"] for line in rst_lines), 3),
+				"grn_count": len(rst_lines),
 				"rst_count": len(rst_lines),
 				"entry_count": len(entry_lines),
+				"grn_lines": rst_lines,
 				"rst_lines": rst_lines,
 				"entry_lines": entry_lines,
 			}
@@ -315,6 +310,10 @@ def _weigh_bridges_for(grns) -> dict[str, dict]:
 			"actual_truck_no",
 			"vehicle_no",
 			"truck_no_in_tp",
+			"load_weight",
+			"tare_weight",
+			"gross_weight",
+			"net_weight",
 			"deduction",
 			"rst_no",
 			"gunny_type",
@@ -381,31 +380,52 @@ def _rst_lines(docs, wbm_by_name: dict, bags_by_wbm: dict) -> list[dict]:
 		wbm = wbm_by_name.get(wbm_name) or {}
 		bags = bags_by_wbm.get(wbm_name) or {}
 		vehicle = (
-			(wbm.get("actual_truck_no") or "").strip()
+			(doc.vehicle_no or "").strip()
+			or (wbm.get("actual_truck_no") or "").strip()
 			or (wbm.get("vehicle_no") or "").strip()
-			or (doc.vehicle_no or "").strip()
 		)
 		rst_no = (doc.rst_no or wbm.get("rst_no") or "").strip()
-		if not (rst_no or wbm_name):
+		if not (rst_no or wbm_name or doc.name):
 			continue
 		jute = cint(bags.get("jute"))
 		plastic = cint(bags.get("plastic"))
-		gunny_weight = flt(bags.get("gunny_weight") or 0, 3)
+		gunny_weight = flt(doc.gunny_weight) or flt(bags.get("gunny_weight") or 0, 3)
 		if not gunny_weight:
 			gunny_weight = flt(wbm.get("gunny_weight"), 3)
 		total_bags = cint(wbm.get("total_bags")) or (jute + plastic)
+
+		load_wt = flt(doc.gross_vehicle_weight) or flt(wbm.get("load_weight"), 3)
+		tare_wt = flt(doc.tare_weight) or flt(wbm.get("tare_weight"), 3)
+		gross_wt = flt(doc.gross_weight) or flt(wbm.get("gross_weight"), 3)
+		if not gross_wt and load_wt and tare_wt:
+			gross_wt = flt(load_wt - tare_wt, 3)
+		if not load_wt and gross_wt and tare_wt:
+			load_wt = flt(gross_wt + tare_wt, 3)
+
+		deduction = flt(wbm.get("deduction") if (wbm and wbm.get("deduction") is not None) else doc.deduction, 3)
+		net_wt = flt(doc.net_weight) or flt(wbm.get("net_weight"), 3)
+		if not net_wt and gross_wt:
+			net_wt = flt(gross_wt - gunny_weight - deduction, 3)
+
 		lines.append(
 			{
+				"grn_no": (doc.grn_no or doc.name or "").strip(),
+				"grn_name": (doc.name or "").strip(),
 				"rst_no": rst_no,
-				"deduction": flt(wbm.get("deduction") if wbm else doc.deduction, 3),
+				"vehicle_no": vehicle,
+				"load_weight": load_wt,
+				"tare_weight": tare_wt,
+				"gross_weight": gross_wt,
+				"gunny_type": (doc.gunny_type or wbm.get("gunny_type") or "").strip(),
+				"gunny_weight": gunny_weight,
+				"deduction": deduction,
+				"net_weight": net_wt,
 				"weigh_bridge_measurement": wbm_name,
 				"actual_vehicle_no": vehicle,
 				"jute_pkt": jute,
 				"plastic_pkt": plastic,
 				"no_of_bags": cint(wbm.get("no_of_bags")),
 				"total_bags": total_bags,
-				"gunny_type": (wbm.get("gunny_type") or doc.gunny_type or "").strip(),
-				"gunny_weight": gunny_weight,
 			}
 		)
 	return lines
@@ -419,20 +439,12 @@ def _assigned_chhatni(docs) -> float:
 
 
 def _tp_is_complete(docs, tp_qty: float, total_received: float) -> bool:
-	if any((doc.tp_fulfillment_status or "").strip() == "TP Completed" for doc in docs):
-		return True
-	return tp_qty > 0 and total_received >= tp_qty
+	return flt(tp_qty) > 0 and flt(total_received) >= flt(tp_qty)
 
 
 def _chhatni_status(docs, tp_qty: float, total_received: float, chhatni_assigned: float, total_deduction: float) -> str:
-	for doc in reversed(docs):
-		if (doc.tp_fulfillment_status or "").strip() != "TP Completed":
-			continue
-		stored = (doc.chhatni_fulfillment_status or "").strip()
-		if stored:
-			return stored
 	status, _remark = evaluate_chhatni_fulfillment(tp_qty, total_received, chhatni_assigned, total_deduction)
-	return status or "0"
+	return status or CHHATNI_NOT_RECEIVED
 
 
 def _tp_no(docs) -> str:

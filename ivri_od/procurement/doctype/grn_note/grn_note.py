@@ -83,6 +83,7 @@ class GRNNote(Document):
 		self._assign_grn_no()
 
 	def validate(self):
+		self._validate_duplicate_grn()
 		self._sync_datetime_fields()
 		self._ensure_grn_no()
 		self._normalize_fields()
@@ -103,8 +104,61 @@ class GRNNote(Document):
 		self._sync_tp_fulfillment_status()
 		self._set_purchase_heading()
 
+	def _validate_duplicate_grn(self):
+		"""Prevent duplicate GRN Note creation for the same completed procurement transaction."""
+		wbm_name = (self.weigh_bridge_measurement or "").strip()
+		rst_no = (self.rst_no or "").strip()
+		filters = {"docstatus": ["<", 2]}
+		if not self.is_new():
+			filters["name"] = ["!=", self.name]
+
+		if wbm_name:
+			dup = frappe.db.get_value(
+				"GRN Note",
+				{**filters, "weigh_bridge_measurement": wbm_name},
+				"name",
+			)
+			if dup:
+				frappe.throw(
+					_("GRN Note {0} already exists for Weigh Bridge Measurement {1}.").format(
+						frappe.bold(dup), frappe.bold(wbm_name)
+					),
+					title=_("Duplicate GRN Note"),
+				)
+
+		if rst_no and cint(self.is_local_procurement):
+			dup = frappe.db.get_value(
+				"GRN Note",
+				{**filters, "rst_no": rst_no, "is_local_procurement": 1},
+				"name",
+			)
+			if dup:
+				frappe.throw(
+					_("GRN Note {0} already exists for RST No {1}.").format(
+						frappe.bold(dup), frappe.bold(rst_no)
+					),
+					title=_("Duplicate GRN Note"),
+				)
+
 	def on_update(self):
+		key = (self.pass_unique_key or "").strip()
+		if key and not cint(self.is_local_procurement):
+			refresh_tp_fulfillment_for_pass(key)
 		self._schedule_procurement_rollup_sync()
+		self._update_linked_purchase_order()
+
+	def _update_linked_purchase_order(self):
+		po = (self.local_purchase_order or getattr(self, "purchase_order", None) or "").strip()
+		if po:
+			frappe.db.after_commit(lambda p=po: self._refresh_po_qty(p))
+
+	@staticmethod
+	def _refresh_po_qty(po_name: str):
+		from ivri_od.procurement.doctype.local_paddy_purchase_order.local_paddy_purchase_order import (
+			update_purchase_order_quantities,
+		)
+
+		update_purchase_order_quantities(po_name)
 
 	def _schedule_procurement_rollup_sync(self):
 		key = (self.pass_unique_key or "").strip()
@@ -117,6 +171,9 @@ class GRNNote(Document):
 		if key and not cint(self.is_local_procurement):
 			frappe.db.after_commit(lambda k=key: refresh_tp_fulfillment_for_pass(k))
 			frappe.db.after_commit(lambda k=key: _sync_procurement_rollups_for_pass(k))
+		po = (self.local_purchase_order or getattr(self, "purchase_order", None) or "").strip()
+		if po:
+			frappe.db.after_commit(lambda p=po: self._refresh_po_qty(p))
 
 	def _sync_tp_fulfillment_status(self):
 		if cint(self.is_local_procurement) or not (self.pass_unique_key or "").strip():
@@ -250,11 +307,17 @@ class GRNNote(Document):
 		rst = frappe.db.get_value(
 			"RST Details",
 			rst_link,
-			["party_name", "commodity", "entry_date", "entry_time", "agent_name"],
+			["party_name", "commodity", "entry_date", "entry_time", "agent_name", "local_purchase_order"],
 			as_dict=True,
 		)
 		if not rst:
 			return
+		if not (self.party_name or "").strip() and (rst.party_name or "").strip():
+			self.party_name = (rst.party_name or "").strip()
+		if not (self.local_purchase_order or "").strip() and (rst.local_purchase_order or "").strip():
+			self.local_purchase_order = (rst.local_purchase_order or "").strip()
+		if not (self.get("purchase_order") or "").strip():
+			self.set("purchase_order", (getattr(rst, "purchase_order", None) or self.local_purchase_order or "").strip())
 		if not (self.ppc_name or "").strip():
 			self.ppc_name = (rst.party_name or "").strip()
 		self.agent_name = ""
@@ -378,6 +441,8 @@ class GRNNote(Document):
 				"vehicle_no",
 				"is_farmer_or_agent",
 				"agent_name",
+				"party_name",
+				"local_purchase_order",
 			],
 			as_dict=True,
 		)
@@ -434,6 +499,13 @@ class GRNNote(Document):
 			self.agent_name = ""
 			vehicle = (wbm.actual_truck_no or wbm.truck_no_in_tp or "").strip()
 		self.vehicle_no = normalize_vehicle_no(vehicle)
+		if cint(self.is_local_procurement) or is_local_procurement_wbm(wbm_name):
+			if not (self.party_name or "").strip() and (wbm.party_name or "").strip():
+				self.party_name = (wbm.party_name or "").strip()
+			if not (self.local_purchase_order or "").strip() and (wbm.local_purchase_order or "").strip():
+				self.local_purchase_order = (wbm.local_purchase_order or "").strip()
+			if not (self.get("purchase_order") or "").strip() and (getattr(wbm, "purchase_order", None) or wbm.local_purchase_order or "").strip():
+				self.set("purchase_order", (getattr(wbm, "purchase_order", None) or wbm.local_purchase_order or "").strip())
 		self._apply_wbm_bag_details(wbm_name)
 
 	def _apply_wbm_bag_details(self, wbm_name: str):
@@ -516,7 +588,8 @@ class GRNNote(Document):
 		self.arrival_datetime = None
 		self.arrival_date = None
 		self.arrival_time = None
-		self.party_name = ""
+		if not (self.party_name or "").strip():
+			self.party_name = ""
 		self.mobile_no = ""
 		if not gate_entry or not frappe.db.exists("Gate Entry", gate_entry):
 			return
@@ -575,7 +648,8 @@ class GRNNote(Document):
 				self.driver_name = (gate_in_row.driver_name or "").strip()
 			if not (self.vehicle_no or "").strip():
 				self.vehicle_no = normalize_vehicle_no(gate_in_row.vehicle_no)
-			self.party_name = (gate_in_row.party_name or "").strip()
+			if (gate_in_row.party_name or "").strip():
+				self.party_name = gate_in_row.party_name.strip()
 			self.mobile_no = (gate_in_row.mobile_no or "").strip()
 
 		exit_row = _latest_gate_exit(gate_in, self.vehicle_no or (gate_in_row.vehicle_no if gate_in_row else ""))
@@ -843,6 +917,8 @@ def grn_dict_for_local_wbm(wbm_name: str) -> dict | None:
 			"measurement_time",
 			"quality_check",
 			"gate_entry",
+			"party_name",
+			"local_purchase_order",
 		],
 		as_dict=True,
 	)
@@ -854,9 +930,14 @@ def grn_dict_for_local_wbm(wbm_name: str) -> dict | None:
 		rst = frappe.db.get_value(
 			"RST Details",
 			wbm.demo_rst_data,
-			["party_name", "commodity", "entry_date", "entry_time"],
+			["party_name", "commodity", "entry_date", "entry_time", "local_purchase_order"],
 			as_dict=True,
 		)
+
+	party_name = ((rst.party_name or "").strip() if rst else "") or (wbm.party_name or "").strip()
+	po = (
+		(rst.local_purchase_order or getattr(rst, "purchase_order", None) or "").strip() if rst else ""
+	) or (wbm.local_purchase_order or getattr(wbm, "purchase_order", None) or "").strip()
 
 	return {
 		"doctype": "GRN Note",
@@ -865,6 +946,9 @@ def grn_dict_for_local_wbm(wbm_name: str) -> dict | None:
 		"pass_unique_key": "",
 		"rst_no": wbm.rst_no,
 		"weigh_bridge_measurement": wbm_name,
+		"party_name": party_name,
+		"local_purchase_order": po,
+		"purchase_order": po,
 		"agent_name": "",
 		"receipt_datetime": (
 			get_datetime(wbm.date)
@@ -1081,6 +1165,8 @@ def _grn_details_from_rst(
 		doc._apply_quality_check(doc.quality_check)
 	if doc.gate_entry:
 		doc._apply_gate_entry(doc.gate_entry)
+	if local:
+		doc._sync_local_procurement_from_rst()
 
 	return {
 		"is_local_procurement": doc.is_local_procurement,
@@ -1098,6 +1184,8 @@ def _grn_details_from_rst(
 		"driver_name": doc.driver_name,
 		"mobile_no": doc.mobile_no,
 		"party_name": doc.party_name,
+		"local_purchase_order": doc.local_purchase_order,
+		"purchase_order": doc.get("purchase_order") or doc.local_purchase_order,
 		"arrival_datetime": doc.arrival_datetime,
 		"gate_exit_datetime": doc.gate_exit_datetime,
 		"arrival_date": doc.arrival_date,
@@ -1239,6 +1327,62 @@ def get_rst_no_autocomplete(txt="", pass_unique_key="", limit=25):
 	return [{"value": row, "label": row, "description": ""} for row in rows]
 
 
+@frappe.whitelist()
+def get_pending_rst_for_party(party_name=""):
+	"""Return unfinished / un-GRNed RST/WBM transactions for local procurement for this party."""
+	party = (party_name or "").strip()
+	if not party:
+		return []
+
+	rsts = frappe.get_all(
+		"RST Details",
+		filters={
+			"party_name": ["like", f"%{party}%"],
+		},
+		fields=[
+			"name",
+			"rst_no",
+			"vehicle_no",
+			"entry_date",
+			"entry_time",
+			"local_purchase_order",
+			"weigh_bridge_measurement",
+		],
+		order_by="entry_date desc, entry_time desc, creation desc",
+	)
+
+	pending = []
+	for r in rsts:
+		rst_no = (r.rst_no or r.name or "").strip()
+		has_grn = frappe.db.exists(
+			"GRN Note",
+			{
+				"rst_no": rst_no,
+				"is_local_procurement": 1,
+				"docstatus": ["<", 2],
+			},
+		)
+		if not has_grn and r.weigh_bridge_measurement:
+			has_grn = frappe.db.exists(
+				"GRN Note",
+				{
+					"weigh_bridge_measurement": r.weigh_bridge_measurement,
+					"docstatus": ["<", 2],
+				},
+			)
+		if not has_grn:
+			pending.append(
+				{
+					"rst_no": rst_no,
+					"vehicle_no": r.vehicle_no or "",
+					"entry_date": str(r.entry_date or ""),
+					"local_purchase_order": r.local_purchase_order or "",
+					"weigh_bridge_measurement": r.weigh_bridge_measurement or "",
+				}
+			)
+	return pending
+
+
 def _grn_receipt_datetime_display(doc) -> str:
 	receipt_dt = combine_datetime(doc, "receipt_datetime", "receipt_date", "receipt_time")
 	if not receipt_dt:
@@ -1282,7 +1426,7 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 	tp_cumulative = flt(doc.tp_cumulative_received)
 	tp_pass_fulfilled = tp_qty > 0 and tp_cumulative >= tp_qty
 	chhatni_display_status = (doc.chhatni_fulfillment_status or "").strip()
-	if not chhatni_display_status and tp_pass_fulfilled:
+	if not chhatni_display_status and tp_qty > 0:
 		chhatni_display_status = chhatni_fulfillment_status(
 			tp_qty,
 			tp_cumulative,

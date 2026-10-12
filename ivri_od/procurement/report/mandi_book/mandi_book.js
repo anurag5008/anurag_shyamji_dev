@@ -33,7 +33,7 @@ frappe.query_reports["Mandi Book"] = {
 			window.__mandi_book_rows = window.__mandi_book_rows || {};
 			window.__mandi_book_rows[data.pass_unique_key] = data;
 		}
-		if (fieldname === "rst_count" || fieldname === "entry_count") {
+		if (fieldname === "grn_count" || fieldname === "rst_count" || fieldname === "entry_count") {
 			return mandi_book_open_button(fieldname, data);
 		}
 		if (fieldname === "chhatni_status") {
@@ -72,9 +72,10 @@ if (!window.__mandi_book_click_bound) {
 }
 
 function mandi_book_open_button(fieldname, data) {
-	const kind = fieldname === "rst_count" ? "rst" : "entry";
+	const is_grn = fieldname === "grn_count" || fieldname === "rst_count";
+	const kind = is_grn ? "grn" : "entry";
 	const count = cint((data && data[fieldname]) || 0);
-	const label = kind === "rst" ? __("RST ({0})", [count]) : __("Entry ({0})", [count]);
+	const label = is_grn ? __("GRN Details ({0})", [count]) : __("Entry Details ({0})", [count]);
 	const pass_key = encodeURIComponent((data && data.pass_unique_key) || "");
 	return `<button type="button" class="btn btn-xs btn-default mandi-book-open" data-kind="${kind}" data-pass="${pass_key}">${frappe.utils.escape_html(label)}</button>`;
 }
@@ -84,7 +85,7 @@ function mandi_book_status_pill(value) {
 	let indicator = "gray";
 	if (text === "Chhatni Received") {
 		indicator = "green";
-	} else if (text === "Over Filled Chhatni Received") {
+	} else if (text === "Extra Chhatni Received" || text === "Over Filled Chhatni Received") {
 		indicator = "blue";
 	} else if (text === "Chhatni Not Received") {
 		indicator = "orange";
@@ -95,9 +96,10 @@ function mandi_book_status_pill(value) {
 }
 
 function mandi_book_dialog(kind, data) {
-	const lines = kind === "rst" ? data.rst_lines || [] : data.entry_lines || [];
+	const is_grn = kind === "grn" || kind === "rst";
+	const lines = is_grn ? (data.grn_lines || data.rst_lines || []) : (data.entry_lines || []);
 	const tp_no = data.transit_pass_no || "";
-	const title = kind === "rst" ? __("RST — TP {0}", [tp_no]) : __("Entry — TP {0}", [tp_no]);
+	const title = is_grn ? __("GRN Details — TP {0}", [tp_no]) : __("Entry Details — TP {0}", [tp_no]);
 	const dialog = new frappe.ui.Dialog({
 		title,
 		size: "extra-large",
@@ -108,33 +110,39 @@ function mandi_book_dialog(kind, data) {
 }
 
 function mandi_book_table(kind, lines) {
-	if (kind === "rst") {
+	if (kind === "grn" || kind === "rst") {
 		return mandi_book_html_table(
 			[
-				__("RST No"),
-				__("Deduction (QT)"),
-				__("Weigh Bridge"),
-				__("Actual Vehicle No"),
-				__("Jute Pkt"),
-				__("Plastic Pkt"),
-				__("No. of Bags"),
-				__("Total Bags"),
-				__("Gunny (Gross / Cut)"),
-				__("Gunny Weight (QT)"),
+				__("GRN No."),
+				__("Rst No."),
+				__("Vehicle No."),
+				__("Load Wt"),
+				__("Tare Wt"),
+				__("Gross Wt"),
+				__("Gunny Type"),
+				__("Gunny Wt"),
+				__("Deduction"),
+				__("Net Wt"),
 			],
 			lines.map((line) => [
-				frappe.utils.escape_html(line.rst_no || "—"),
-				mandi_book_qty(line.deduction, 3),
-				mandi_book_doc_link("Weigh Bridge Measurement", line.weigh_bridge_measurement),
-				frappe.utils.escape_html(line.actual_vehicle_no || "—"),
-				frappe.utils.escape_html(String(cint(line.jute_pkt))),
-				frappe.utils.escape_html(String(cint(line.plastic_pkt))),
-				frappe.utils.escape_html(String(cint(line.no_of_bags))),
-				frappe.utils.escape_html(String(cint(line.total_bags))),
+				mandi_book_doc_link("GRN Note", line.grn_name, line.grn_no || line.grn_name),
+				line.rst_no
+					? (line.weigh_bridge_measurement
+						? mandi_book_doc_link("Weigh Bridge Measurement", line.weigh_bridge_measurement, line.rst_no)
+						: frappe.utils.escape_html(line.rst_no))
+					: (line.weigh_bridge_measurement
+						? mandi_book_doc_link("Weigh Bridge Measurement", line.weigh_bridge_measurement)
+						: "—"),
+				frappe.utils.escape_html(line.vehicle_no || line.actual_vehicle_no || "—"),
+				mandi_book_qty(line.load_weight, 3),
+				mandi_book_qty(line.tare_weight, 3),
+				mandi_book_qty(line.gross_weight, 3),
 				frappe.utils.escape_html(line.gunny_type || "—"),
 				mandi_book_qty(line.gunny_weight, 3),
+				mandi_book_qty(line.deduction, 3),
+				mandi_book_qty(line.net_weight, 3),
 			]),
-			__("No RST on this TP")
+			__("No GRN on this TP")
 		);
 	}
 	return mandi_book_html_table(
@@ -161,12 +169,13 @@ function mandi_book_html_table(headers, body, empty_text) {
 	return `<div style="overflow:auto;"><table class="table table-bordered table-sm" style="margin-bottom:0;"><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table></div>`;
 }
 
-function mandi_book_doc_link(doctype, name) {
+function mandi_book_doc_link(doctype, name, label) {
 	if (!name) {
 		return "—";
 	}
+	const display = label || name;
 	const route = frappe.utils.get_form_link(doctype, name);
-	return `<a href="${route}">${frappe.utils.escape_html(name)}</a>`;
+	return `<a href="${route}">${frappe.utils.escape_html(display)}</a>`;
 }
 
 function mandi_book_qty(value, precision) {

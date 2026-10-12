@@ -252,7 +252,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 6,
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -313,6 +313,16 @@
    "label": "Vehicle Gate Movement",
    "link_count": 0,
    "link_to": "Vehicle Gate Movement Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Entry Report",
+   "link_count": 0,
+   "link_to": "Entry Report",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

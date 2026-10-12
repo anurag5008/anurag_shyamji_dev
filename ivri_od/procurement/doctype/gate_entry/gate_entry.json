@@ -143,7 +143,8 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Party Name"
+   "label": "Party Name",
+   "reqd": 1
   },
   {
    "fieldname": "out_details_section",
@@ -220,7 +221,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "vehicle_no,driver_name,in_purpose",
+ "search_fields": "vehicle_no,driver_name,party_name,in_purpose",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

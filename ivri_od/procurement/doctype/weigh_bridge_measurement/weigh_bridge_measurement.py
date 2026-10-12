@@ -122,6 +122,12 @@ def _qc_bag_lines(qc_name: str) -> list[dict]:
 	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
 		return []
 
+	fields = ["jute_pkt_no", "no_of_plastic_bag"]
+	if frappe.db.has_column("Quality Check Bag Detail", "jute_bags"):
+		fields.append("jute_bags")
+	if frappe.db.has_column("Quality Check Bag Detail", "plastic_bags"):
+		fields.append("plastic_bags")
+
 	lines = frappe.get_all(
 		"Quality Check Bag Detail",
 		filters={
@@ -129,7 +135,7 @@ def _qc_bag_lines(qc_name: str) -> list[dict]:
 			"parenttype": "Quality Check",
 			"parentfield": "type_of_pkt",
 		},
-		fields=["jute_pkt_no", "no_of_plastic_bag", "jute_bags", "plastic_bags"],
+		fields=fields,
 		order_by="idx asc",
 	)
 	if lines:
@@ -359,6 +365,12 @@ class WeighBridgeMeasurement(Document):
 			self.actual_truck_no = rst_vehicle
 		if is_private_procurement_rst(rst):
 			self.agent_name = ""
+			if (rst.party_name or "").strip():
+				self.party_name = rst.party_name.strip()
+			if (rst.local_purchase_order or "").strip():
+				self.local_purchase_order = rst.local_purchase_order.strip()
+				if hasattr(self, "purchase_order"):
+					self.purchase_order = rst.local_purchase_order.strip()
 		else:
 			agent = get_rst_agent_name(demo_rst_data=rst_link, rst_no=self.rst_no)
 			if agent:

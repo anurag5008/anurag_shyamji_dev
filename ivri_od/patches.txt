@@ -111,3 +111,4 @@ ivri_od.patches.v1_0.recalc_grn_received_minus_tp_chhatni
 ivri_od.patches.v1_0.recalc_chhatni_threshold_0_3
 ivri_od.patches.v1_0.recalc_chhatni_shortfall_threshold_only
 ivri_od.patches.v1_0.recalc_grn_received_plus_deduction
+ivri_od.patches.v1_0.recalc_tp_fulfillment_final_net_weight

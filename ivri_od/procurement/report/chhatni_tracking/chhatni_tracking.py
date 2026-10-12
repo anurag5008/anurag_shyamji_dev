@@ -160,16 +160,15 @@ def get_data(filters):
 		if tp_qty > 0 and total_received < tp_qty:
 			chhatni_status = _("Chhatni Not Received")
 		elif tp_qty > 0 and total_received >= tp_qty:
-			stored = (grn.get("chhatni_status_completed") or "").strip()
-			if stored and procurement_chhatni > 0:
-				chhatni_status = stored
-			else:
-				chhatni_status = chhatni_fulfillment_status(
+			chhatni_status = (
+				chhatni_fulfillment_status(
 					tp_qty,
 					total_received,
 					chhatni_rate,
 					total_deduction,
-				) or _("Chhatni Pending")
+				)
+				or _("Chhatni Pending")
+			)
 		else:
 			chhatni_status = ""
 

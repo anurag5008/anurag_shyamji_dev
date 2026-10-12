@@ -21,6 +21,7 @@ class RSTDetails(Document):
 		self._sync_mill_and_agent_from_transit_pass()
 		self._validate_mill_name()
 		self._set_tp_status()
+		self._validate_local_purchase_order()
 
 	def on_trash(self):
 		wbm_name = self.weigh_bridge_measurement
@@ -108,6 +109,33 @@ class RSTDetails(Document):
 				title=_("Duplicate RST No"),
 			)
 
+	def _validate_local_purchase_order(self):
+		if not (self.local_purchase_order or "").strip():
+			return
+		if not frappe.db.exists("Local Paddy Purchase Order", self.local_purchase_order):
+			frappe.throw(_("Local Paddy Purchase Order {0} does not exist.").format(self.local_purchase_order))
+		po = frappe.db.get_value(
+			"Local Paddy Purchase Order",
+			self.local_purchase_order,
+			["party_name", "status", "commodity"],
+			as_dict=True,
+		)
+		if not po:
+			return
+		if not (self.commodity or "").strip() and (po.commodity or "").strip():
+			self.commodity = po.commodity.strip()
+		if self.party_name and po.party_name:
+			p1 = self.party_name.strip().lower()
+			p2 = po.party_name.strip().lower()
+			if p1 not in p2 and p2 not in p1:
+				frappe.msgprint(
+					_("Warning: Selected Purchase Order party '{0}' does not match RST party '{1}'.").format(
+						po.party_name, self.party_name
+					),
+					indicator="orange",
+					alert=True,
+				)
+
 	def _sync_weigh_bridge_measurement(self):
 		private = is_private_procurement_rst(self)
 		awaiting_tp = party_found_awaiting_tp(self)
@@ -139,6 +167,9 @@ class RSTDetails(Document):
 					"actual_truck_no": normalize_vehicle_no(self.vehicle_no),
 					"pass_unique_key": "",
 					"agent_name": "",
+					"party_name": (self.party_name or "").strip(),
+					"local_purchase_order": (self.local_purchase_order or "").strip(),
+					"purchase_order": (self.local_purchase_order or "").strip(),
 				}
 			)
 		elif awaiting_tp:

@@ -9,6 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "agent_name",
+  "district",
   "column_break_1",
   "is_active"
  ],
@@ -24,6 +25,15 @@
    "label": "Agent Name",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "allow_in_quick_entry": 1,
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "District",
+   "options": "District Master"
   },
   {
    "fieldname": "column_break_1",
@@ -76,7 +86,7 @@
   }
  ],
  "quick_entry": 0,
- "search_fields": "agent_name",
+ "search_fields": "agent_name,district",
  "show_name_in_global_search": 1,
  "show_title_field_in_link": 1,
  "sort_field": "modified",

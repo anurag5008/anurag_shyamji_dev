@@ -20,6 +20,8 @@
   "weighment_section",
   "date",
   "rst_no",
+  "party_name",
+  "local_purchase_order",
   "column_break_weighment",
   "tp_status",
   "quality_check",
@@ -139,6 +141,24 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "RST No"
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Party Name",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "local_purchase_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Local Purchase Order",
+   "options": "Local Paddy Purchase Order",
+   "read_only": 1
   },
   {
    "fieldname": "tp_status",

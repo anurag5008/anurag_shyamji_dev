@@ -206,9 +206,10 @@ def get_qc_sl_no(qc_name: str | None) -> int:
 	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
 		return 0
 
-	serial = cint(frappe.db.get_value("Quality Check", qc_name, "qc_serial_no"))
-	if serial:
-		return serial
+	if frappe.db.has_column("Quality Check", "qc_serial_no"):
+		serial = cint(frappe.db.get_value("Quality Check", qc_name, "qc_serial_no"))
+		if serial:
+			return serial
 
 	if qc_name.startswith("QC-"):
 		tail = qc_name.rsplit("-", 1)[-1]

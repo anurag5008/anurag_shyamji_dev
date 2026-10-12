@@ -39,6 +39,44 @@ frappe.ui.form.on("GRN Note", {
 	rst_no(frm) {
 		load_rst_details(frm);
 	},
+	party_name(frm) {
+		const party = (frm.doc.party_name || "").trim();
+		if (!party || !frm.doc.is_local_procurement) {
+			return;
+		}
+		frappe.call({
+			method: "ivri_od.procurement.doctype.grn_note.grn_note.get_pending_rst_for_party",
+			args: { party_name: party },
+			callback(r) {
+				const list = r.message || [];
+				if (list.length === 1) {
+					frm.set_value("rst_no", list[0].rst_no);
+				} else if (list.length > 1) {
+					let d = new frappe.ui.Dialog({
+						title: __("Select Pending RST for {0}", [party]),
+						fields: [
+							{
+								fieldname: "selected_rst",
+								fieldtype: "Select",
+								label: __("Pending RST Transactions"),
+								reqd: 1,
+								options: list.map(item => ({
+									label: `${item.rst_no} | Vehicle: ${item.vehicle_no || "N/A"} | Date: ${item.entry_date} | PO: ${item.local_purchase_order || "N/A"}`,
+									value: item.rst_no
+								}))
+							}
+						],
+						primary_action_label: __("Select"),
+						primary_action(values) {
+							d.hide();
+							frm.set_value("rst_no", values.selected_rst);
+						}
+					});
+					d.show();
+				}
+			}
+		});
+	},
 	ppc_name(frm) {
 		if (frm.is_new()) {
 			refresh_grn_chhatni(frm);
