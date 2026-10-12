@@ -1,0 +1,113 @@
+<style>
+	body, html {
+		margin: 8px;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+		font-size: 11px;
+		color: #0f172a;
+	}
+	.report-header {
+		text-align: center;
+		margin-bottom: 16px;
+	}
+	.report-title {
+		font-size: 16px;
+		font-weight: 700;
+		color: #0f172a;
+	}
+	.report-subtitle {
+		font-size: 12px;
+		color: #475569;
+		margin-top: 4px;
+	}
+	.report-table table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.report-table th, .report-table td {
+		border: 1px solid #cbd5e1;
+		padding: 6px 8px;
+		font-size: 11px;
+	}
+	.report-table th {
+		background-color: #f1f5f9;
+		font-weight: 700;
+		color: #1e293b;
+		text-align: center;
+	}
+	.report-table td.text-left {
+		text-align: left;
+	}
+	.report-table td.text-right {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+	.report-table tr.total-row td {
+		font-weight: 700;
+		background-color: #f8fafc;
+		border-top: 2px solid #64748b;
+	}
+</style>
+
+<div class="report-header">
+	<div class="report-title">{{ __("Abstract Physical Report") }}</div>
+	{% if filters.season || filters.ppc_name %}
+		<div class="report-subtitle">
+			{% if filters.season %}<span><strong>{{ __("Season") }}:</strong> {{ filters.season }}</span>{% endif %}
+			{% if filters.ppc_name %}<span style="margin-left: 16px;"><strong>{{ __("PPC") }}:</strong> {{ filters.ppc_name }}</span>{% endif %}
+		</div>
+	{% endif %}
+</div>
+
+<div class="report-table">
+	<table>
+		<thead>
+			<tr>
+				<th style="width: 15%; text-align: left;">{{ __("Season") }}</th>
+				<th style="width: 25%; text-align: left;">{{ __("PPC") }}</th>
+				<th style="width: 12%; text-align: right;">{{ __("TP Quantity (QTL)") }}</th>
+				<th style="width: 12%; text-align: right;">{{ __("Physical Paddy (QTL)") }}</th>
+				<th style="width: 12%; text-align: right;">{{ __("Entry Qty (QTL)") }}</th>
+				<th style="width: 12%; text-align: right;">{{ __("Chhatni Quantity (QTL)") }}</th>
+				<th style="width: 12%; text-align: right;">{{ __("Chhatni %") }}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{%
+				let total_tp = 0;
+				let total_physical = 0;
+				let total_entry = 0;
+				let total_chhatni = 0;
+			%}
+			{% for (let i = 0; i < data.length; i++) { %}
+				{%
+					const row = data[i];
+					total_tp += flt(row.tp_quantity);
+					total_physical += flt(row.physical_paddy);
+					total_entry += flt(row.entry_qty);
+					total_chhatni += flt(row.chhatni_quantity);
+				%}
+				<tr>
+					<td class="text-left">{{ row.season }}</td>
+					<td class="text-left">{{ row.ppc }}</td>
+					<td class="text-right">{{ flt(row.tp_quantity).toFixed(3) }}</td>
+					<td class="text-right">{{ flt(row.physical_paddy).toFixed(3) }}</td>
+					<td class="text-right">{{ flt(row.entry_qty).toFixed(3) }}</td>
+					<td class="text-right">{{ flt(row.chhatni_quantity).toFixed(3) }}</td>
+					<td class="text-right">{{ flt(row.chhatni_pct).toFixed(2) }}%</td>
+				</tr>
+			{% } %}
+			{%
+				const total_denom = total_tp - total_entry;
+				const total_chhatni_pct = total_denom > 0 ? (total_chhatni / total_denom * 100) : 0;
+			%}
+			<tr class="total-row">
+				<td class="text-left" colspan="2"><strong>{{ __("Total") }}</strong></td>
+				<td class="text-right">{{ total_tp.toFixed(3) }}</td>
+				<td class="text-right">{{ total_physical.toFixed(3) }}</td>
+				<td class="text-right">{{ total_entry.toFixed(3) }}</td>
+				<td class="text-right">{{ total_chhatni.toFixed(3) }}</td>
+				<td class="text-right">{{ total_chhatni_pct.toFixed(2) }}%</td>
+			</tr>
+		</tbody>
+	</table>
+</div>

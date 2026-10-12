@@ -1,0 +1,144 @@
+{%
+	const report_columns = report.get_columns_for_print().filter(col => !col.hidden);
+	const mill_groups = [];
+	let has_season = false;
+	let has_ppc = false;
+	let has_total = false;
+
+	for (let i = 0; i < report_columns.length; i++) {
+		const col = report_columns[i];
+		const fn = col.fieldname || "";
+		if (fn === "season") has_season = true;
+		else if (fn === "ppc_display") has_ppc = true;
+		else if (fn.endsWith("_target")) {
+			mill_groups.push({
+				name: col.mill_name || col.label,
+				code: col.mill_code || "",
+				target_fn: fn,
+				recv_fn: report_columns[i + 1] ? report_columns[i + 1].fieldname : "",
+				bal_fn: report_columns[i + 2] ? report_columns[i + 2].fieldname : ""
+			});
+		} else if (fn === "total_target") {
+			has_total = true;
+		}
+	}
+%}
+
+<style>
+	body, html {
+		margin: 5px;
+		font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+		font-size: 11px;
+		color: #0f172a;
+	}
+	.report-title {
+		font-size: 16px;
+		font-weight: 700;
+		text-align: center;
+		margin-bottom: 12px;
+	}
+	.report-table table {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.report-table th, .report-table td {
+		border: 1px solid #cbd5e1;
+		padding: 5px 6px;
+		font-size: 11px;
+	}
+	.report-table th {
+		background-color: #f8fafc;
+		font-weight: 600;
+		text-align: center;
+	}
+	.report-table th.mill-super {
+		background-color: #f1f5f9;
+		font-weight: 700;
+		border-right: 2px solid #64748b;
+	}
+	.report-table th.total-super {
+		background-color: #e2e8f0;
+		font-weight: 800;
+		border-right: 2px solid #64748b;
+	}
+	.report-table td.text-right {
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+	.report-table td.text-left {
+		text-align: left;
+	}
+	.report-table td.mill-divider, .report-table th.mill-divider {
+		border-right: 2px solid #64748b;
+	}
+	.report-table tfoot td {
+		font-weight: 700;
+		background-color: #f1f5f9;
+		border-top: 2px solid #64748b;
+	}
+</style>
+
+<div>
+	<div class="report-title">{%= __(report.report_name) %}</div>
+
+	<div class="report-table">
+		<table>
+			<thead>
+				<tr>
+					{% if (has_season) { %}
+						<th rowspan="2" style="width: 100px;">{%= __("Season") %}</th>
+					{% } %}
+					{% if (has_ppc) { %}
+						<th rowspan="2" style="width: 180px;">{%= __("PPC") %}</th>
+					{% } %}
+					{% for (let m = 0; m < mill_groups.length; m++) { %}
+						{% const mg = mill_groups[m]; %}
+						<th colspan="3" class="mill-super" style="white-space: normal; line-height: 1.3;">
+							<div style="font-weight: 700; font-size: 11px;">{%= mg.name %}</div>
+							{% if (mg.code) { %}<div style="font-weight: 600; color: #475569; font-size: 10px; margin-top: 2px;">({%= mg.code %})</div>{% } %}
+						</th>
+					{% } %}
+					{% if (has_total) { %}
+						<th colspan="3" class="total-super">{%= __("TOTAL") %}</th>
+					{% } %}
+				</tr>
+				<tr>
+					{% for (let m = 0; m < mill_groups.length; m++) { %}
+						<th>{%= __("Target") %}</th>
+						<th>{%= __("Received") %}</th>
+						<th class="mill-divider">{%= __("Balance") %}</th>
+					{% } %}
+					{% if (has_total) { %}
+						<th>{%= __("Total Target") %}</th>
+						<th>{%= __("Total Received") %}</th>
+						<th class="mill-divider">{%= __("Total Balance") %}</th>
+					{% } %}
+				</tr>
+			</thead>
+			<tbody>
+				{% for (let r = 0; r < data.length; r++) { %}
+					{% const row = data[r]; %}
+					<tr>
+						{% if (has_season) { %}
+							<td class="text-left">{%= row.season || "" %}</td>
+						{% } %}
+						{% if (has_ppc) { %}
+							<td class="text-left">{%= row.ppc_display || row.ppc_name || "" %}</td>
+						{% } %}
+						{% for (let m = 0; m < mill_groups.length; m++) { %}
+							{% const mg = mill_groups[m]; %}
+							<td class="text-right">{%= flt(row[mg.target_fn]).toFixed(3) %}</td>
+							<td class="text-right">{%= flt(row[mg.recv_fn]).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row[mg.bal_fn]).toFixed(3) %}</td>
+						{% } %}
+						{% if (has_total) { %}
+							<td class="text-right">{%= flt(row.total_target).toFixed(3) %}</td>
+							<td class="text-right">{%= flt(row.total_received).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row.total_balance).toFixed(3) %}</td>
+						{% } %}
+					</tr>
+				{% } %}
+			</tbody>
+		</table>
+	</div>
+</div>

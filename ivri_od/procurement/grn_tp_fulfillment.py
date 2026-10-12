@@ -6,6 +6,11 @@ from __future__ import annotations
 import frappe
 from frappe.utils import flt
 
+CHHATNI_NOT_RECEIVED = "Chhatni Not Received"
+CHHATNI_RECEIVED = "Chhatni Received"
+CHHATNI_PENDING = "Chhatni Pending"
+EXTRA_CHHATNI_RECEIVED = "Extra Chhatni Received"
+
 # Allow shortfall vs required chhatni overfill (QT) when marking Chhatni Received.
 CHHATNI_QT_TOLERANCE = 0.3
 
@@ -130,3 +135,60 @@ def clear_tp_fulfillment_fields(grn):
 	grn.tp_cumulative_received = 0
 	grn.tp_fulfillment_status = ""
 	grn.chhatni_fulfillment_status = ""
+
+
+def required_chhatni_qt(tp_qty: float, chhatni_percentage: float) -> float:
+	"""Return the assigned chhatni quantity for a transit pass."""
+	return flt(flt(tp_qty) * flt(chhatni_percentage) / 100, 3)
+
+
+def received_chhatni_pct(total_deduction: float, tp_qty: float) -> float:
+	"""Return deductions as a percentage of TP quantity."""
+	tp_qty = flt(tp_qty)
+	if tp_qty <= 0:
+		return 0.0
+	return flt(flt(total_deduction) / tp_qty * 100, 2)
+
+
+def tp_chhatni_balance_qt(
+	tp_qty: float, cumulative_received: float, total_deduction: float
+) -> float:
+	"""Return received quantity minus TP and recorded deductions."""
+	return flt(flt(cumulative_received) - flt(tp_qty) - flt(total_deduction), 3)
+
+
+def tp_fulfillment_status(tp_qty: float, cumulative_received: float) -> str:
+	return "TP Completed" if flt(tp_qty) > 0 and flt(cumulative_received) >= flt(tp_qty) else "In Progress"
+
+
+def remaining_tp_quantity(tp_qty: float, cumulative_received: float) -> float:
+	return flt(max(flt(tp_qty) - flt(cumulative_received), 0), 3)
+
+
+def pending_tp_quantity(tp_qty: float, cumulative_received: float) -> float:
+	return remaining_tp_quantity(tp_qty, cumulative_received)
+
+
+def excess_tp_received_quantity(tp_qty: float, cumulative_received: float) -> float:
+	return flt(max(flt(cumulative_received) - flt(tp_qty), 0), 3)
+
+
+def evaluate_chhatni_fulfillment(
+	tp_qty: float,
+	cumulative_received: float,
+	chhatni_kg_per_quintal: float,
+	total_deduction: float = 0,
+) -> tuple[str, str]:
+	"""Evaluate chhatni from GRN deductions for the Mandi Book report."""
+	tp_qty = flt(tp_qty)
+	if tp_qty <= 0 or flt(cumulative_received) < tp_qty:
+		return CHHATNI_NOT_RECEIVED, ""
+	if flt(chhatni_kg_per_quintal) <= 0:
+		return CHHATNI_PENDING, ""
+	actual_pct = received_chhatni_pct(total_deduction, tp_qty)
+	assigned_pct = flt(chhatni_kg_per_quintal, 2)
+	if actual_pct > assigned_pct + 0.30:
+		return EXTRA_CHHATNI_RECEIVED, ""
+	if actual_pct >= assigned_pct - 0.30:
+		return CHHATNI_RECEIVED, ""
+	return CHHATNI_PENDING, ""

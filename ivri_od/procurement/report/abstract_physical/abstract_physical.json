@@ -1,0 +1,14 @@
+{
+ "add_total_row": 1,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Procurement",
+ "name": "Abstract Physical",
+ "ref_doctype": "PPC Master",
+ "report_name": "Abstract Physical",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Desk User"}
+ ]
+}
