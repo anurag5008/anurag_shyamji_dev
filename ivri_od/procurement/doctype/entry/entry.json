@@ -8,10 +8,11 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "datetime_section",
-  "entry_date",
-  "entry_time",
   "tp_section",
+  "season",
+  "ppc_name",
+  "tp_no",
+  "column_break_tp_lookup",
   "pass_unique_key",
   "transit_pass_no",
   "column_break_tp",
@@ -19,8 +20,8 @@
   "pacs_name",
   "entry_details_section",
   "agent_name",
-  "column_break_1",
   "entry_quantity",
+  "column_break_1",
   "entry_price_per_quintal",
   "total_amount"
  ],
@@ -35,40 +36,45 @@
    "reqd": 1
   },
   {
-   "fieldname": "datetime_section",
-   "fieldtype": "Section Break",
-   "label": "Entry"
-  },
-  {
-   "default": "Today",
-   "fieldname": "entry_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Date",
-   "reqd": 1
-  },
-  {
-   "default": "Now",
-   "fieldname": "entry_time",
-   "fieldtype": "Time",
-   "in_list_view": 1,
-   "label": "Time",
-   "reqd": 1
-  },
-  {
    "fieldname": "tp_section",
    "fieldtype": "Section Break",
    "label": "Transit Pass"
   },
   {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ppc_name",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "PPC",
+   "options": "PPC Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tp_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tp_lookup",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "pass_unique_key",
-   "fieldtype": "Autocomplete",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "TP (Pass Unique Key)",
-   "max_items": 25,
-   "reqd": 1
+   "read_only": 1
   },
   {
    "fieldname": "transit_pass_no",
@@ -143,7 +149,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-01 17:30:00.000000",
+ "modified": "2026-10-02 19:27:31.938961",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Entry",
@@ -178,7 +184,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "pass_unique_key,pacs_name,agent_name,transit_pass_no",
+ "search_fields": "pass_unique_key,pacs_name,agent_name,transit_pass_no,tp_no,ppc_name,season",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

@@ -8,11 +8,13 @@
  "engine": "InnoDB",
  "field_order": [
   "ppc_name",
-  "season",
-  "column_break_1",
   "mill_name",
+  "column_break_1",
+  "season",
   "chutney_quantity_kg_per_quintal",
-  "chutney_percentage"
+  "chutney_percentage",
+  "history_section",
+  "chhatni_history"
  ],
  "fields": [
   {
@@ -51,7 +53,6 @@
   },
   {
    "allow_in_quick_entry": 1,
-   "description": "Chhatni weight in kg per quintal of paddy (1 quintal = 100 kg).",
    "fieldname": "chutney_quantity_kg_per_quintal",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -60,13 +61,26 @@
    "reqd": 1
   },
   {
-   "description": "Auto: same as kg per quintal (e.g. 4 kg per quintal = 4%).",
    "fieldname": "chutney_percentage",
    "fieldtype": "Percent",
    "in_list_view": 1,
    "label": "Chhatni Percentage",
    "precision": "2",
    "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "history_section",
+   "fieldtype": "Section Break",
+   "label": "Chhatni Change History"
+  },
+  {
+   "cannot_add_rows": 1,
+   "cannot_delete_rows": 1,
+   "fieldname": "chhatni_history",
+   "fieldtype": "Table",
+   "label": "Change Log",
+   "options": "Chhatni Assign History"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -104,7 +118,7 @@
    "write": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "search_fields": "ppc_name,season,mill_name",
  "sort_field": "modified",
  "sort_order": "DESC",

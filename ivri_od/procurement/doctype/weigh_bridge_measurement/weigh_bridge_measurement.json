@@ -14,12 +14,16 @@
   "transit_pass_section",
   "pass_unique_key",
   "pacs_name",
-  "tp_weight",
   "column_break_tp",
+  "tp_weight",
+  "no_of_bags",
   "weighment_section",
-  "measurement_date",
-  "measurement_time",
+  "date",
   "rst_no",
+  "party_name",
+  "local_purchase_order",
+  "column_break_weighment",
+  "tp_status",
   "quality_check",
   "quality_test",
   "truck_section",
@@ -30,12 +34,13 @@
   "actual_truck_no",
   "load_section",
   "commodity",
-  "no_of_bags",
   "gunny_type",
+  "total_bags",
   "column_break_load",
   "load_weight",
   "tare_weight",
   "gross_weight",
+  "column_break_load_2",
   "gunny_weight",
   "deduction",
   "net_weight",
@@ -43,9 +48,9 @@
   "transit_pass_no",
   "total_jute_empty_qt",
   "total_plastic_empty_qt",
+  "vehicle_no",
   "section_break_rnxd",
-  "bag_weight_details",
-  "vehicle_no"
+  "bag_weight_details"
  ],
  "fields": [
   {
@@ -69,16 +74,15 @@
    "default": "0",
    "fieldname": "is_farmer_or_agent",
    "fieldtype": "Check",
-   "label": "From Farmer or Agent"
+   "label": "Local Paddy Purchase"
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent",
-   "description": "Not used for local paddy procurement. Party name is not saved in Agent Master.",
    "fieldname": "agent_name",
    "fieldtype": "Link",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Agent Name",
+   "label": "Party Name",
    "mandatory_depends_on": "eval:doc.is_farmer_or_agent && !doc.demo_rst_data",
    "options": "Agent Master",
    "read_only_depends_on": "eval:doc.demo_rst_data"
@@ -109,7 +113,7 @@
    "depends_on": "eval:!doc.is_farmer_or_agent",
    "fieldname": "pacs_name",
    "fieldtype": "Data",
-   "label": "PACS Name",
+   "label": "PPC Name",
    "read_only": 1
   },
   {
@@ -132,28 +136,38 @@
    "label": "Weighment"
   },
   {
-   "default": "Today",
-   "fieldname": "measurement_date",
-   "fieldtype": "Date",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Date",
-   "reqd": 1
-  },
-  {
-   "default": "Now",
-   "fieldname": "measurement_time",
-   "fieldtype": "Time",
-   "in_list_view": 1,
-   "label": "Time",
-   "reqd": 1
-  },
-  {
    "fieldname": "rst_no",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "RST No"
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Party Name",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:doc.is_farmer_or_agent",
+   "fieldname": "local_purchase_order",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Local Purchase Order",
+   "options": "Local Paddy Purchase Order",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tp_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP Status",
+   "options": "\nTP Received\nTP Not Received\nLocal Procurement",
+   "read_only": 1
   },
   {
    "fieldname": "slno_of_qc",
@@ -224,7 +238,6 @@
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent || doc.same_truck_as_transit_pass",
-   "description": "From RST Vehicle No when From Farmer or Agent is ticked. Otherwise the truck that differs from the transit pass.",
    "fieldname": "actual_truck_no",
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
@@ -245,7 +258,7 @@
   {
    "fieldname": "no_of_bags",
    "fieldtype": "Int",
-   "label": "No of Bags",
+   "label": "Bags (In No.)",
    "non_negative": 1
   },
   {
@@ -255,21 +268,21 @@
   {
    "fieldname": "load_weight",
    "fieldtype": "Float",
-   "label": "Gross Vehicle Weight (QT)",
+   "label": "Load Weight (QT)",
    "non_negative": 1,
    "precision": "3"
   },
   {
    "fieldname": "tare_weight",
    "fieldtype": "Float",
-   "label": "Tare Vehicle Weight (QT)",
+   "label": "Tare Weight (QT)",
    "non_negative": 1,
    "precision": "3"
   },
   {
    "fieldname": "gross_weight",
    "fieldtype": "Float",
-   "label": "Gross Paddy Weight (QT)",
+   "label": "Gross Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
@@ -295,20 +308,18 @@
    "fieldname": "net_weight",
    "fieldtype": "Float",
    "in_list_view": 1,
-   "label": "Net Paddy Weight (QT)",
+   "label": "Net Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
-   "description": "Sum of empty bag weight from Bag Details (QT, up to 3 decimals).",
    "fieldname": "gunny_weight",
    "fieldtype": "Float",
    "label": "Gunny Weight (QT)",
    "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
+   "precision": "3"
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
@@ -316,6 +327,15 @@
    "fieldtype": "Table",
    "label": "Bag Details (from QC)",
    "options": "Weigh Bridge Bag Detail"
+  },
+  {
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "fieldname": "total_bags",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Total Bags",
+   "non_negative": 1,
+   "read_only": 1
   },
   {
    "fieldname": "total_jute_empty_qt",
@@ -338,11 +358,27 @@
   {
    "fieldname": "section_break_rnxd",
    "fieldtype": "Section Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Date & Time",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_weighment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_load_2",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-30 06:40:00.000000",
+ "modified": "2026-10-06 15:55:56.936740",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Weigh Bridge Measurement",
@@ -377,7 +413,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "pass_unique_key,transit_pass_no,rst_no,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
+ "search_fields": "pass_unique_key,transit_pass_no,rst_no,tp_status,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

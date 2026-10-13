@@ -22,6 +22,11 @@
 			color: #fff;
 			padding: 18px 24px 14px;
 		}
+		.top-band-table { width: 100%; border-collapse: collapse; }
+		.top-band-table td { vertical-align: middle; padding: 0; }
+		.top-band-table .logo-cell { width: 1%; padding-right: 16px; white-space: nowrap; }
+		.top-band-table .title-cell { text-align: left; }
+		.print-logo { display: block; background: #fff; border-radius: 4px; padding: 4px; }
 		.top-band .company {
 			font-size: 17pt;
 			font-weight: 600;
@@ -185,8 +190,17 @@
 <body>
 	<div class="pass">
 		<div class="top-band">
-			<div class="company">{{ company_name or _("Mill Gate") }}</div>
-			<div class="pass-type">{{ _("Official Gate Entry Pass") }}</div>
+			<table class="top-band-table" cellpadding="0" cellspacing="0">
+				<tr>
+					{% if print_logo %}
+					<td class="logo-cell">{{ print_logo | safe }}</td>
+					{% endif %}
+					<td class="title-cell">
+						<div class="company">{{ company_name or _("Mill Gate") }}</div>
+						<div class="pass-type">{{ _("Official Gate Entry Pass") }}</div>
+					</td>
+				</tr>
+			</table>
 		</div>
 
 		<div class="doc-strip">
@@ -211,6 +225,10 @@
 						<tr>
 							<td class="lbl">{{ _("Vehicle No") }}</td>
 							<td class="val">{{ doc.vehicle_no or "—" }}</td>
+						</tr>
+						<tr>
+							<td class="lbl">{{ _("Party Name") }}</td>
+							<td class="val">{{ party_name or doc.party_name or doc.custom_party_name or "—" }}</td>
 						</tr>
 						<tr>
 							<td class="lbl">{{ _("Driver Name") }}</td>

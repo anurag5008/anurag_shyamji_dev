@@ -1,0 +1,169 @@
+{
+ "actions": [],
+ "creation": "2026-10-01 10:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "source_sl",
+  "season",
+  "pacs",
+  "ppc",
+  "miller",
+  "transit_pass_no",
+  "transit_pass_date",
+  "transit_pass_time",
+  "vehicle_no",
+  "driver_name",
+  "bag",
+  "quantity",
+  "delay_in_days",
+  "accepted_date",
+  "accepted_time",
+  "action",
+  "row_status",
+  "error_message"
+ ],
+ "fields": [
+  {
+   "columns": 1,
+   "fieldname": "source_sl",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Source Sl#",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "season",
+   "fieldtype": "Data",
+   "label": "Season",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "pacs",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "PACS",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "ppc",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "PPC",
+   "read_only": 1
+  },
+  {
+   "fieldname": "miller",
+   "fieldtype": "Data",
+   "label": "Miller",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "transit_pass_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Transit Pass No",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "transit_pass_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transit Pass Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transit_pass_time",
+   "fieldtype": "Time",
+   "label": "Transit Pass Time",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vehicle No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "bag",
+   "fieldtype": "Int",
+   "label": "Bag",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delay_in_days",
+   "fieldtype": "Int",
+   "label": "Delay In Days",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accepted_date",
+   "fieldtype": "Date",
+   "label": "Accepted Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "accepted_time",
+   "fieldtype": "Time",
+   "label": "Accepted Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "action",
+   "fieldtype": "Data",
+   "label": "Action",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "row_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Row Status",
+   "options": "Valid\nDuplicate\nFailed",
+   "read_only": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "error_message",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Error Message",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 10:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "PPAS Transit Pass Import Item",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -4,19 +4,15 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import flt, format_datetime, get_datetime
+from frappe.utils import flt
 
-from ivri_od.procurement.pass_print import (
-	qr_content_entry,
-	qr_image_html,
-	render_template_file,
-	send_pdf_download,
-)
+from ivri_od.procurement.transit_pass_resolve import get_transit_pass_for_ppc_and_tp_no
 
 
 class Entry(Document):
 	def after_insert(self):
 		self._sync_grn_entry_details()
+		self._schedule_procurement_rollup_sync()
 
 	def on_update(self):
 		self._sync_grn_entry_details()
@@ -24,8 +20,18 @@ class Entry(Document):
 		previous_key = (previous.pass_unique_key or "").strip() if previous else ""
 		if previous_key and previous_key != (self.pass_unique_key or "").strip():
 			self._sync_grn_entry_details(previous_key)
+		self._schedule_procurement_rollup_sync(previous_key)
+
+	def _schedule_procurement_rollup_sync(self, previous_key: str | None = None):
+		keys = {(self.pass_unique_key or "").strip()}
+		if previous_key:
+			keys.add((previous_key or "").strip())
+		keys.discard("")
+		for key in keys:
+			frappe.db.after_commit(lambda k=key: _sync_procurement_rollups_for_pass(k))
 
 	def validate(self):
+		self._resolve_pass_from_ppc_and_tp_no()
 		self._validate_pass_unique_key()
 		self._normalize_fields()
 		self._validate_available_quantity()
@@ -41,29 +47,41 @@ class Entry(Document):
 
 		sync_grn_entry_details_for_pass(key)
 
+	def _resolve_pass_from_ppc_and_tp_no(self):
+		tp_no = (self.tp_no or "").strip()
+		ppc_name = (self.ppc_name or "").strip()
+		season = (self.season or "").strip()
+		if not season:
+			frappe.throw(_("Season is required to fetch the Pass Unique Key."))
+		if not ppc_name or not tp_no:
+			frappe.throw(_("PPC and TP No are required to fetch the Pass Unique Key."))
+		tp_row = get_transit_pass_for_ppc_and_tp_no(ppc_name, tp_no, season=season)
+		if not tp_row:
+			frappe.throw(
+				_(
+					"No PPAS Transit Pass found for Season {0}, TP No {1}, and PPC {2}. "
+					"Check season, TP No, and PPC on the transit pass import."
+				).format(frappe.bold(season), frappe.bold(tp_no), frappe.bold(ppc_name))
+			)
+		key = (tp_row.get("pass_unique_key") or tp_row.get("name") or "").strip()
+		if not key:
+			frappe.throw(_("Transit pass found but Pass Unique Key is missing."))
+		self.pass_unique_key = key
+		self.tp_no = tp_no
+		self.transit_pass_no = (tp_row.get("transit_pass_no") or tp_no).strip()
+		self.tp_quantity = flt(tp_row.get("quantity"))
+		self.pacs_name = (tp_row.get("pacs") or "").strip()
+
 	def _validate_pass_unique_key(self):
 		key = (self.pass_unique_key or "").strip()
 		self.pass_unique_key = key
 		if not key:
-			frappe.throw(_("Select TP (Pass Unique Key) from PPAS Transit Pass."))
+			frappe.throw(_("Pass Unique Key could not be resolved. Enter PPC and TP No."))
 
 		if not frappe.db.exists("PPAS Transit Pass", {"pass_unique_key": key}):
 			frappe.throw(
 				_("No PPAS Transit Pass found for Pass Unique Key {0}.").format(frappe.bold(key))
 			)
-
-		tp = frappe.db.get_value(
-			"PPAS Transit Pass",
-			{"pass_unique_key": key},
-			["transit_pass_no", "quantity", "pacs"],
-			as_dict=True,
-		)
-		if not tp:
-			return
-
-		self.transit_pass_no = tp.transit_pass_no
-		self.tp_quantity = flt(tp.quantity)
-		self.pacs_name = (tp.pacs or "").strip()
 
 	def _validate_available_quantity(self):
 		key = (self.pass_unique_key or "").strip()
@@ -116,39 +134,30 @@ class Entry(Document):
 		self.total_amount = flt(self.entry_quantity) * flt(self.entry_price_per_quintal)
 
 
-def _entry_datetime_display(doc) -> str:
-	if doc.entry_date and doc.entry_time:
-		return format_datetime(get_datetime(f"{doc.entry_date} {doc.entry_time}"))
-	if doc.entry_date:
-		return format_datetime(get_datetime(str(doc.entry_date)))
-	return "—"
+def resolve_pass_unique_key_from_ppc_tp(
+	ppc_name: str, tp_no: str, season: str | None = None
+) -> str | None:
+	row = get_transit_pass_for_ppc_and_tp_no(ppc_name, tp_no, season=season)
+	if not row:
+		return None
+	return (row.get("pass_unique_key") or row.get("name") or "").strip() or None
 
 
-def _render_entry_pass_html(doc, for_pdf: bool = False) -> str:
-	entry_datetime_display = _entry_datetime_display(doc)
-	qr_text = qr_content_entry(doc, entry_datetime_display)
-	return render_template_file(
-		("procurement", "doctype", "entry", "entry_pass.html"),
-		{
-			"doc": doc,
-			"entry_datetime_display": entry_datetime_display,
-			"qr_image": qr_image_html(qr_text),
-			"qr_text": qr_text,
-			"for_pdf": for_pdf,
-		},
-	)
+def _sync_procurement_rollups_for_pass(pass_unique_key: str) -> None:
+	from ivri_od.procurement.procurement_sync import sync_procurement_from_pass
+
+	sync_procurement_from_pass((pass_unique_key or "").strip())
 
 
 @frappe.whitelist()
-def get_entry_pass_html(name: str) -> str:
-	doc = frappe.get_doc("Entry", name)
-	doc.check_permission("print")
-	return _render_entry_pass_html(doc)
-
-
-@frappe.whitelist()
-def download_entry_pass_pdf(name: str):
-	doc = frappe.get_doc("Entry", name)
-	doc.check_permission("print")
-	html = _render_entry_pass_html(doc, for_pdf=True)
-	send_pdf_download(html, f"{doc.name}-entry-pass.pdf")
+def resolve_entry_pass_from_ppc_tp(ppc_name=None, tp_no=None, season=None):
+	row = get_transit_pass_for_ppc_and_tp_no(ppc_name, tp_no, season=season)
+	if not row:
+		return {}
+	key = (row.get("pass_unique_key") or row.get("name") or "").strip()
+	return {
+		"pass_unique_key": key,
+		"transit_pass_no": row.get("transit_pass_no"),
+		"quantity": row.get("quantity"),
+		"pacs": row.get("pacs"),
+	}

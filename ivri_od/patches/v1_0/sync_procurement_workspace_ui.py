@@ -13,7 +13,6 @@ PROCUREMENT_DOCTYPES = [
 	("Mill Master", "factory"),
 	("PPC Master", "map-pin"),
 	("Season Master", "calendar"),
-	("Season Mapping", "calendar"),
 	("Daily Planning", "truck"),
 	("PPAS Data Extraction", "download"),
 	("PPAS Transit Pass", "file-text"),
@@ -29,9 +28,9 @@ PROCUREMENT_DOCTYPES = [
 
 def execute():
 	_ensure_procurement_workspace_title()
-	_force_import_procurement_workspace()
-	_force_import_sidebar_only()
-	frappe.clear_cache()
+	from ivri_od.procurement.procurement_workspace import sync_procurement_desk_ui
+
+	sync_procurement_desk_ui()
 
 
 def _ensure_procurement_workspace_title():

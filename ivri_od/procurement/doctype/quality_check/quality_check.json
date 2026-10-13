@@ -8,8 +8,10 @@
  "engine": "InnoDB",
  "field_order": [
   "qc_datetime_section",
+  "qc_datetime",
   "qc_date",
   "qc_time",
+  "column_break_qc_head",
   "is_farmer_or_agent",
   "farmer_name",
   "gate_section",
@@ -19,18 +21,20 @@
   "column_break_gate",
   "unloading_point",
   "staff_name",
-  "party_name",
   "paddy_section",
   "paddy_received_in_pkt",
   "paddy_returned",
   "column_break_paddy",
-  "paddy_type",
   "paddy_quality",
+  "paddy_type",
   "quality_params_section",
   "moisture",
+  "column_break_params",
   "dust",
   "qc_decision_section",
   "qc_decision",
+  "old_new_bags_section",
+  "old_new_bags",
   "type_of_pkt_section",
   "type_of_pkt"
  ],
@@ -41,21 +45,28 @@
    "label": "Quality Check"
   },
   {
-   "default": "Today",
-   "fieldname": "qc_date",
-   "fieldtype": "Date",
+   "default": "Now",
+   "fieldname": "qc_datetime",
+   "fieldtype": "Datetime",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Date",
+   "label": "Date & Time",
+   "read_only": 1,
    "reqd": 1
   },
   {
-   "default": "Now",
+   "fieldname": "qc_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Date",
+   "read_only": 1
+  },
+  {
    "fieldname": "qc_time",
    "fieldtype": "Time",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Time",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "default": "0",
@@ -78,7 +89,6 @@
    "label": "Vehicle"
   },
   {
-   "description": "Checking quality of this vehicle",
    "fieldname": "vehicle_no",
    "fieldtype": "Autocomplete",
    "in_list_view": 1,
@@ -122,16 +132,6 @@
    "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
   },
   {
-   "depends_on": "eval:!doc.is_farmer_or_agent",
-   "fieldname": "party_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "PPC Name",
-   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent",
-   "options": "PPC Master"
-  },
-  {
    "fieldname": "paddy_section",
    "fieldtype": "Section Break",
    "label": "Paddy"
@@ -153,15 +153,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "paddy_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Paddy Type",
-   "options": "\nOld\nNew",
-   "reqd": 1
-  },
-  {
    "fieldname": "paddy_quality",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -169,6 +160,13 @@
    "label": "Paddy Quality",
    "options": "\nMota\nPatla",
    "reqd": 1
+  },
+  {
+   "fieldname": "paddy_type",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Paddy Type (In Bags)",
+   "read_only": 1
   },
   {
    "fieldname": "quality_params_section",
@@ -200,8 +198,20 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Quality Test",
-   "options": "\nAccepted\nPartially Accepted\nRejected",
+   "options": "\nAccepted\nPartially Accepted",
+   "read_only": 1,
    "reqd": 1
+  },
+  {
+   "fieldname": "old_new_bags_section",
+   "fieldtype": "Section Break",
+   "label": "Paddy Type (In Bags)"
+  },
+  {
+   "fieldname": "old_new_bags",
+   "fieldtype": "Table",
+   "label": "Paddy Type (In Bags)",
+   "options": "Quality Check Old New Bag Detail"
   },
   {
    "fieldname": "type_of_pkt_section",
@@ -213,11 +223,19 @@
    "fieldtype": "Table",
    "label": "Type of Bags",
    "options": "Quality Check Bag Detail"
+  },
+  {
+   "fieldname": "column_break_qc_head",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_params",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-22 15:15:22.504305",
+ "modified": "2026-10-05 12:05:12.740089",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Quality Check",
@@ -252,7 +270,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "qc_decision,gate_entry,vehicle_no,unloading_point,staff_name,party_name,farmer_name,driver_name",
+ "search_fields": "qc_decision,gate_entry,vehicle_no,unloading_point,staff_name,farmer_name,driver_name",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

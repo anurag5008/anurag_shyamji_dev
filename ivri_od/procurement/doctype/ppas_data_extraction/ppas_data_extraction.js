@@ -1574,7 +1574,9 @@ async function extract_data_action(frm) {
                             "PPAS Error",
 
                         message:
-                            error.message,
+                            `${error.message}<br><br>` +
+                            __("PPAS Agent could not retrieve data. You can use " +
+                                "<a href=\"/app/ppas-transit-pass-import\">Manual PPAS Import</a> as a backup."),
 
                         indicator:
                             "red"

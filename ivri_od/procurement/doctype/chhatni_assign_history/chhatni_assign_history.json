@@ -1,0 +1,70 @@
+{
+ "actions": [],
+ "creation": "2026-10-01 18:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "change_datetime",
+  "changed_by",
+  "old_chhatni_kg",
+  "new_chhatni_kg",
+  "change_note"
+ ],
+ "fields": [
+  {
+   "columns": 2,
+   "fieldname": "change_datetime",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Changed On",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "columns": 2,
+   "fieldname": "changed_by",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Changed By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "old_chhatni_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Previous Chhatni (Kg/Quintal)",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "columns": 1,
+   "fieldname": "new_chhatni_kg",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "New Chhatni (Kg/Quintal)",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "change_note",
+   "fieldtype": "Small Text",
+   "in_list_view": 1,
+   "label": "Note",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-01 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Chhatni Assign History",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

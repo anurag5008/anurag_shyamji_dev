@@ -173,6 +173,28 @@ def get_qc_for_vehicle_open_visit(vehicle_no: str) -> dict | None:
 	return rows[0] if rows else None
 
 
+def get_quality_check_for_vehicle(vehicle_no: str) -> dict | None:
+	"""Latest Quality Check for this vehicle (open visit first, then any recent QC)."""
+	vehicle_no = normalize_vehicle_no(vehicle_no)
+	if not vehicle_no:
+		return None
+	qc = get_qc_for_vehicle_open_visit(vehicle_no)
+	if qc:
+		return qc
+	rows = frappe.db.sql(
+		"""
+		SELECT qc.name, qc.vehicle_no, qc.gate_entry, qc.qc_decision
+		FROM `tabQuality Check` qc
+		WHERE UPPER(TRIM(qc.vehicle_no)) = %s
+		ORDER BY qc.modified DESC, qc.creation DESC
+		LIMIT 1
+		""",
+		vehicle_no,
+		as_dict=True,
+	)
+	return rows[0] if rows else None
+
+
 def get_quality_check_for_vehicle_open_visit(vehicle_no: str) -> str | None:
 	qc = get_qc_for_vehicle_open_visit(vehicle_no)
 	return qc.name if qc else None
@@ -184,9 +206,10 @@ def get_qc_sl_no(qc_name: str | None) -> int:
 	if not qc_name or not frappe.db.exists("Quality Check", qc_name):
 		return 0
 
-	serial = cint(frappe.db.get_value("Quality Check", qc_name, "qc_serial_no"))
-	if serial:
-		return serial
+	if frappe.db.has_column("Quality Check", "qc_serial_no"):
+		serial = cint(frappe.db.get_value("Quality Check", qc_name, "qc_serial_no"))
+		if serial:
+			return serial
 
 	if qc_name.startswith("QC-"):
 		tail = qc_name.rsplit("-", 1)[-1]

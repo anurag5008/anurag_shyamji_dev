@@ -53,7 +53,7 @@ frappe.ui.form.on("Target Allocation", {
 	},
 
 	refresh(frm) {
-		if (frm.doc.ppc_name && frm.doc.mill_name && !frm.is_new()) {
+		if (frm.doc.ppc_name && frm.doc.mill_name && frm.doc.season) {
 			refresh_latest_chutney(frm);
 		}
 	},

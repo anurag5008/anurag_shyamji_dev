@@ -1,6 +1,8 @@
 # Copyright (c) 2026, Profezzo and contributors
 
 import base64
+import mimetypes
+import os
 from io import BytesIO
 
 import frappe
@@ -17,6 +19,39 @@ def get_company_name() -> str:
 	return frappe.db.get_value("Company", company, "company_name") or company
 
 
+_PRINT_LOGO_EXTENSIONS = (".png", ".jpg", ".jpeg", ".webp", ".svg", ".gif")
+
+
+def get_print_logo_path() -> str | None:
+	"""First image in apps/ivri_od/logo/ (served embedded in print/PDF)."""
+	app_root = os.path.dirname(frappe.get_app_path("ivri_od"))
+	logo_dir = os.path.join(app_root, "logo")
+	if not os.path.isdir(logo_dir):
+		return None
+	candidates: list[str] = []
+	for name in sorted(os.listdir(logo_dir)):
+		path = os.path.join(logo_dir, name)
+		if not os.path.isfile(path):
+			continue
+		if os.path.splitext(name)[1].lower() in _PRINT_LOGO_EXTENSIONS:
+			candidates.append(path)
+	return candidates[0] if candidates else None
+
+
+def print_logo_html(max_height: int = 56) -> str:
+	path = get_print_logo_path()
+	if not path:
+		return ""
+	mime = mimetypes.guess_type(path)[0] or "image/jpeg"
+	with open(path, "rb") as logo_file:
+		b64 = base64.b64encode(logo_file.read()).decode("ascii")
+	return (
+		f'<img src="data:{mime};base64,{b64}" class="print-logo" '
+		f'style="max-height:{max_height}px;max-width:140px;height:auto;width:auto;" '
+		f'alt="" />'
+	)
+
+
 def _qr_line(label: str, value) -> str | None:
 	text = ("" if value is None else str(value)).strip()
 	if not text or text == "—":
@@ -28,13 +63,14 @@ def _join_qr_lines(*parts: str | None) -> str:
 	return "\n".join(line for line in parts if line)
 
 
-def qr_content_gate_entry(doc, entry_datetime_display: str) -> str:
+def qr_content_gate_entry(doc, entry_datetime_display: str, party_name: str | None = None) -> str:
 	"""All main Gate Entry fields as plain text for phone QR scanners."""
 	movement = doc.in_out or "In"
 	lines = [
 		_qr_line("Gate Entry", doc.name),
 		_qr_line("Movement", movement),
 		_qr_line("Vehicle No", doc.vehicle_no),
+		_qr_line("Party Name", party_name),
 		_qr_line("Driver", doc.driver_name),
 		_qr_line("Mobile", doc.mobile_no),
 		_qr_line("Gate In Date & Time", entry_datetime_display),
@@ -89,10 +125,74 @@ def qr_content_entry(doc, entry_datetime_display: str) -> str:
 	return body
 
 
+def qr_content_grn_note(doc, receipt_datetime_display: str) -> str:
+	"""Main GRN Note fields as plain text for phone QR scanners."""
+	lines = [
+		_qr_line("GRN", (doc.grn_no or doc.name or "").strip() or doc.name),
+		_qr_line("Receipt Date & Time", receipt_datetime_display),
+		_qr_line(
+			"Purchase Type",
+			"Local Paddy Purchase" if doc.is_local_procurement else "Government Paddy Purchase",
+		),
+		_qr_line("Pass Unique Key", doc.pass_unique_key),
+		_qr_line("CMR Season", doc.cmr_season),
+		_qr_line("Chhatni (Kg/Qtl)", doc.chhatni),
+		_qr_line("Transit Pass No", doc.transit_pass_no),
+		_qr_line("TP Quantity (QT)", doc.tp_quantity),
+		_qr_line("PACS", doc.pacs),
+		_qr_line("PPC", doc.ppc),
+		_qr_line("Mill Name", doc.mill_name),
+		_qr_line("RST No", doc.rst_no),
+		_qr_line("Vehicle No", doc.vehicle_no),
+		_qr_line("Driver Name", doc.driver_name),
+		_qr_line("Net Weight", doc.net_weight),
+		_qr_line("Quality Check", doc.quality_check),
+		_qr_line("QC Sample No", doc.qc_sample_no),
+		_qr_line("No of Bags", doc.no_of_bags),
+		_qr_line("Moisture", doc.moisture),
+		_qr_line("Dust", doc.dust),
+		_qr_line("QC Decision", doc.qc_decision),
+		_qr_line("This GRN Received (QT)", doc.received_quantity),
+		_qr_line("Pass Total Received So Far (QT)", doc.tp_cumulative_received),
+		_qr_line("Received (QT) - TP + Chhatni", doc.tp_chhatni_balance),
+		_qr_line("Progressive Deduction Total (QT)", doc.tp_cumulative_deduction),
+		_qr_line("Chhatni % Received", doc.chhatni_received_pct),
+		_qr_line("TP Status", doc.tp_fulfillment_status),
+		_qr_line("Chhatni Status", doc.chhatni_fulfillment_status),
+		_qr_line("Chhatni Note", doc.chhatni_fulfillment_remark),
+	]
+	for row in doc.get("entry_details") or []:
+		entry_line = _join_qr_lines(
+			_qr_line("Entry", row.entry),
+			_qr_line("Qty", row.entry_quantity),
+			_qr_line("Agent", row.agent_name),
+		)
+		if entry_line:
+			lines.append(entry_line)
+	body = _join_qr_lines(*lines)
+	try:
+		body = f"{body}\n\n{get_url_to_form('GRN Note', doc.name)}"
+	except Exception:
+		pass
+	return body
+
+
+def _qr_encoder_text(data: str) -> str:
+	"""pyqrcode encodes as Latin-1. Unicode dashes in labels raise UnicodeEncodeError."""
+	text = (
+		(data or "")
+		.replace("\u2212", "-")
+		.replace("\u2013", "-")
+		.replace("\u2014", "-")
+	)
+	return text.encode("iso-8859-1", errors="replace").decode("iso-8859-1")
+
+
 def qr_image_html(data: str, size: int = 168) -> str:
 	"""PNG embedded as base64 — scans reliably from PDF (SVG often breaks in wkhtmltopdf)."""
 	from pyqrcode import create as qrcreate
 
+	data = _qr_encoder_text(data)
 	stream = BytesIO()
 	# High correction when payload is longer (full details)
 	error_level = "H" if len(data) > 200 else "M"
@@ -116,6 +216,7 @@ def render_template_file(relative_parts: tuple[str, ...], context: dict) -> str:
 	env = get_jenv()
 	context.setdefault("printed_on", format_datetime(now_datetime()))
 	context.setdefault("company_name", get_company_name())
+	context.setdefault("print_logo", print_logo_html())
 	context.setdefault("_", _)
 	return env.from_string(template_source).render(context)
 

@@ -6,6 +6,7 @@ import json
 import frappe
 from frappe.model.document import Document
 
+from ivri_od.procurement.datetime_fields import ensure_doc_datetime
 from ivri_od.procurement.doctype.ppas_transit_pass.pass_unique_key import make_pass_unique_key
 from ivri_od.procurement.doctype.ppas_transit_pass.ppas_import import split_datetime
 
@@ -26,6 +27,18 @@ class PPASTransitPass(Document):
 			self.miller = self.miller.strip()
 
 		self.set_pass_unique_key()
+		ensure_doc_datetime(
+			self,
+			"transit_pass_datetime",
+			date_field="transit_pass_date",
+			time_field="transit_pass_time",
+		)
+		ensure_doc_datetime(
+			self,
+			"accepted_datetime",
+			date_field="accepted_date",
+			time_field="accepted_time",
+		)
 		self.validate_duplicate_identity()
 		self.validate_duplicate_pass_unique_key()
 

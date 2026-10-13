@@ -1,4 +1,4 @@
-"""Recalculate GRN Chhatni status with corrected overfill rule."""
+"""Recalculate GRN TP/Chhatni status (overfill rule and TP-not-filled chhatni note)."""
 
 import frappe
 

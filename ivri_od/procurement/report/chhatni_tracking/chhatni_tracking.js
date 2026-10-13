@@ -1,4 +1,6 @@
-frappe.query_reports["Mill PPC Season Quantity Summary"] = {
+// Copyright (c) 2026, Profezzo and contributors
+
+frappe.query_reports["Chhatni Tracking"] = {
 	collapsible_filters: true,
 	filters: [
 		{
@@ -15,9 +17,14 @@ frappe.query_reports["Mill PPC Season Quantity Summary"] = {
 		},
 		{
 			fieldname: "mill_name",
-			label: __("Mill"),
+			label: __("Mill Name"),
 			fieldtype: "Link",
 			options: "Mill Master",
+		},
+		{
+			fieldname: "transit_pass_no",
+			label: __("Transit Pass No"),
+			fieldtype: "Data",
 		},
 	],
 };

@@ -12,15 +12,17 @@
   "inside_mill",
   "gate_section",
   "in_purpose",
-  "purpose",
   "going_to_weighment",
+  "column_break_purpose",
+  "purpose",
   "vehicle_section",
   "vehicle_no",
-  "truck_pic",
   "driver_name",
-  "mobile_no",
+  "party_name",
   "column_break_1",
+  "mobile_no",
   "entry_datetime",
+  "truck_pic",
   "entry_date",
   "entry_time",
   "out_details_section",
@@ -71,18 +73,18 @@
   },
   {
    "depends_on": "eval:doc.in_purpose=='Others'",
-    "fieldname": "purpose",
-    "fieldtype": "Small Text",
-    "label": "Purpose Details",
-    "mandatory_depends_on": "eval:doc.in_purpose=='Others'"
+   "fieldname": "purpose",
+   "fieldtype": "Small Text",
+   "label": "Purpose Details",
+   "mandatory_depends_on": "eval:doc.in_purpose=='Others'"
   },
   {
-    "default": "0",
-    "depends_on": "eval:doc.in_purpose",
-    "fieldname": "going_to_weighment",
-    "fieldtype": "Check",
-    "label": "Going to Weighment",
-    "read_only": 0
+   "default": "0",
+   "depends_on": "eval:doc.in_purpose",
+   "fieldname": "going_to_weighment",
+   "fieldtype": "Check",
+   "label": "Going to Weighment",
+   "read_only": 0
   },
   {
    "fieldname": "vehicle_section",
@@ -112,7 +114,8 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Gate In Date & Time",
+   "label": "Date & Time",
+   "read_only": 1,
    "reqd": 1
   },
   {
@@ -136,25 +139,33 @@
    "label": "Driver Name"
   },
   {
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Party Name",
+   "reqd": 1
+  },
+  {
    "fieldname": "out_details_section",
    "fieldtype": "Section Break",
    "hidden": 1,
    "label": "Legacy Gate Out"
   },
   {
-    "fieldname": "out_purpose",
-    "fieldtype": "Select",
-    "hidden": 1,
-    "label": "Out Purpose",
-    "options": "\nFCI DEPO\nRRC DEPO\nOthers",
-    "mandatory_depends_on": "eval:doc.in_out=='Out'"
+   "fieldname": "out_purpose",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Out Purpose",
+   "options": "\nFCI DEPO\nRRC DEPO\nOthers",
+   "mandatory_depends_on": "eval:doc.in_out=='Out'"
   },
   {
-    "fieldname": "out_purpose_detail",
-    "fieldtype": "Small Text",
-    "hidden": 1,
-    "label": "Out Purpose Detail",
-    "mandatory_depends_on": "eval:doc.in_out=='Out' && doc.out_purpose=='Others'"
+   "fieldname": "out_purpose_detail",
+   "fieldtype": "Small Text",
+   "hidden": 1,
+   "label": "Out Purpose Detail",
+   "mandatory_depends_on": "eval:doc.in_out=='Out' && doc.out_purpose=='Others'"
   },
   {
    "fieldname": "gate_entry_in",
@@ -167,6 +178,10 @@
    "fieldname": "mobile_no",
    "fieldtype": "Data",
    "label": "Mobile No"
+  },
+  {
+   "fieldname": "column_break_purpose",
+   "fieldtype": "Column Break"
   }
  ],
  "index_web_pages_for_search": 1,
@@ -206,7 +221,7 @@
   }
  ],
  "row_format": "Dynamic",
- "search_fields": "vehicle_no,driver_name,in_purpose",
+ "search_fields": "vehicle_no,driver_name,party_name,in_purpose",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],

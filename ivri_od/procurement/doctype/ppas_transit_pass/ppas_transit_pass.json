@@ -17,8 +17,9 @@
   "pass_section",
   "transit_pass_no",
   "pass_unique_key",
-  "transit_pass_date",
   "column_break_2",
+  "transit_pass_datetime",
+  "transit_pass_date",
   "transit_pass_time",
   "vehicle_section",
   "vehicle_no",
@@ -28,10 +29,11 @@
   "quantity",
   "acceptance_section",
   "delay_in_days",
-  "accepted_date",
+  "action",
   "column_break_4",
-  "accepted_time",
-  "action"
+  "accepted_datetime",
+  "accepted_date",
+  "accepted_time"
  ],
  "fields": [
   {
@@ -89,7 +91,6 @@
    "reqd": 1
   },
   {
-   "description": "Miller code-PPC name(code)-K25/R24-TP{pass no}. Unique across PPAS and mills.",
    "fieldname": "pass_unique_key",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -102,7 +103,8 @@
    "fieldname": "transit_pass_date",
    "fieldtype": "Date",
    "in_standard_filter": 1,
-   "label": "Transit Pass Date"
+   "label": "Transit Pass Date",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_2",
@@ -111,7 +113,8 @@
   {
    "fieldname": "transit_pass_time",
    "fieldtype": "Time",
-   "label": "Transit Pass Time"
+   "label": "Transit Pass Time",
+   "hidden": 1
   },
   {
    "fieldname": "vehicle_section",
@@ -135,7 +138,6 @@
   },
   {
    "default": "0",
-   "default": "0",
    "fieldname": "bags",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -157,7 +159,6 @@
   },
   {
    "default": "0",
-   "default": "0",
    "fieldname": "delay_in_days",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -168,7 +169,8 @@
   {
    "fieldname": "accepted_date",
    "fieldtype": "Date",
-   "label": "Accepted Date"
+   "label": "Accepted Date",
+   "hidden": 1
   },
   {
    "fieldname": "column_break_4",
@@ -177,13 +179,24 @@
   {
    "fieldname": "accepted_time",
    "fieldtype": "Time",
-   "label": "Accepted Time"
+   "label": "Accepted Time",
+   "hidden": 1
   },
   {
    "fieldname": "action",
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "Action"
+  },
+  {
+   "fieldname": "transit_pass_datetime",
+   "fieldtype": "Datetime",
+   "label": "Transit Pass Date & Time"
+  },
+  {
+   "fieldname": "accepted_datetime",
+   "fieldtype": "Datetime",
+   "label": "Accepted Date & Time"
   }
  ],
  "index_web_pages_for_search": 1,
