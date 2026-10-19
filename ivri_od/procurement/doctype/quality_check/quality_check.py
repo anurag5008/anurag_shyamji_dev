@@ -50,6 +50,7 @@ class QualityCheck(Document):
 			date_field="qc_date",
 			time_field="qc_time",
 		)
+		self._validate_not_local_procurement()
 		self._sync_farmer_or_agent_mode()
 		self._validate_gate_entry()
 		self._validate_farmer_or_agent_fields()
@@ -59,6 +60,15 @@ class QualityCheck(Document):
 		self._sync_paddy_type_from_old_new_bags()
 		self._validate_old_new_bags()
 		self._validate_type_of_pkt()
+
+	def _validate_not_local_procurement(self):
+		before = self.get_doc_before_save()
+		is_existing_local = before and cint(getattr(before, "is_farmer_or_agent", 0))
+		if cint(self.is_farmer_or_agent) and not is_existing_local:
+			frappe.throw(
+				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
+				title=_("Local Procurement Disabled"),
+			)
 
 	def on_update(self):
 		_sync_weigh_bridge_quality_from_qc(self)

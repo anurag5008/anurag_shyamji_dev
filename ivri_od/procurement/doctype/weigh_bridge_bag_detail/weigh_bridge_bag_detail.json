@@ -12,25 +12,25 @@
  ],
  "fields": [
   {
-   "columns": 1,
+   "columns": 3,
    "fieldname": "jute_bags",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Jute Bags",
+   "label": "Jute Bag No (Bags)",
    "non_negative": 1,
    "read_only": 1
   },
   {
-   "columns": 1,
+   "columns": 3,
    "fieldname": "plastic_bags",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "Plastic Bags",
+   "label": "Plastic Bag No (Bags)",
    "non_negative": 1,
    "read_only": 1
   },
   {
-   "columns": 2,
+   "columns": 3,
    "fieldname": "total_bags",
    "fieldtype": "Int",
    "in_list_view": 1,

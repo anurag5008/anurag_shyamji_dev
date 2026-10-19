@@ -36,14 +36,14 @@ def execute(filters=None):
 def get_columns():
 	return [
 		{"label": _("Season"), "fieldname": "season", "fieldtype": "Data", "width": 110},
-		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 180},
+		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 260},
 		{
 			"label": _("Mill Name"),
 			"fieldname": "mill_name",
 			"fieldtype": "Data",
-			"width": 220,
+			"width": 480,
 		},
-		{"label": _("TP No."), "fieldname": "transit_pass_no", "fieldtype": "Data", "width": 90},
+		{"label": _("TP No."), "fieldname": "transit_pass_no", "fieldtype": "Data", "width": 95},
 		{
 			"label": _("Pass Unique Key"),
 			"fieldname": "pass_unique_key",
@@ -57,7 +57,34 @@ def get_columns():
 			"fieldname": "tp_quantity",
 			"fieldtype": "Float",
 			"precision": 3,
-			"width": 110,
+			"width": 105,
+		},
+		{
+			"label": _("Total Gross Wt"),
+			"fieldname": "total_gross_weight",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 130,
+		},
+		{
+			"label": _("Gunny Type"),
+			"fieldname": "summary_gunny_type",
+			"fieldtype": "Data",
+			"width": 120,
+		},
+		{
+			"label": _("Total Gunny Wt"),
+			"fieldname": "total_gunny_weight",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 130,
+		},
+		{
+			"label": _("Total Deduction Received"),
+			"fieldname": "total_deduction_received",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 180,
 		},
 		{
 			"label": _("Total Qty Received"),
@@ -80,7 +107,7 @@ def get_columns():
 			"precision": 3,
 			"width": 170,
 		},
-		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 110},
+		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 130},
 		{"label": _("Jute Bags"), "fieldname": "jute_pkt", "fieldtype": "Int", "width": 95},
 		{"label": _("Plastic Bags"), "fieldname": "plastic_pkt", "fieldtype": "Int", "width": 95},
 		{"label": _("Total Bags"), "fieldname": "total_bags", "fieldtype": "Int", "width": 95},
@@ -89,23 +116,36 @@ def get_columns():
 			"fieldname": "chhatni_assigned",
 			"fieldtype": "Float",
 			"precision": 2,
-			"width": 135,
+			"width": 140,
 		},
 		{
 			"label": _("Received Chhatni %"),
 			"fieldname": "actual_chhatni_pct",
 			"fieldtype": "Percent",
 			"precision": 2,
-			"width": 135,
+			"width": 140,
 		},
 		{
 			"label": _("Chhatni Status"),
 			"fieldname": "chhatni_status",
 			"fieldtype": "Data",
-			"width": 180,
+			"width": 185,
 		},
-		{"label": _("GRN Details"), "fieldname": "grn_count", "fieldtype": "Data", "width": 125},
-		{"label": _("Entry Details"), "fieldname": "entry_count", "fieldtype": "Data", "width": 125},
+		{"label": _("Entry"), "fieldname": "entry", "fieldtype": "Link", "options": "Entry", "width": 125},
+		{"label": _("Agent Name"), "fieldname": "agent_name", "fieldtype": "Data", "width": 150},
+		{"label": _("Entry Qty"), "fieldname": "entry_quantity", "fieldtype": "Float", "precision": 3, "width": 110},
+		{"label": _("Price per Quintal"), "fieldname": "entry_price_per_quintal", "fieldtype": "Float", "precision": 2, "width": 135},
+		{"label": _("Total Amount"), "fieldname": "total_amount", "fieldtype": "Float", "precision": 2, "width": 135},
+		{"label": _("GRN No."), "fieldname": "grn_no", "fieldtype": "Link", "options": "GRN Note", "width": 135},
+		{"label": _("RST No."), "fieldname": "rst_no", "fieldtype": "Data", "width": 120},
+		{"label": _("Vehicle No."), "fieldname": "vehicle_no", "fieldtype": "Data", "width": 125},
+		{"label": _("Load Wt"), "fieldname": "load_weight", "fieldtype": "Float", "precision": 3, "width": 105},
+		{"label": _("Tare Wt"), "fieldname": "tare_weight", "fieldtype": "Float", "precision": 3, "width": 105},
+		{"label": _("Gross Wt"), "fieldname": "gross_weight", "fieldtype": "Float", "precision": 3, "width": 105},
+		{"label": _("Gunny Type"), "fieldname": "gunny_type", "fieldtype": "Data", "width": 120},
+		{"label": _("Gunny Wt"), "fieldname": "gunny_weight", "fieldtype": "Float", "precision": 3, "width": 105},
+		{"label": _("Deduction"), "fieldname": "deduction", "fieldtype": "Float", "precision": 3, "width": 105},
+		{"label": _("Net Wt"), "fieldname": "net_weight", "fieldtype": "Float", "precision": 3, "width": 105},
 	]
 
 
@@ -186,7 +226,7 @@ def get_data(filters):
 		pending_qty = pending_tp_quantity(tp_qty, total_received)
 		excess_qty = excess_tp_received_quantity(tp_qty, total_received)
 		required_chhatni = required_chhatni_qt(tp_qty, chhatni_assigned)
-		actual_chhatni_pct = received_chhatni_pct(total_deduction, tp_qty) if tp_qty > 0 else 0.0
+		actual_chhatni_pct = received_chhatni_pct(total_received, tp_qty)
 		chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned, total_deduction)
 		balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
 		extra = excess_qty
@@ -205,43 +245,134 @@ def get_data(filters):
 		for line in rst_lines:
 			if line["gunny_type"] and line["gunny_type"] not in gunny_types:
 				gunny_types.append(line["gunny_type"])
-		rows.append(
-			{
-				"season": season_name,
-				"ppc_name": ppc_display_name(sample.ppc or sample.ppc_name),
-				"mill_name": mill_label,
-				"transit_pass_no": tp_no,
-				"pass_unique_key": key,
-				"tp_quantity": tp_qty,
-				"total_received": total_received,
-				"pending_qty": pending_qty,
-				"pending_quantity": pending_qty,
-				"remaining_quantity": pending_qty,
-				"excess_received_qty": excess_qty,
-				"excess_received_quantity": excess_qty,
-				"tp_status": tp_status,
-				"chhatni_assigned": chhatni_assigned,
-				"required_chhatni": required_chhatni,
-				"actual_chhatni_pct": actual_chhatni_pct,
-				"chhatni_status": chhatni_status,
-				"received_minus_tp_chhatni": balance,
-				"extra_after_tp": extra,
-				"chhatni_received_qty": chhatni_received_qty,
-				"jute_pkt": sum(line["jute_pkt"] for line in rst_lines),
-				"plastic_pkt": sum(line["plastic_pkt"] for line in rst_lines),
-				"no_of_bags": sum(line["no_of_bags"] for line in rst_lines),
-				"total_bags": sum(line["total_bags"] for line in rst_lines),
-				"gunny_type": " / ".join(gunny_types),
-				"gunny_weight": flt(sum(line["gunny_weight"] for line in rst_lines), 3),
-				"deduction": flt(sum(line["deduction"] for line in rst_lines), 3),
-				"grn_count": len(rst_lines),
-				"rst_count": len(rst_lines),
-				"entry_count": len(entry_lines),
-				"grn_lines": rst_lines,
-				"rst_lines": rst_lines,
-				"entry_lines": entry_lines,
-			}
-		)
+
+		total_gross_weight = flt(sum(line["gross_weight"] for line in rst_lines), 3)
+		total_gunny_weight = flt(sum(line["gunny_weight"] for line in rst_lines), 3)
+		total_deduction_received = flt(sum(line["deduction"] for line in rst_lines), 3)
+
+		tp_summary = {
+			"season": season_name,
+			"ppc_name": ppc_display_name(sample.ppc or sample.ppc_name),
+			"mill_name": mill_label,
+			"transit_pass_no": tp_no,
+			"pass_unique_key": key,
+			"tp_key": key,
+			"tp_quantity": tp_qty,
+			"total_gross_weight": total_gross_weight,
+			"total_gross_wt": total_gross_weight,
+			"summary_gunny_type": " / ".join(gunny_types),
+			"total_gunny_weight": total_gunny_weight,
+			"total_gunny_wt": total_gunny_weight,
+			"total_deduction_received": total_deduction_received,
+			"total_deduction": total_deduction_received,
+			"total_received": total_received,
+			"pending_qty": pending_qty,
+			"pending_quantity": pending_qty,
+			"remaining_quantity": pending_qty,
+			"excess_received_qty": excess_qty,
+			"excess_received_quantity": excess_qty,
+			"tp_status": tp_status,
+			"jute_pkt": sum(line["jute_pkt"] for line in rst_lines),
+			"plastic_pkt": sum(line["plastic_pkt"] for line in rst_lines),
+			"no_of_bags": sum(line["no_of_bags"] for line in rst_lines),
+			"total_bags": sum(line["total_bags"] for line in rst_lines),
+			"chhatni_assigned": chhatni_assigned,
+			"required_chhatni": required_chhatni,
+			"actual_chhatni_pct": actual_chhatni_pct,
+			"chhatni_status": chhatni_status,
+			"received_minus_tp_chhatni": balance,
+			"extra_after_tp": extra,
+			"chhatni_received_qty": chhatni_received_qty,
+			"gunny_type_summary": " / ".join(gunny_types),
+			"deduction_total": total_deduction,
+			"grn_count": len(rst_lines),
+			"rst_count": len(rst_lines),
+			"entry_count": len(entry_lines),
+			"grn_lines": rst_lines,
+			"rst_lines": rst_lines,
+			"entry_lines": entry_lines,
+		}
+
+		tp_blank = {
+			"season": "",
+			"ppc_name": "",
+			"mill_name": "",
+			"transit_pass_no": "",
+			"pass_unique_key": "",
+			"tp_key": key,
+			"tp_quantity": None,
+			"total_gross_weight": None,
+			"total_gross_wt": None,
+			"summary_gunny_type": "",
+			"total_gunny_weight": None,
+			"total_gunny_wt": None,
+			"total_deduction_received": None,
+			"total_deduction": None,
+			"total_received": None,
+			"pending_qty": None,
+			"pending_quantity": None,
+			"remaining_quantity": None,
+			"excess_received_qty": None,
+			"excess_received_quantity": None,
+			"tp_status": "",
+			"jute_pkt": None,
+			"plastic_pkt": None,
+			"no_of_bags": None,
+			"total_bags": None,
+			"chhatni_assigned": None,
+			"required_chhatni": None,
+			"actual_chhatni_pct": None,
+			"chhatni_status": "",
+			"received_minus_tp_chhatni": None,
+			"extra_after_tp": None,
+			"chhatni_received_qty": None,
+			"gunny_type_summary": "",
+			"deduction_total": None,
+			"grn_count": None,
+			"rst_count": None,
+			"entry_count": None,
+			"grn_lines": [],
+			"rst_lines": [],
+			"entry_lines": [],
+		}
+
+		# Detail rows: align Entry records sequentially alongside GRN records
+		total_detail_rows = max(len(rst_lines), len(entry_lines))
+		if total_detail_rows == 0:
+			row = dict(tp_summary)
+			row.update(_empty_grn_dict())
+			row.update(_empty_entry_dict())
+			row["detail_type"] = ""
+			rows.append(row)
+		else:
+			for idx in range(total_detail_rows):
+				base = tp_summary if idx == 0 else tp_blank
+				row = dict(base)
+
+				grn = rst_lines[idx] if idx < len(rst_lines) else None
+				entry = entry_lines[idx] if idx < len(entry_lines) else None
+
+				if grn:
+					row.update(_grn_fields_dict(grn))
+				else:
+					row.update(_empty_grn_dict())
+
+				if entry:
+					row.update(_entry_fields_dict(entry))
+				else:
+					row.update(_empty_entry_dict())
+
+				if grn and entry:
+					row["detail_type"] = "GRN & Entry"
+				elif grn:
+					row["detail_type"] = "GRN"
+				elif entry:
+					row["detail_type"] = "Entry"
+				else:
+					row["detail_type"] = ""
+
+				rows.append(row)
+
 	return rows
 
 
@@ -361,13 +492,18 @@ def _entries_for(pass_keys: list[str]) -> dict[str, list[dict]]:
 	grouped: dict[str, list[dict]] = defaultdict(list)
 	for row in rows:
 		key = (row.pass_unique_key or "").strip()
+		qty = flt(row.entry_quantity, 3)
+		rate = flt(row.entry_price_per_quintal, 2)
+		amt = flt(row.total_amount, 2)
+		if not amt and qty and rate:
+			amt = flt(qty * rate, 2)
 		grouped[key].append(
 			{
 				"entry": row.name,
 				"agent_name": (row.agent_name or "").strip(),
-				"entry_quantity": flt(row.entry_quantity, 3),
-				"entry_price_per_quintal": flt(row.entry_price_per_quintal, 2),
-				"total_amount": flt(row.total_amount, 2),
+				"entry_quantity": qty,
+				"entry_price_per_quintal": rate,
+				"total_amount": amt,
 			}
 		)
 	return grouped
@@ -478,3 +614,58 @@ def _ppc_matches(doc, values: set[str]) -> bool:
 		if value in (ppc, ppc_name) or value in ppc or value in ppc_name:
 			return True
 	return False
+
+
+def _grn_fields_dict(line: dict) -> dict:
+	return {
+		"grn_no": (line.get("grn_no") or line.get("grn_name") or "").strip(),
+		"grn_name": (line.get("grn_name") or "").strip(),
+		"rst_no": (line.get("rst_no") or "").strip(),
+		"vehicle_no": (line.get("vehicle_no") or line.get("actual_vehicle_no") or "").strip(),
+		"load_weight": flt(line.get("load_weight"), 3),
+		"tare_weight": flt(line.get("tare_weight"), 3),
+		"gross_weight": flt(line.get("gross_weight"), 3),
+		"gunny_type": (line.get("gunny_type") or "").strip(),
+		"gunny_weight": flt(line.get("gunny_weight"), 3),
+		"deduction": flt(line.get("deduction"), 3),
+		"net_weight": flt(line.get("net_weight"), 3),
+		"weigh_bridge_measurement": (line.get("weigh_bridge_measurement") or "").strip(),
+	}
+
+
+def _empty_grn_dict() -> dict:
+	return {
+		"grn_no": "",
+		"grn_name": "",
+		"rst_no": "",
+		"vehicle_no": "",
+		"load_weight": None,
+		"tare_weight": None,
+		"gross_weight": None,
+		"gunny_type": "",
+		"gunny_weight": None,
+		"deduction": None,
+		"net_weight": None,
+		"weigh_bridge_measurement": "",
+	}
+
+
+def _entry_fields_dict(entry: dict) -> dict:
+	return {
+		"entry": (entry.get("entry") or "").strip(),
+		"agent_name": (entry.get("agent_name") or "").strip(),
+		"entry_quantity": flt(entry.get("entry_quantity"), 3),
+		"entry_price_per_quintal": flt(entry.get("entry_price_per_quintal"), 2),
+		"total_amount": flt(entry.get("total_amount"), 2),
+	}
+
+
+def _empty_entry_dict() -> dict:
+	return {
+		"entry": "",
+		"agent_name": "",
+		"entry_quantity": None,
+		"entry_price_per_quintal": None,
+		"total_amount": None,
+	}
+

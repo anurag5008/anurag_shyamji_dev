@@ -92,34 +92,6 @@ def get_truck_load_from_transit_pass(plan_date, ppc_name, trucks_sent=0):
 	return compute_truck_totals(plan_date, ppc_name, trucks_sent)
 
 
-@frappe.whitelist()
-@frappe.validate_and_sanitize_search_inputs
-def get_pacs_for_ppc(doctype, txt, searchfield, start, page_len, filters):
-	filters = frappe.parse_json(filters) if filters else {}
-	ppc_name = filters.get("ppc_name")
-	conditions = ["(name LIKE %s OR code LIKE %s OR ppc_name LIKE %s)"]
-	values = [f"%{txt}%", f"%{txt}%", f"%{txt}%"]
-
-	if ppc_name:
-		ppc_values = sorted(_master_match_values("PPC Master", ppc_name, ["code", "ppc_name", "title"]))
-		if ppc_values:
-			placeholders = ", ".join(["%s"] * len(ppc_values))
-			conditions.append(f"(ppc_name IN ({placeholders}) OR name IN ({placeholders}))")
-			values.extend(ppc_values)
-			values.extend(ppc_values)
-
-	return frappe.db.sql(
-		f"""
-		SELECT name
-		FROM `tabSociety Master`
-		WHERE {" AND ".join(conditions)}
-		ORDER BY name
-		LIMIT %s, %s
-		""",
-		(*values, start, page_len),
-	)
-
-
 class DailyPlanning(Document):
 	def validate(self):
 		self.validate_plan_date()

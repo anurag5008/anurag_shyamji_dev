@@ -1054,7 +1054,8 @@ def import_manual_ppas_valid_rows(season, items_json=None):
 	valid_payloads = []
 	for item in items:
 		payload = manual_item_from_import_child(item)
-		if _text(payload.get("row_status")) != "Valid":
+		status = _text(payload.get("row_status"))
+		if status and status != "Valid":
 			continue
 		valid_payloads.append(payload)
 

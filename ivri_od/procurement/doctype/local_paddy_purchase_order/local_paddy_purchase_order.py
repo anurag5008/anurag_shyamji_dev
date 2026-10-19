@@ -16,11 +16,11 @@ def get_po_received_quantity(po_name: str) -> float:
 		"""
 		SELECT IFNULL(SUM(net_weight), 0)
 		FROM `tabGRN Note`
-		WHERE (local_purchase_order = %s OR purchase_order = %s)
+		WHERE local_purchase_order = %s
 		  AND is_local_procurement = 1
 		  AND docstatus < 2
 		""",
-		(po_name, po_name),
+		po_name,
 	)
 	return flt(res[0][0]) if res else 0.0
 
@@ -39,6 +39,8 @@ def compute_po_status(ordered_qty: float, received_qty: float, current_status: s
 
 class LocalPaddyPurchaseOrder(Document):
 	def validate(self):
+		if self.is_new():
+			frappe.throw(_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."))
 		self._normalize_fields()
 		self._validate_ordered_quantity()
 		self._compute_quantities_and_status()
@@ -100,30 +102,8 @@ def refresh_po_quantities(po_name: str) -> dict:
 
 @frappe.whitelist()
 def get_open_purchase_orders_for_party(party_name: str) -> list[dict]:
-	"""Return open / partially received POs for a given party name."""
-	party = (party_name or "").strip()
-	if not party:
-		return []
-
-	# Search by exact or substring match
-	return frappe.get_all(
-		"Local Paddy Purchase Order",
-		filters={
-			"party_name": ["like", f"%{party}%"],
-			"status": ["in", ["Open", "Partially Received"]],
-		},
-		fields=[
-			"name",
-			"party_name",
-			"order_date",
-			"commodity",
-			"ordered_quantity",
-			"received_quantity",
-			"pending_quantity",
-			"status",
-		],
-		order_by="order_date desc, creation desc",
-	)
+	"""Disabled: Local Paddy Purchase Order selection is disabled."""
+	return []
 
 
 @frappe.whitelist()

@@ -52,14 +52,18 @@
 		text-align: center;
 	}
 	.report-table th.mill-super {
-		background-color: #f1f5f9;
+		background-color: #dbeafe;
+		color: #1e3a8a;
 		font-weight: 700;
 		border-right: 2px solid #64748b;
+		border-bottom: 2px solid #4c5a67;
 	}
 	.report-table th.total-super {
-		background-color: #e2e8f0;
+		background-color: #dbeafe;
+		color: #1e3a8a;
 		font-weight: 800;
 		border-right: 2px solid #64748b;
+		border-bottom: 2px solid #4c5a67;
 	}
 	.report-table td.text-right {
 		text-align: right;
@@ -85,11 +89,12 @@
 		<table>
 			<thead>
 				<tr>
+					<th rowspan="2" class="mill-divider" style="width: 35px;">#</th>
 					{% if (has_season) { %}
 						<th rowspan="2" style="width: 100px;">{%= __("Season") %}</th>
 					{% } %}
 					{% if (has_ppc) { %}
-						<th rowspan="2" style="width: 180px;">{%= __("PPC") %}</th>
+						<th rowspan="2" class="mill-divider" style="width: 180px;">{%= __("PPC") %}</th>
 					{% } %}
 					{% for (let m = 0; m < mill_groups.length; m++) { %}
 						{% const mg = mill_groups[m]; %}
@@ -99,18 +104,18 @@
 						</th>
 					{% } %}
 					{% if (has_total) { %}
-						<th colspan="3" class="total-super">{%= __("TOTAL") %}</th>
+						<th colspan="3" class="total-super">{%= __("Grand Total") %}</th>
 					{% } %}
 				</tr>
 				<tr>
 					{% for (let m = 0; m < mill_groups.length; m++) { %}
-						<th>{%= __("Target") %}</th>
-						<th>{%= __("Received") %}</th>
+						<th class="mill-divider">{%= __("Target") %}</th>
+						<th class="mill-divider">{%= __("Received") %}</th>
 						<th class="mill-divider">{%= __("Balance") %}</th>
 					{% } %}
 					{% if (has_total) { %}
-						<th>{%= __("Total Target") %}</th>
-						<th>{%= __("Total Received") %}</th>
+						<th class="mill-divider">{%= __("Total Target") %}</th>
+						<th class="mill-divider">{%= __("Total Received") %}</th>
 						<th class="mill-divider">{%= __("Total Balance") %}</th>
 					{% } %}
 				</tr>
@@ -119,26 +124,65 @@
 				{% for (let r = 0; r < data.length; r++) { %}
 					{% const row = data[r]; %}
 					<tr>
+						<td class="text-left mill-divider" style="text-align: center;">{%= r + 1 %}</td>
 						{% if (has_season) { %}
 							<td class="text-left">{%= row.season || "" %}</td>
 						{% } %}
 						{% if (has_ppc) { %}
-							<td class="text-left">{%= row.ppc_display || row.ppc_name || "" %}</td>
+							<td class="text-left mill-divider">{%= row.ppc_display || row.ppc_name || "" %}</td>
 						{% } %}
 						{% for (let m = 0; m < mill_groups.length; m++) { %}
 							{% const mg = mill_groups[m]; %}
-							<td class="text-right">{%= flt(row[mg.target_fn]).toFixed(3) %}</td>
-							<td class="text-right">{%= flt(row[mg.recv_fn]).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row[mg.target_fn]).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row[mg.recv_fn]).toFixed(3) %}</td>
 							<td class="text-right mill-divider">{%= flt(row[mg.bal_fn]).toFixed(3) %}</td>
 						{% } %}
 						{% if (has_total) { %}
-							<td class="text-right">{%= flt(row.total_target).toFixed(3) %}</td>
-							<td class="text-right">{%= flt(row.total_received).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row.total_target).toFixed(3) %}</td>
+							<td class="text-right mill-divider">{%= flt(row.total_received).toFixed(3) %}</td>
 							<td class="text-right mill-divider">{%= flt(row.total_balance).toFixed(3) %}</td>
 						{% } %}
 					</tr>
 				{% } %}
 			</tbody>
+			<tfoot>
+				<tr>
+					<td class="text-left mill-divider"></td>
+					{% if (has_season) { %}
+						<td class="text-left"></td>
+					{% } %}
+					{% if (has_ppc) { %}
+						<td class="text-left mill-divider"></td>
+					{% } %}
+					{% for (let m = 0; m < mill_groups.length; m++) { %}
+						{% const mg = mill_groups[m]; %}
+						{%
+							let tot_target = 0, tot_recv = 0, tot_bal = 0;
+							for (let r = 0; r < data.length; r++) {
+								tot_target += flt(data[r][mg.target_fn]);
+								tot_recv += flt(data[r][mg.recv_fn]);
+								tot_bal += flt(data[r][mg.bal_fn]);
+							}
+						%}
+						<td class="text-right mill-divider">{%= tot_target.toFixed(3) %}</td>
+						<td class="text-right mill-divider">{%= tot_recv.toFixed(3) %}</td>
+						<td class="text-right mill-divider">{%= tot_bal.toFixed(3) %}</td>
+					{% } %}
+					{% if (has_total) { %}
+						{%
+							let g_target = 0, g_recv = 0, g_bal = 0;
+							for (let r = 0; r < data.length; r++) {
+								g_target += flt(data[r].total_target);
+								g_recv += flt(data[r].total_received);
+								g_bal += flt(data[r].total_balance);
+							}
+						%}
+						<td class="text-right mill-divider">{%= g_target.toFixed(3) %}</td>
+						<td class="text-right mill-divider">{%= g_recv.toFixed(3) %}</td>
+						<td class="text-right mill-divider">{%= g_bal.toFixed(3) %}</td>
+					{% } %}
+				</tr>
+			</tfoot>
 		</table>
 	</div>
 </div>

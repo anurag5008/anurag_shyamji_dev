@@ -376,6 +376,153 @@ class TestAbstractReport(FrappeTestCase):
 		]
 		self.assertEqual(mill_target_cols, names)
 
+	def test_abstract_report_vertical_column_borders(self):
+		"""Verify continuous vertical borders between #, Season, PPC, mill groups, and Grand Total."""
+		import json
+		import subprocess
+
+		columns = get_columns()
+		js_path = frappe.get_app_path("ivri_od", "procurement", "report", "abstract_report", "abstract_report.js")
+
+		node_script = """
+		const fs = require('fs');
+		const code = fs.readFileSync(__JS_PATH__, 'utf8');
+""".replace("__JS_PATH__", json.dumps(js_path)) + """
+		global.frappe = {
+			query_reports: {},
+			utils: { escape_html: (s) => s }
+		};
+		global.__ = (s) => s;
+		global.flt = (v) => parseFloat(v) || 0;
+		const appendedSuperCells = [];
+		const mockEl = () => {
+			const obj = {
+				length: 1,
+				find: () => mockEl(),
+				empty: () => obj,
+				append: (child) => {
+					if (typeof child === 'string') appendedSuperCells.push(child);
+					else if (child && child.__html) appendedSuperCells.push(child.__html);
+					return obj;
+				},
+				before: () => obj,
+				off: () => obj,
+				on: () => obj,
+				addClass: () => obj,
+				attr: () => ""
+			};
+			return obj;
+		};
+		global.$ = (html) => {
+			const el = mockEl();
+			if (typeof html === 'string') {
+				el.__html = html;
+			}
+			return el;
+		};
+		global.window = {
+			off: () => ({ on: () => {} }),
+			on: () => {}
+		};
+
+		let createdStyle = null;
+		global.document = {
+			head: { appendChild: () => {} },
+			getElementById: () => null,
+			createElement: () => {
+				createdStyle = { id: '', textContent: '' };
+				return createdStyle;
+			}
+		};
+
+		eval(code);
+
+		const report = frappe.query_reports['Abstract Report'];
+		const rawColumns = JSON.parse(fs.readFileSync(0, 'utf8'));
+
+		// Emulate Frappe DataTable columns including _rowIndex as colIndex 0
+		const datatableColumns = [
+			{ id: '_rowIndex', fieldname: '_rowIndex', colIndex: 0 }
+		].concat(rawColumns.map((c, i) => Object.assign({}, c, {
+			colIndex: i + 1,
+			id: c.fieldname
+		})));
+
+		const mockDataTable = {
+			header: {},
+			wrapper: {},
+			datamanager: {
+				getColumns: () => datatableColumns
+			}
+		};
+
+		report.after_datatable_render(mockDataTable);
+
+		const result = {
+			style_css: createdStyle ? createdStyle.textContent : '',
+			super_cells: appendedSuperCells
+		};
+		process.stdout.write(JSON.stringify(result));
+		"""
+
+		proc = subprocess.run(
+			["node", "-e", node_script],
+			input=json.dumps(columns, default=str),
+			capture_output=True,
+			text=True,
+			cwd=frappe.get_app_path("frappe", "../.."),
+		)
+		if proc.returncode != 0:
+			raise AssertionError(f"Node script failed (exit {proc.returncode}):\nSTDOUT: {proc.stdout}\nSTDERR: {proc.stderr}")
+
+		result = json.loads(proc.stdout)
+		style_css = result["style_css"]
+		super_cells = " ".join(result.get("super_cells", []))
+
+		# 1. Verify border style definitions
+		self.assertIn("border-right: 2px solid #64748b !important", style_css)
+		self.assertIn(".dt-super-cell--row-index-divider", style_css)
+		self.assertIn(".dt-super-cell--season", style_css)
+		self.assertIn(".dt-super-cell--ppc-divider", style_css)
+		self.assertIn(".dt-super-cell--mill", style_css)
+		self.assertIn(".dt-super-cell--total", style_css)
+
+		# 2. Verify row index (#) column has border-right divider rule (colIndex 0)
+		self.assertIn(".dt-cell--col-0", style_css, "# column (col 0) must have divider CSS rule")
+
+		# 3. Verify Season column has no border rule (colIndex 1)
+		self.assertIn(".dt-cell--col-1", style_css, "Season column (col 1) must have rule")
+		self.assertIn("border-right: none !important", style_css, "Season must have border-right: none")
+
+		# 4. Verify PPC column has border-right divider rule (colIndex 2)
+		self.assertIn(".dt-cell--col-2", style_css, "PPC column (col 2) must have divider CSS rule")
+
+		# 5. Verify all mill balance columns + total balance have border-right
+		# In our simulated datatableColumns, offset is +1 because of _rowIndex
+		balance_col_indices = [
+			i + 1 for i, c in enumerate(columns)
+			if c["fieldname"].endswith("_balance")
+		]
+		self.assertGreaterEqual(len(balance_col_indices), 5, "Must have at least 5 mill balance columns + total balance")
+
+		for b_idx in balance_col_indices:
+			self.assertIn(f".dt-cell--col-{b_idx}", style_css, f"Balance column {b_idx} must have divider CSS rule")
+
+		# 6. Verify Grand Total super-header
+		self.assertIn("Grand Total", super_cells, "Super header must contain 'Grand Total'")
+
+
+
+def run_quick():
+	suite = unittest.TestSuite()
+	suite.addTest(TestAbstractReport("test_abstract_report_vertical_column_borders"))
+	suite.addTest(TestAbstractReport("test_columns_structure_and_dynamic_mills"))
+	runner = unittest.TextTestRunner(verbosity=2)
+	result = runner.run(suite)
+	if not result.wasSuccessful():
+		raise RuntimeError(f"Tests failed: {len(result.failures)} failures, {len(result.errors)} errors")
+	print(f"All {result.testsRun} tests passed successfully!")
+	return True
 
 
 def run():

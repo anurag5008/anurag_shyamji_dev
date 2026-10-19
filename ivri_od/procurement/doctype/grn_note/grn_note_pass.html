@@ -4,140 +4,113 @@
 	<meta charset="utf-8">
 	<title>{{ doc.grn_no or doc.name }} — GRN</title>
 	<style>
-		@page { size: A4 portrait; margin: 8mm; }
+		@page { size: A4 portrait; margin: 6mm 8mm; }
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 		body {
-			font-family: "Segoe UI", "Helvetica Neue", Helvetica, Arial, sans-serif;
-			font-size: 8.5pt;
+			font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
+			font-size: 7.8pt;
 			line-height: 1.35;
-			color: #1e293b;
+			color: #0f172a;
 			background: #fff;
 		}
 		.pass {
 			width: 100%;
 			max-width: 194mm;
 			margin: 0 auto;
-			border: 1px solid #cbd5e1;
+			border: 1.5px solid #64748b;
+			border-radius: 3px;
+			background: #fff;
+			overflow: hidden;
 		}
+
+		/* ── Header ── */
 		.top-band {
-			background: linear-gradient(120deg, #0f172a 0%, #1e40af 55%, #1e3a5f 100%);
-			color: #fff;
-			padding: 10px 14px;
+			background: #ffffff;
+			border-bottom: 2px solid #1e3a8a;
+			padding: 8px 12px;
 		}
 		.top-band-table { width: 100%; border-collapse: collapse; }
 		.top-band-table td { vertical-align: middle; padding: 0; }
-		.top-band-table .logo-cell { width: 1%; padding-right: 10px; }
-		.print-logo { display: block; background: #fff; border-radius: 3px; padding: 2px; max-height: 44px !important; max-width: 100px !important; }
-		.top-band .company { font-size: 12pt; font-weight: 700; letter-spacing: 0.01em; }
-		.top-band .pass-type {
-			font-size: 7pt;
-			text-transform: uppercase;
-			letter-spacing: 0.12em;
-			opacity: 0.9;
-			margin-top: 2px;
+		.top-band-table .logo-cell { width: 1%; padding-right: 14px; }
+		.print-logo {
+			display: block;
+			max-height: 48px !important;
+			max-width: 115px !important;
+			height: auto;
+			width: auto;
 		}
-		.top-band .qr-mini { text-align: right; width: 1%; padding-left: 8px; }
+		.top-band .company {
+			font-size: 13pt;
+			font-weight: 800;
+			color: #0f172a;
+			letter-spacing: -0.01em;
+			line-height: 1.2;
+		}
+		.top-band .pass-type {
+			font-size: 8pt;
+			text-transform: uppercase;
+			letter-spacing: 0.1em;
+			color: #1e40af;
+			font-weight: 700;
+			margin-top: 3px;
+		}
+		.top-band .qr-mini { text-align: right; width: 1%; padding-left: 10px; }
 		.top-band .qr-mini .qr-box {
 			background: #fff;
-			border-radius: 4px;
-			padding: 4px;
+			border: 1.5px solid #64748b;
+			border-radius: 3px;
+			padding: 3px;
 			display: inline-block;
 		}
-		.top-band .qr-mini .qr-image { width: 72px !important; height: 72px !important; display: block; }
+		.top-band .qr-mini .qr-image { width: 68px !important; height: 68px !important; display: block; }
+
+		/* ── Document strip ── */
 		.doc-strip {
 			display: table;
 			width: 100%;
 			background: #f1f5f9;
-			border-bottom: 1px solid #e2e8f0;
-			padding: 6px 14px;
+			border-bottom: 1px solid #94a3b8;
+			padding: 6px 12px;
 		}
 		.doc-strip .doc-id {
 			display: table-cell;
 			vertical-align: middle;
-			font-size: 11pt;
+			font-size: 11.5pt;
 			font-weight: 800;
 			color: #0f172a;
+			letter-spacing: 0.02em;
+		}
+		.doc-strip .doc-id span.lbl {
+			font-size: 7.5pt;
+			font-weight: 700;
+			color: #475569;
+			text-transform: uppercase;
+			margin-right: 5px;
+			letter-spacing: 0.04em;
 		}
 		.doc-strip .meta {
 			display: table-cell;
 			vertical-align: middle;
 			text-align: right;
-			font-size: 7.5pt;
-			color: #475569;
+			font-size: 8pt;
+			color: #334155;
+			font-weight: 600;
 		}
 		.badge {
 			display: inline-block;
-			padding: 2px 8px;
+			padding: 2.5px 8px;
 			border-radius: 3px;
-			font-size: 7pt;
+			font-size: 7.2pt;
 			font-weight: 700;
 			text-transform: uppercase;
 			letter-spacing: 0.04em;
-			background: #dbeafe;
-			color: #1d4ed8;
-			border: 1px solid #93c5fd;
-			margin-left: 6px;
-		}
-		.fulfillment-band {
-			padding: 8px 10px;
-			background: #fffbeb;
-			border-bottom: 2px solid #f59e0b;
-		}
-		.fulfillment-band .band-title {
-			font-size: 7pt;
-			font-weight: 800;
-			text-transform: uppercase;
-			letter-spacing: 0.1em;
-			color: #92400e;
-			margin-bottom: 6px;
-		}
-		.kpi-grid {
-			width: 100%;
-			border-collapse: separate;
-			border-spacing: 6px 0;
-		}
-		.kpi-grid td {
-			vertical-align: top;
-			width: 25%;
-			background: #fff;
-			border: 1px solid #fde68a;
-			border-radius: 4px;
-			padding: 6px 8px;
-		}
-		.kpi-grid .kpi-label {
-			font-size: 6.5pt;
-			font-weight: 700;
-			text-transform: uppercase;
-			letter-spacing: 0.05em;
-			color: #78716c;
-			line-height: 1.25;
-		}
-		.kpi-grid .kpi-value {
-			font-size: 13pt;
-			font-weight: 800;
+			background: #e2e8f0;
 			color: #0f172a;
-			margin: 2px 0;
-			line-height: 1.1;
+			border: 1px solid #94a3b8;
+			margin-left: 8px;
 		}
-		.kpi-grid .kpi-hint {
-			font-size: 6.5pt;
-			color: #64748b;
-			line-height: 1.3;
-		}
-		.pill {
-			display: inline-block;
-			margin-top: 3px;
-			padding: 2px 8px;
-			border-radius: 999px;
-			font-size: 7pt;
-			font-weight: 700;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-		}
-		.pill-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
-		.pill-warn { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
-		.pill-muted { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
-		.pill-info { background: #e0f2fe; color: #0369a1; border: 1px solid #7dd3fc; }
+
+		/* ── Body grid ── */
 		.body-grid {
 			width: 100%;
 			border-collapse: collapse;
@@ -145,86 +118,171 @@
 		.body-grid > tbody > tr > td {
 			vertical-align: top;
 			width: 50%;
-			padding: 8px 10px;
-			border-bottom: 1px solid #e2e8f0;
+			padding: 6px 10px;
 		}
-		.body-grid > tbody > tr > td:first-child { border-right: 1px solid #e2e8f0; }
+		.body-grid > tbody > tr > td:first-child {
+			border-right: 1px solid #cbd5e1;
+		}
+		.section-box {
+			margin-bottom: 7px;
+		}
+		.section-box:last-child {
+			margin-bottom: 0;
+		}
 		.section-title {
-			font-size: 6.5pt;
+			font-size: 7.2pt;
 			font-weight: 800;
 			text-transform: uppercase;
-			letter-spacing: 0.1em;
-			color: #64748b;
-			margin-bottom: 4px;
-			padding-bottom: 2px;
-			border-bottom: 1px solid #e2e8f0;
+			letter-spacing: 0.08em;
+			color: #0f172a;
+			background: #f1f5f9;
+			padding: 3.5px 8px;
+			border-left: 3.5px solid #1e40af;
+			border-bottom: 1px solid #cbd5e1;
+			border-top: 1px solid #e2e8f0;
+			border-right: 1px solid #e2e8f0;
+			border-radius: 2px;
+			margin-bottom: 3px;
 		}
 		.kv {
 			width: 100%;
 			border-collapse: collapse;
 		}
 		.kv td {
-			padding: 3px 0;
+			padding: 3.2px 3px;
 			vertical-align: top;
-			border-bottom: 1px dotted #e2e8f0;
+			border-bottom: 1px dotted #cbd5e1;
 		}
 		.kv tr:last-child td { border-bottom: none; }
-		.kv .k { width: 42%; font-size: 6.5pt; color: #64748b; font-weight: 600; padding-right: 6px; }
-		.kv .v { font-size: 8pt; font-weight: 600; color: #0f172a; }
+		.kv .k {
+			width: 46%;
+			font-size: 7.2pt;
+			color: #334155;
+			font-weight: 600;
+			padding-right: 5px;
+		}
+		.kv .v {
+			font-size: 7.8pt;
+			font-weight: 600;
+			color: #0f172a;
+		}
+		.kv tr.highlight-row {
+			background: #f0fdf4;
+			border: 1px solid #86efac;
+		}
+		.kv tr.highlight-row td {
+			padding: 4px 3px;
+			border-bottom: none;
+		}
+		.kv .v.highlight-val {
+			font-weight: 800;
+			color: #166534;
+			font-size: 8.5pt;
+		}
+
+		/* ── Entry detail table ── */
 		.entry-table {
 			width: 100%;
 			border-collapse: collapse;
-			margin-top: 4px;
+			margin-top: 3px;
 			font-size: 7.5pt;
 		}
 		.entry-table th {
 			text-align: left;
-			font-size: 6.5pt;
+			font-size: 6.8pt;
 			text-transform: uppercase;
-			color: #64748b;
-			padding: 3px 4px;
-			border: 1px solid #e2e8f0;
-			background: #f8fafc;
+			color: #1e293b;
+			padding: 3.5px 6px;
+			border: 1px solid #94a3b8;
+			background: #f1f5f9;
+			font-weight: 700;
+			letter-spacing: 0.03em;
 		}
 		.entry-table td {
-			padding: 3px 4px;
-			border: 1px solid #e2e8f0;
+			padding: 3.5px 6px;
+			border: 1px solid #cbd5e1;
+			color: #0f172a;
 		}
-		.footer {
-			padding: 5px 14px;
-			font-size: 6.5pt;
-			color: #64748b;
+		.entry-table tr:nth-child(even) td {
 			background: #f8fafc;
+		}
+		.entry-table tfoot td {
+			font-weight: 700;
+			background: #f1f5f9;
+			border-top: 2px solid #94a3b8;
+		}
+
+		/* ── Signatures ── */
+		.signatures-strip {
+			width: 100%;
+			border-collapse: collapse;
+			margin-top: 8px;
+			border-top: 1px solid #cbd5e1;
+			background: #fafafa;
+		}
+		.signatures-strip td {
+			vertical-align: bottom;
+			padding: 44px 14px 8px;
+			font-size: 7.2pt;
+			color: #334155;
+		}
+		.signatures-strip td.sig-cell {
+			width: 38%;
+			text-align: center;
+		}
+		.signatures-strip .sig-line {
+			border-top: 1px dashed #64748b;
+			padding-top: 4px;
+			font-weight: 700;
+			text-transform: uppercase;
+			letter-spacing: 0.05em;
+			color: #0f172a;
+		}
+
+		/* ── Footer ── */
+		.footer {
+			padding: 4px 12px;
+			font-size: 6.8pt;
+			color: #475569;
+			background: #f8fafc;
+			border-top: 1px solid #cbd5e1;
 			display: table;
 			width: 100%;
 		}
-		.footer .left { display: table-cell; }
-		.footer .right { display: table-cell; text-align: right; }
+		.footer .left { display: table-cell; vertical-align: middle; }
+		.footer .right { display: table-cell; text-align: right; vertical-align: middle; }
+
+		/* ── Screen-only print button ── */
 		.actions {
 			max-width: 194mm;
 			margin: 8px auto 0;
 			text-align: center;
 		}
 		.actions button {
-			font-size: 10pt;
-			padding: 6px 16px;
+			font-size: 9.5pt;
+			padding: 6px 18px;
 			cursor: pointer;
 			border: 1px solid #0f172a;
 			background: #0f172a;
 			color: #fff;
 			border-radius: 4px;
+			font-weight: 600;
 		}
 		@media print {
-			body { padding: 0; }
-			.pass { border: none; max-width: none; }
+			body { padding: 0; background: #fff; }
+			.pass { border: 1.5px solid #64748b; max-width: none; }
 			.actions { display: none !important; }
-			.fulfillment-band, .kpi-grid td { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-			.top-band { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+			.top-band, .doc-strip, .section-title, .kv tr.highlight-row,
+			.entry-table th, .signatures-strip, .footer, .badge {
+				-webkit-print-color-adjust: exact;
+				print-color-adjust: exact;
+			}
 		}
 	</style>
 </head>
 <body>
 	<div class="pass">
+		<!-- ═══ Header: Logo + Company + GRN title + QR ═══ -->
 		<div class="top-band">
 			<table class="top-band-table" cellpadding="0" cellspacing="0">
 				<tr>
@@ -232,7 +290,9 @@
 					<td class="logo-cell">{{ print_logo | safe }}</td>
 					{% endif %}
 					<td>
-						<div class="company">{{ company_name or _("Procurement") }}</div>
+						{% if company_name %}
+						<div class="company">{{ company_name }}</div>
+						{% endif %}
 						<div class="pass-type">{{ _("Goods Receipt Note (GRN)") }}</div>
 					</td>
 					<td class="qr-mini">
@@ -242,156 +302,175 @@
 			</table>
 		</div>
 
+		<!-- ═══ Document ID strip ═══ -->
 		<div class="doc-strip">
-			<div class="doc-id">{{ doc.grn_no or doc.name }}</div>
+			<div class="doc-id">
+				<span class="lbl">{{ _("GRN No:") }}</span>{{ doc.grn_no or doc.name }}
+			</div>
 			<div class="meta">
 				{{ receipt_datetime_display }}
 				<span class="badge">{{ purchase_heading }}</span>
 			</div>
 		</div>
 
-		{% if not doc.is_local_procurement %}
-		<div class="fulfillment-band">
-			<div class="band-title">{{ _("TP & Chhatni Fulfillment") }}</div>
-			<table class="kpi-grid" cellpadding="0" cellspacing="0">
-				<tr>
-					<td>
-						<div class="kpi-label">{{ _("This GRN Received (QT)") }}</div>
-						<div class="kpi-value">{{ qty_received }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("Pass Total Received So Far (QT)") }}</div>
-						<div class="kpi-value">{{ qty_cumulative }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("Progressive Deduction Total (QT)") }}</div>
-						<div class="kpi-value">{{ qty_tp_cumulative_deduction }}</div>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<div class="kpi-label">{{ _("Chhatni % Received") }}</div>
-						<div class="kpi-value">{{ qty_chhatni_received_pct }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("Received (QT) - TP + Chhatni") }}</div>
-						<div class="kpi-value">{{ qty_tp_chhatni_balance }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("TP Quantity (QT)") }}</div>
-						<div class="kpi-value">{{ qty_tp }}</div>
-					</td>
-				</tr>
-				<tr>
-					<td>
-						<div class="kpi-label">{{ _("TP Status") }}</div>
-						{% set tp_status = doc.tp_fulfillment_status or "" %}
-						{% if tp_pass_fulfilled and (not tp_status or tp_status == "In Progress") %}
-						{% set tp_status = "TP Completed" %}
-						{% endif %}
-						<div class="kpi-value" style="font-size:10pt;">{{ tp_status or "—" }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("Chhatni Status") }}</div>
-						{% set ch_status = chhatni_display_status or doc.chhatni_fulfillment_status or "" %}
-						<div class="kpi-value" style="font-size:10pt;">{{ ch_status or "—" }}</div>
-					</td>
-					<td>
-						<div class="kpi-label">{{ _("Chhatni Note") }}</div>
-						<div class="kpi-value" style="font-size:10pt;">{{ doc.chhatni_fulfillment_remark or "—" }}</div>
-					</td>
-				</tr>
-			</table>
-		</div>
-		{% endif %}
-
+		<!-- ═══ Two-column body ═══ -->
 		<table class="body-grid" cellpadding="0" cellspacing="0">
 			<tr>
-				<td>
-					<div class="section-title">{{ _("GRN & mill") }}</div>
-					<table class="kv">
-						{% if not doc.is_local_procurement %}
-						<tr><td class="k">{{ _("Pass Unique Key") }}</td><td class="v">{{ doc.pass_unique_key or "—" }}</td></tr>
-						<tr><td class="k">{{ _("CMR Season") }}</td><td class="v">{{ doc.cmr_season or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Chhatni (Kg/Qtl)") }}</td><td class="v">{{ doc.chhatni or "—" }}</td></tr>
-						{% endif %}
-						<tr><td class="k">{{ _("Mill Name") }}</td><td class="v">{{ doc.mill_name or "—" }}</td></tr>
-					</table>
-				</td>
+				<!-- ── Left column ── -->
 				<td>
 					{% if not doc.is_local_procurement %}
-					<div class="section-title">{{ _("Transit pass") }}</div>
-					<table class="kv">
-						<tr><td class="k">{{ _("TP No") }}</td><td class="v">{{ doc.transit_pass_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("TP Date & Time") }}</td><td class="v">{{ transit_pass_datetime_display or "—" }}</td></tr>
-						<tr><td class="k">{{ _("TP Quantity (QT)") }}</td><td class="v">{{ qty_tp }}</td></tr>
-						<tr><td class="k">{{ _("PACS") }}</td><td class="v">{{ doc.pacs or "—" }}</td></tr>
-						<tr><td class="k">{{ _("PPC") }}</td><td class="v">{{ doc.ppc or "—" }}</td></tr>
-					</table>
+					<div class="section-box">
+						<div class="section-title">{{ _("Transit Pass Details") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("Pass Unique Key") }}</td><td class="v">{{ doc.pass_unique_key or "—" }}</td></tr>
+							<tr><td class="k">{{ _("TP No") }}</td><td class="v">{{ doc.transit_pass_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("TP Date & Time") }}</td><td class="v">{{ transit_pass_datetime_display or "—" }}</td></tr>
+							<tr><td class="k">{{ _("TP Quantity (QT)") }}</td><td class="v">{{ qty_tp }}{% if doc.tp_quantity and qty_tp != "—" %} QT{% endif %}</td></tr>
+							<tr><td class="k">{{ _("Bags (In No.)") }}</td><td class="v">{{ doc.no_of_bags or "—" }}</td></tr>
+							<tr><td class="k">{{ _("PPC") }}</td><td class="v">{{ doc.ppc or "—" }}</td></tr>
+							<tr><td class="k">{{ _("PACS") }}</td><td class="v">{{ doc.pacs or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Mill Name") }}</td><td class="v">{{ doc.mill_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("CMR Season") }}</td><td class="v">{{ doc.cmr_season or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Chhatni (Kg per Quintal)") }}</td><td class="v">{{ doc.chhatni or "—" }}{% if doc.chhatni %} Kg/Qtl{% endif %}</td></tr>
+						</table>
+					</div>
+
+					<div class="section-box">
+						<div class="section-title">{{ _("Gate Details") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("Vehicle") }}</td><td class="v">{{ doc.vehicle_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Driver Name") }}</td><td class="v">{{ doc.driver_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Driver Mobile No") }}</td><td class="v">{{ doc.mobile_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Party Name") }}</td><td class="v">{{ doc.party_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Arrival Date & Time") }}</td><td class="v">{{ arrival_datetime_display or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Gate Exit Date & Time") }}</td><td class="v">{{ gate_exit_datetime_display or "—" }}</td></tr>
+						</table>
+					</div>
 					{% else %}
-					<div class="section-title">{{ _("Local procurement") }}</div>
-					<table class="kv">
-						<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Agent / Farmer") }}</td><td class="v">{{ doc.agent_name or "—" }}</td></tr>
-					</table>
+					<div class="section-box">
+						<div class="section-title">{{ _("Local Procurement Details") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Agent Name") }}</td><td class="v">{{ doc.agent_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Local Purchase Order") }}</td><td class="v">{{ doc.local_purchase_order or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Mill Name") }}</td><td class="v">{{ doc.mill_name or "—" }}</td></tr>
+						</table>
+					</div>
+
+					<div class="section-box">
+						<div class="section-title">{{ _("Gate Details") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("Vehicle") }}</td><td class="v">{{ doc.vehicle_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Driver Name") }}</td><td class="v">{{ doc.driver_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Driver Mobile No") }}</td><td class="v">{{ doc.mobile_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Party Name") }}</td><td class="v">{{ doc.party_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Arrival Date & Time") }}</td><td class="v">{{ arrival_datetime_display or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Gate Exit Date & Time") }}</td><td class="v">{{ gate_exit_datetime_display or "—" }}</td></tr>
+						</table>
+					</div>
 					{% endif %}
 				</td>
-			</tr>
-			<tr>
+
+				<!-- ── Right column ── -->
 				<td>
-					<div class="section-title">{{ _("Weighment & gate") }}</div>
-					<table class="kv">
-						<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Vehicle No") }}</td><td class="v">{{ doc.vehicle_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Driver") }}</td><td class="v">{{ doc.driver_name or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Driver Mobile No") }}</td><td class="v">{{ doc.mobile_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Party Name") }}</td><td class="v">{{ doc.party_name or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Gate Exit Date & Time") }}</td><td class="v">{{ gate_exit_datetime_display }}</td></tr>
-						<tr><td class="k">{{ _("Gross (QT)") }}</td><td class="v">{{ doc.gross_weight or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Tare (QT)") }}</td><td class="v">{{ doc.tare_weight or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Deduction (QT)") }}</td><td class="v">{{ doc.deduction or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Net Paddy (QT)") }}</td><td class="v">{{ doc.net_weight or "—" }}</td></tr>
-					</table>
-				</td>
-				<td>
-					<div class="section-title">{{ _("Quality check") }}</div>
-					<table class="kv">
-						<tr><td class="k">{{ _("Quality Check") }}</td><td class="v">{{ doc.quality_check or "—" }}</td></tr>
-						<tr><td class="k">{{ _("QC Date & Time") }}</td><td class="v">{{ qc_datetime_display }}</td></tr>
-						<tr><td class="k">{{ _("QC Sample No") }}</td><td class="v">{{ doc.qc_sample_no or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Bags (In No.)") }}</td><td class="v">{{ doc.no_of_bags or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Moisture") }}</td><td class="v">{{ doc.moisture or "—" }}</td></tr>
-						<tr><td class="k">{{ _("Dust") }}</td><td class="v">{{ doc.dust or "—" }}</td></tr>
-						<tr><td class="k">{{ _("QC Decision") }}</td><td class="v">{{ doc.qc_decision or "—" }}</td></tr>
-						<tr><td class="k">{{ _("PPC Name") }}</td><td class="v">{{ doc.ppc_name or "—" }}</td></tr>
-					</table>
+					<div class="section-box">
+						<div class="section-title">{{ _("Weighment (RST)") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("RST No") }}</td><td class="v">{{ doc.rst_no or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Gunny Type") }}</td><td class="v">{{ doc.gunny_type or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Jute Bags") }}</td><td class="v">{{ doc.jute_bags if doc.jute_bags is not none else 0 }}</td></tr>
+							<tr><td class="k">{{ _("Plastic Bags") }}</td><td class="v">{{ doc.plastic_bags if doc.plastic_bags is not none else 0 }}</td></tr>
+							<tr><td class="k">{{ _("Total Bags") }}</td><td class="v">{{ doc.total_bags or 0 }}</td></tr>
+							<tr><td class="k">{{ _("Load Weight (QT)") }}</td><td class="v">{{ qty_load_weight or doc.gross_vehicle_weight or "—" }}{% if doc.gross_vehicle_weight %} QT{% endif %}</td></tr>
+							<tr><td class="k">{{ _("Tare Weight (QT)") }}</td><td class="v">{{ qty_tare_weight or doc.tare_weight or "—" }}{% if doc.tare_weight %} QT{% endif %}</td></tr>
+							<tr><td class="k">{{ _("Gross Weight (QT)") }}</td><td class="v">{{ qty_gross_weight or doc.gross_weight or "—" }}{% if doc.gross_weight %} QT{% endif %}</td></tr>
+							<tr><td class="k">{{ _("Gunny Weight (QT)") }}</td><td class="v">{{ qty_gunny_weight or doc.gunny_weight or "—" }}{% if doc.gunny_weight %} QT{% endif %}</td></tr>
+							<tr><td class="k">{{ _("Deduction (QT)") }}</td><td class="v">{{ qty_deduction or doc.deduction or "—" }}{% if doc.deduction %} QT{% endif %}</td></tr>
+							<tr class="highlight-row">
+								<td class="k" style="font-weight:700;color:#166534;">{{ _("Net Weight (QT)") }}</td>
+								<td class="v highlight-val">{{ qty_net_weight or doc.net_weight or "—" }}{% if doc.net_weight %} QT{% endif %}</td>
+							</tr>
+						</table>
+					</div>
+
+					<div class="section-box">
+						<div class="section-title">{{ _("Quality Check") }}</div>
+						<table class="kv">
+							<tr><td class="k">{{ _("QC Sample No") }}</td><td class="v">{{ doc.quality_check or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Date & Time") }}</td><td class="v">{{ qc_datetime_display or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Quality Test") }}</td><td class="v">{{ doc.qc_decision or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Unloading Point") }}</td><td class="v">{{ doc.unloading_point or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Staff Name") }}</td><td class="v">{{ doc.unloader_name or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Moisture(%)") }}</td><td class="v">{{ doc.moisture if doc.moisture is not none else "—" }}</td></tr>
+							<tr><td class="k">{{ _("Dust(kg)") }}</td><td class="v">{{ doc.dust if doc.dust is not none else "—" }}</td></tr>
+							<tr><td class="k">{{ _("Paddy Quality") }}</td><td class="v">{{ doc.paddy_quality or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Paddy Type") }}</td><td class="v">{{ doc.paddy_type or "—" }}</td></tr>
+							<tr><td class="k">{{ _("Paddy Received (Bags)") }}</td><td class="v">{{ doc.paddy_received_in_pkt if doc.paddy_received_in_pkt is not none else "—" }}</td></tr>
+							<tr><td class="k">{{ _("Paddy Returned (Bags)") }}</td><td class="v">{{ doc.paddy_returned if doc.paddy_returned is not none else "—" }}</td></tr>
+						</table>
+					</div>
 				</td>
 			</tr>
 		</table>
 
+		<!-- ═══ Entry Details table (conditional) ═══ -->
 		{% if doc.entry_details %}
-		<div style="padding: 6px 10px 8px;">
-			<div class="section-title">{{ _("Entry details") }}</div>
+		<div style="padding: 3px 10px 5px;">
+			<div class="section-title">{{ _("Entry Details (for this TP)") }}</div>
 			<table class="entry-table">
-				<tr>
-					<th>{{ _("Entry") }}</th>
-					<th>{{ _("Agent") }}</th>
-					<th>{{ _("Qty (QT)") }}</th>
-				</tr>
-				{% for row in doc.entry_details %}
-				<tr>
-					<td>{{ row.entry or "—" }}</td>
-					<td>{{ row.agent_name or "—" }}</td>
-					<td>{{ row.entry_quantity or "—" }}</td>
-				</tr>
-				{% endfor %}
+				<thead>
+					<tr>
+						<th>{{ _("Entry No") }}</th>
+						<th>{{ _("Agent Name") }}</th>
+						<th>{{ _("PACS Name") }}</th>
+						<th style="text-align: right;">{{ _("Qty (QT)") }}</th>
+						<th style="text-align: right;">{{ _("Rate (₹/Qtl)") }}</th>
+						<th style="text-align: right;">{{ _("Total Amount (₹)") }}</th>
+					</tr>
+				</thead>
+				<tbody>
+					{% set ns = namespace(total_qty=0, total_amt=0) %}
+					{% for row in doc.entry_details %}
+					{% set ns.total_qty = ns.total_qty + (row.entry_quantity or 0) %}
+					{% set ns.total_amt = ns.total_amt + (row.total_amount or 0) %}
+					<tr>
+						<td style="font-weight: 600;">{{ row.entry or "—" }}</td>
+						<td>{{ row.agent_name or "—" }}</td>
+						<td>{{ row.pacs_name or "—" }}</td>
+						<td style="text-align: right; font-variant-numeric: tabular-nums;">{{ row.entry_quantity if row.entry_quantity is not none else "—" }}</td>
+						<td style="text-align: right; font-variant-numeric: tabular-nums;">{{ row.entry_price_per_quintal if row.entry_price_per_quintal is not none else "—" }}</td>
+						<td style="text-align: right; font-variant-numeric: tabular-nums; font-weight: 600;">{{ row.total_amount if row.total_amount is not none else "—" }}</td>
+					</tr>
+					{% endfor %}
+				</tbody>
+				{% if doc.entry_details | length > 1 %}
+				<tfoot>
+					<tr>
+						<td colspan="3" style="text-align: right;">{{ _("Total:") }}</td>
+						<td style="text-align: right; font-variant-numeric: tabular-nums;">{{ ns.total_qty }}</td>
+						<td></td>
+						<td style="text-align: right; font-variant-numeric: tabular-nums;">{{ ns.total_amt }}</td>
+					</tr>
+				</tfoot>
+				{% endif %}
 			</table>
 		</div>
 		{% endif %}
 
+		<!-- ═══ Signatures ═══ -->
+		<table class="signatures-strip" cellpadding="0" cellspacing="0">
+			<tr>
+				<td style="width: 60%;"></td>
+				<td class="sig-cell">
+					<div class="sig-line">{{ _("Authorized Signatory") }}</div>
+				</td>
+			</tr>
+		</table>
+
+		<!-- ═══ Footer ═══ -->
 		<div class="footer">
 			<div class="left">{{ _("Document generated on") }} {{ printed_on }}</div>
-			<div class="right">{{ _("Scan QR for full GRN details") }} · {{ doc.grn_no or doc.name }}</div>
+			<div class="right">{{ _("Scan QR for verified GRN details") }} · {{ doc.grn_no or doc.name }}</div>
 		</div>
 	</div>
 

@@ -94,6 +94,8 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		sync_quality_from_qc(frm);
 	},
 	refresh(frm) {
+		frm.toggle_display("is_farmer_or_agent", Boolean(frm.doc.is_farmer_or_agent));
+		frm.toggle_display("local_purchase_order", Boolean(frm.doc.local_purchase_order));
 		toggle_wbm_source_mode_ui(frm);
 		ensure_weighment_datetime(frm);
 		allow_typed_pass_unique_key(frm);
@@ -123,6 +125,13 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 	},
 	pass_unique_key(frm) {
 		load_transit_pass_details(frm);
+	},
+	demo_rst_data(frm) {
+		if (frm.doc.is_farmer_or_agent) {
+			copy_rst_vehicle_to_actual_truck(frm);
+		} else {
+			check_and_apply_vehicle_mismatch(frm);
+		}
 	},
 	same_truck_as_transit_pass(frm) {
 		if (frm.doc.is_farmer_or_agent) {
@@ -255,6 +264,37 @@ function copy_rst_vehicle_to_actual_truck(frm) {
 		const vehicle = (r && r.vehicle_no ? r.vehicle_no : "").trim().toUpperCase();
 		if (vehicle && (frm.doc.actual_truck_no || "").trim().toUpperCase() !== vehicle) {
 			frm.set_value("actual_truck_no", vehicle);
+		}
+	});
+}
+
+function check_and_apply_vehicle_mismatch(frm, tp_vehicle_no = null) {
+	if (frm.doc.is_farmer_or_agent) {
+		return;
+	}
+	const rst = (frm.doc.demo_rst_data || "").trim();
+	if (!rst) {
+		return;
+	}
+	frappe.db.get_value("RST Details", rst, "vehicle_no", (r) => {
+		const rst_v = (r && r.vehicle_no ? r.vehicle_no : "").trim().toUpperCase();
+		const tp_v = (
+			tp_vehicle_no !== null
+				? tp_vehicle_no
+				: (frm.doc.truck_no_in_tp || "")
+		).trim().toUpperCase();
+
+		if (rst_v && tp_v) {
+			if (rst_v === tp_v) {
+				frm.set_value("same_truck_as_transit_pass", 0);
+				frm.set_value("actual_truck_no", "");
+			} else {
+				frm.set_value("same_truck_as_transit_pass", 1);
+				frm.set_value("actual_truck_no", rst_v);
+			}
+		} else if (rst_v && !tp_v) {
+			frm.set_value("same_truck_as_transit_pass", 1);
+			frm.set_value("actual_truck_no", rst_v);
 		}
 	});
 }
@@ -418,7 +458,8 @@ function load_transit_pass_details(frm) {
 			if (!r) {
 				return;
 			}
-			frm.set_value("truck_no_in_tp", (r.vehicle_no || "").toUpperCase());
+			const tp_vehicle = (r.vehicle_no || "").trim().toUpperCase();
+			frm.set_value("truck_no_in_tp", tp_vehicle);
 			frm.set_value("pacs_name", r.pacs || "");
 			frm.set_value("tp_weight", r.quantity || 0);
 			if (!frm.doc.no_of_bags && r.bags) {
@@ -427,6 +468,7 @@ function load_transit_pass_details(frm) {
 			if (r.transit_pass_no) {
 				frm.set_value("transit_pass_no", r.transit_pass_no);
 			}
+			check_and_apply_vehicle_mismatch(frm, tp_vehicle);
 			sync_quality_from_qc(frm);
 		}
 	);

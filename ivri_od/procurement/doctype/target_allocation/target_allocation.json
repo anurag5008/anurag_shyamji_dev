@@ -14,10 +14,10 @@
   "agent_name",
   "mill_name",
   "chhatni",
-  "latest_chutney_section",
+  "agent_details_section",
+  "agent_details",
   "latest_chutney_kg_per_quintal",
   "latest_chutney_percentage",
-  "column_break_chutney",
   "latest_chutney_season",
   "latest_chutney_assign"
  ],
@@ -59,11 +59,12 @@
    "allow_in_quick_entry": 1,
    "fieldname": "agent_name",
    "fieldtype": "Link",
+   "hidden": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Agent Name",
    "options": "Agent Master",
-   "reqd": 1
+   "read_only": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -83,15 +84,20 @@
    "non_negative": 1
   },
   {
-   "collapsible": 1,
-   "fieldname": "latest_chutney_section",
+   "fieldname": "agent_details_section",
    "fieldtype": "Section Break",
-   "label": "Latest Chutney"
+   "label": "Agent Details"
+  },
+  {
+   "fieldname": "agent_details",
+   "fieldtype": "Table",
+   "label": "Agent Details",
+   "options": "Target Allocation Agent"
   },
   {
    "fieldname": "latest_chutney_kg_per_quintal",
    "fieldtype": "Float",
-   "in_list_view": 1,
+   "hidden": 1,
    "label": "Latest Chhatni (Kg per Quintal)",
    "non_negative": 1,
    "read_only": 1
@@ -99,17 +105,15 @@
   {
    "fieldname": "latest_chutney_percentage",
    "fieldtype": "Percent",
+   "hidden": 1,
    "label": "Latest Chhatni Percentage",
    "precision": "2",
    "read_only": 1
   },
   {
-   "fieldname": "column_break_chutney",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "latest_chutney_season",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Latest Chhatni Season",
    "options": "Season Master",
    "read_only": 1
@@ -117,6 +121,7 @@
   {
    "fieldname": "latest_chutney_assign",
    "fieldtype": "Link",
+   "hidden": 1,
    "label": "Latest Chhatni Assign",
    "options": "Chhatni Assign",
    "read_only": 1

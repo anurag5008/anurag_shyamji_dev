@@ -28,7 +28,6 @@
    "columns": 1,
    "fieldname": "entry_date",
    "fieldtype": "Date",
-   "in_list_view": 1,
    "label": "Date",
    "read_only": 1
   },
@@ -36,7 +35,6 @@
    "columns": 1,
    "fieldname": "entry_time",
    "fieldtype": "Time",
-   "in_list_view": 1,
    "label": "Time",
    "read_only": 1
   },

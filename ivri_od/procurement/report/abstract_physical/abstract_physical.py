@@ -14,6 +14,7 @@ from ivri_od.procurement.ppc_pass_metrics import (
 	make_ppc_resolver,
 	ppc_display_name,
 )
+from ivri_od.procurement.report.mandi_book.mandi_book import execute as execute_mandi_book
 from ivri_od.procurement.transit_pass_resolve import resolve_ppc_master_name
 
 
@@ -178,7 +179,6 @@ def get_data(filters):
 		"tp_quantity": 0.0,
 		"physical_paddy": 0.0,
 		"entry_qty": 0.0,
-		"chhatni_quantity": 0.0,
 	})
 
 	for tp in all_tps:
@@ -202,17 +202,37 @@ def get_data(filters):
 			# Skip transactions referencing PPCs not found in PPC Master
 			continue
 		net_wt = flt(grn.net_weight)
-		ded = flt(grn.deduction)
 		entry_q = (
 			flt(grn.get("entry_qty"))
 			or flt(grn.get("entry_quantity"))
 			or grn_entry_map.get(grn.name, 0.0)
 		)
 		aggregated[(s, p.name)]["physical_paddy"] += net_wt
-		aggregated[(s, p.name)]["chhatni_quantity"] += ded
 		aggregated[(s, p.name)]["entry_qty"] += entry_q
 
-	# 6. Render report rows: only PPCs present in PPC Master with Target Allocation > 0 in season
+	# 6. Fetch Mandi Book data to reuse its Excess Received Qty (QTL) per pass / PPC
+	mandi_filters = {}
+	if season_filter:
+		mandi_filters["season"] = season_filter
+	if ppc_filter:
+		mandi_filters["ppc_name"] = ppc_filter
+
+	_, mandi_rows = execute_mandi_book(mandi_filters)
+	mandi_excess_by_ppc_season = defaultdict(float)
+	for row in mandi_rows:
+		excess = row.get("excess_received_qty")
+		if excess is not None and flt(excess) > 0:
+			pass_key = (row.get("pass_unique_key") or "").strip()
+			p = resolve_to_ppc_master(row.get("ppc_name")) or tp_meta_by_key.get(pass_key, {}).get("ppc_doc")
+			s = (
+				resolve_season_master_name(row.get("season"))
+				or (row.get("season") or "").strip()
+				or tp_meta_by_key.get(pass_key, {}).get("season")
+			)
+			if s and p:
+				mandi_excess_by_ppc_season[(s, p.name)] += flt(excess)
+
+	# 7. Render report rows: only PPCs present in PPC Master with Target Allocation > 0 in season
 	data = []
 	for season in relevant_seasons:
 		for p in candidate_ppcs:
@@ -224,12 +244,11 @@ def get_data(filters):
 				"tp_quantity": 0.0,
 				"physical_paddy": 0.0,
 				"entry_qty": 0.0,
-				"chhatni_quantity": 0.0,
 			})
 			tp_qty = flt(b["tp_quantity"], 3)
 			physical = flt(b["physical_paddy"], 3)
 			entry_qty = flt(b["entry_qty"], 3)
-			chhatni_qty = flt(b["chhatni_quantity"], 3)
+			chhatni_qty = flt(mandi_excess_by_ppc_season.get((season, p.name), 0.0), 3)
 
 			denom = tp_qty - entry_qty
 			if denom > 0:

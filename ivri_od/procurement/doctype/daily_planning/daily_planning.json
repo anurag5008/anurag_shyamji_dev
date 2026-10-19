@@ -11,7 +11,6 @@
   "plan_date",
   "ppc_name",
   "column_break_1",
-  "pacs_name",
   "season_name",
   "truck_section",
   "trucks_sent",
@@ -50,15 +49,6 @@
    "label": "PPC Name",
    "options": "PPC Master",
    "reqd": 1
-  },
-  {
-   "allow_in_quick_entry": 1,
-   "fieldname": "pacs_name",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "PACS Name",
-   "options": "Society Master"
   },
   {
    "fieldname": "column_break_1",
@@ -166,7 +156,7 @@
   }
  ],
  "quick_entry": 0,
- "search_fields": "ppc_name,pacs_name,plan_date,season_name",
+ "search_fields": "ppc_name,plan_date,season_name",
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
