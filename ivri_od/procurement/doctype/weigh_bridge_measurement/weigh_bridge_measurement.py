@@ -288,6 +288,8 @@ class WeighBridgeMeasurement(Document):
 				)
 
 	def validate(self):
+		ensure_doc_datetime(self, "date", default_now=True)
+		self._validate_not_local_procurement()
 		self._sync_weighment_datetime()
 		self._apply_rst_private_procurement_mode()
 		self._sync_rst_no_from_rst_details()
@@ -298,6 +300,18 @@ class WeighBridgeMeasurement(Document):
 		self._validate_farmer_or_agent_source()
 		self._normalize_truck_numbers()
 		self._sync_actual_truck()
+
+	def _validate_not_local_procurement(self):
+		before = self.get_doc_before_save()
+		is_existing_local = before and (
+			cint(getattr(before, "is_farmer_or_agent", 0))
+			or bool((getattr(before, "local_purchase_order", None) or "").strip())
+		)
+		if (cint(self.is_farmer_or_agent) or (self.local_purchase_order or "").strip()) and not is_existing_local:
+			frappe.throw(
+				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
+				title=_("Local Procurement Disabled"),
+			)
 		self._sync_gate_entry_link()
 		self._sync_quality_check_link()
 		self._sync_bag_details_from_qc()
@@ -542,12 +556,38 @@ class WeighBridgeMeasurement(Document):
 	def _sync_actual_truck(self):
 		if is_farmer_or_agent_source(self):
 			return
-		if self.same_truck_as_transit_pass:
-			tp_truck = (self.truck_no_in_tp or "").strip().upper()
-			if tp_truck:
-				self.actual_truck_no = tp_truck
-		elif not self.same_truck_as_transit_pass:
-			self.actual_truck_no = ""
+
+		rst_link = (self.demo_rst_data or "").strip()
+		pass_key = (self.pass_unique_key or "").strip()
+
+		if rst_link and pass_key and frappe.db.exists("RST Details", rst_link):
+			rst_v = (
+				frappe.db.get_value("RST Details", rst_link, "vehicle_no") or ""
+			).strip().upper()
+			tp_v = (self.truck_no_in_tp or "").strip().upper()
+			if not tp_v and pass_key:
+				tp_v = (
+					frappe.db.get_value(
+						"PPAS Transit Pass", {"pass_unique_key": pass_key}, "vehicle_no"
+					)
+					or ""
+				).strip().upper()
+
+			if rst_v and tp_v:
+				if rst_v == tp_v:
+					self.same_truck_as_transit_pass = 0
+					self.actual_truck_no = ""
+				else:
+					self.same_truck_as_transit_pass = 1
+					self.actual_truck_no = rst_v
+			elif rst_v and not tp_v:
+				self.same_truck_as_transit_pass = 1
+				self.actual_truck_no = rst_v
+			elif not self.same_truck_as_transit_pass:
+				self.actual_truck_no = ""
+		else:
+			if not self.same_truck_as_transit_pass:
+				self.actual_truck_no = ""
 
 	def _validate_actual_truck_weighment(self):
 		if is_farmer_or_agent_source(self):
@@ -710,15 +750,15 @@ class WeighBridgeMeasurement(Document):
 
 
 def _qc_lookup_vehicle_candidates(doc) -> list[str]:
-	"""Truck numbers to match Quality Check / Gate Entry (TP truck first when same-as-TP)."""
+	"""Truck numbers to match Quality Check / Gate Entry (actual truck first when different from TP)."""
 	seen: set[str] = set()
 	out: list[str] = []
-	for raw in (
-		(doc.get("truck_no_in_tp") if cint(doc.get("same_truck_as_transit_pass")) else None),
-		doc.get("truck_no_in_tp"),
-		doc.get("actual_truck_no"),
-		doc.get("vehicle_no"),
-	):
+	raw_order = (
+		(doc.get("actual_truck_no"), doc.get("truck_no_in_tp"))
+		if cint(doc.get("same_truck_as_transit_pass"))
+		else (doc.get("truck_no_in_tp"), doc.get("actual_truck_no"))
+	) + (doc.get("vehicle_no"),)
+	for raw in raw_order:
 		v = normalize_vehicle_no(raw)
 		if v and v not in seen:
 			seen.add(v)
@@ -1069,6 +1109,9 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	)
 
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+		return
+
+	if is_local_procurement_wbm(wbm_name):
 		return
 
 	if frappe.db.exists(

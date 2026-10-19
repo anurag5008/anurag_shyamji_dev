@@ -88,6 +88,7 @@ class GRNNote(Document):
 		self._ensure_grn_no()
 		self._normalize_fields()
 		self._sync_local_procurement_flags()
+		self._validate_not_local_procurement()
 		self._validate_farmer_or_agent_agent()
 		if cint(self.is_local_procurement):
 			self._validate_and_sync_rst()
@@ -103,6 +104,23 @@ class GRNNote(Document):
 			self._sync_chhatni_from_season_mapping()
 		self._sync_tp_fulfillment_status()
 		self._set_purchase_heading()
+
+	def _validate_not_local_procurement(self):
+		before = self.get_doc_before_save()
+		is_existing_local = before and (
+			cint(getattr(before, "is_local_procurement", 0))
+			or bool((getattr(before, "local_purchase_order", None) or "").strip())
+		)
+		is_local = (
+			cint(self.is_local_procurement)
+			or bool((self.local_purchase_order or "").strip())
+			or is_local_procurement_wbm((self.weigh_bridge_measurement or "").strip())
+		)
+		if is_local and not is_existing_local:
+			frappe.throw(
+				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
+				title=_("Local Procurement Disabled"),
+			)
 
 	def _validate_duplicate_grn(self):
 		"""Prevent duplicate GRN Note creation for the same completed procurement transaction."""
@@ -148,17 +166,11 @@ class GRNNote(Document):
 		self._update_linked_purchase_order()
 
 	def _update_linked_purchase_order(self):
-		po = (self.local_purchase_order or getattr(self, "purchase_order", None) or "").strip()
-		if po:
-			frappe.db.after_commit(lambda p=po: self._refresh_po_qty(p))
+		pass
 
 	@staticmethod
 	def _refresh_po_qty(po_name: str):
-		from ivri_od.procurement.doctype.local_paddy_purchase_order.local_paddy_purchase_order import (
-			update_purchase_order_quantities,
-		)
-
-		update_purchase_order_quantities(po_name)
+		pass
 
 	def _schedule_procurement_rollup_sync(self):
 		key = (self.pass_unique_key or "").strip()
@@ -171,9 +183,6 @@ class GRNNote(Document):
 		if key and not cint(self.is_local_procurement):
 			frappe.db.after_commit(lambda k=key: refresh_tp_fulfillment_for_pass(k))
 			frappe.db.after_commit(lambda k=key: _sync_procurement_rollups_for_pass(k))
-		po = (self.local_purchase_order or getattr(self, "purchase_order", None) or "").strip()
-		if po:
-			frappe.db.after_commit(lambda p=po: self._refresh_po_qty(p))
 
 	def _sync_tp_fulfillment_status(self):
 		if cint(self.is_local_procurement) or not (self.pass_unique_key or "").strip():
@@ -850,7 +859,7 @@ def build_auto_grn_doc_dict(wbm_name: str) -> dict | None:
 		return None
 
 	if is_local_procurement_wbm(wbm_name):
-		return grn_dict_for_local_wbm(wbm_name)
+		return None
 
 	wbm = frappe.db.get_value(
 		"Weigh Bridge Measurement",
@@ -890,87 +899,8 @@ def build_auto_grn_doc_dict(wbm_name: str) -> dict | None:
 
 
 def grn_dict_for_local_wbm(wbm_name: str) -> dict | None:
-	"""Initial GRN payload for local / farmer–agent WBM (no transit pass)."""
-	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
-		return None
-	if not is_local_procurement_wbm(wbm_name):
-		return None
-
-	wbm = frappe.db.get_value(
-		"Weigh Bridge Measurement",
-		wbm_name,
-		[
-			"rst_no",
-			"agent_name",
-			"demo_rst_data",
-			"load_weight",
-			"gross_weight",
-			"tare_weight",
-			"net_weight",
-			"deduction",
-			"gunny_type",
-			"gunny_weight",
-			"vehicle_no",
-			"commodity",
-			"date",
-			"measurement_date",
-			"measurement_time",
-			"quality_check",
-			"gate_entry",
-			"party_name",
-			"local_purchase_order",
-		],
-		as_dict=True,
-	)
-	if not wbm or not (wbm.rst_no or "").strip():
-		return None
-
-	rst = None
-	if (wbm.demo_rst_data or "").strip() and frappe.db.exists("RST Details", wbm.demo_rst_data):
-		rst = frappe.db.get_value(
-			"RST Details",
-			wbm.demo_rst_data,
-			["party_name", "commodity", "entry_date", "entry_time", "local_purchase_order"],
-			as_dict=True,
-		)
-
-	party_name = ((rst.party_name or "").strip() if rst else "") or (wbm.party_name or "").strip()
-	po = (
-		(rst.local_purchase_order or getattr(rst, "purchase_order", None) or "").strip() if rst else ""
-	) or (wbm.local_purchase_order or getattr(wbm, "purchase_order", None) or "").strip()
-
-	return {
-		"doctype": "GRN Note",
-		"is_local_procurement": 1,
-		"is_farmer_or_agent": 1,
-		"pass_unique_key": "",
-		"rst_no": wbm.rst_no,
-		"weigh_bridge_measurement": wbm_name,
-		"party_name": party_name,
-		"local_purchase_order": po,
-		"purchase_order": po,
-		"agent_name": "",
-		"receipt_datetime": (
-			get_datetime(wbm.date)
-			if wbm.date
-			else get_datetime(
-				f"{(rst.entry_date if rst else None) or wbm.measurement_date or nowdate()} "
-				f"{(rst.entry_time if rst else None) or wbm.measurement_time or nowtime()}"
-			)
-		),
-		"ppc_name": ((rst.party_name or "").strip() if rst else ""),
-		"paddy_variety": ((rst.commodity if rst else "") or wbm.commodity or "").strip(),
-		"gross_vehicle_weight": flt(wbm.load_weight),
-		"gross_weight": flt(wbm.gross_weight),
-		"tare_weight": flt(wbm.tare_weight),
-		"net_weight": flt(wbm.net_weight),
-		"deduction": flt(wbm.deduction),
-		"gunny_type": wbm.gunny_type or "",
-		"gunny_weight": flt(wbm.gunny_weight),
-		"vehicle_no": normalize_vehicle_no(wbm.actual_truck_no or wbm.vehicle_no),
-		"quality_check": (wbm.quality_check or "").strip(),
-		"gate_entry": (wbm.gate_entry or "").strip(),
-	}
+	"""Disabled: Local Paddy Purchase is disabled."""
+	return None
 
 
 def _resolve_wbm_for_rst(rst_no: str, pass_unique_key: str | None = None) -> str | None:
@@ -1032,12 +962,12 @@ def _qc_bag_count(qc_name: str) -> int:
 			"parenttype": "Quality Check",
 			"parentfield": "type_of_pkt",
 		},
-		fields=["jute_pkt_no", "no_of_plastic_bag", "jute_bags", "plastic_bags"],
+		fields=["jute_pkt_no", "no_of_plastic_bag"],
 	)
 	total = 0
 	for line in lines:
-		jute = cint(line.jute_pkt_no) or cint(line.jute_bags)
-		plastic = cint(line.no_of_plastic_bag) or cint(line.plastic_bags)
+		jute = cint(line.jute_pkt_no) or cint(line.get("jute_bags"))
+		plastic = cint(line.no_of_plastic_bag) or cint(line.get("plastic_bags"))
 		total += jute + plastic
 	return total
 
@@ -1329,58 +1259,8 @@ def get_rst_no_autocomplete(txt="", pass_unique_key="", limit=25):
 
 @frappe.whitelist()
 def get_pending_rst_for_party(party_name=""):
-	"""Return unfinished / un-GRNed RST/WBM transactions for local procurement for this party."""
-	party = (party_name or "").strip()
-	if not party:
-		return []
-
-	rsts = frappe.get_all(
-		"RST Details",
-		filters={
-			"party_name": ["like", f"%{party}%"],
-		},
-		fields=[
-			"name",
-			"rst_no",
-			"vehicle_no",
-			"entry_date",
-			"entry_time",
-			"local_purchase_order",
-			"weigh_bridge_measurement",
-		],
-		order_by="entry_date desc, entry_time desc, creation desc",
-	)
-
-	pending = []
-	for r in rsts:
-		rst_no = (r.rst_no or r.name or "").strip()
-		has_grn = frappe.db.exists(
-			"GRN Note",
-			{
-				"rst_no": rst_no,
-				"is_local_procurement": 1,
-				"docstatus": ["<", 2],
-			},
-		)
-		if not has_grn and r.weigh_bridge_measurement:
-			has_grn = frappe.db.exists(
-				"GRN Note",
-				{
-					"weigh_bridge_measurement": r.weigh_bridge_measurement,
-					"docstatus": ["<", 2],
-				},
-			)
-		if not has_grn:
-			pending.append(
-				{
-					"rst_no": rst_no,
-					"vehicle_no": r.vehicle_no or "",
-					"entry_date": str(r.entry_date or ""),
-					"local_purchase_order": r.local_purchase_order or "",
-					"weigh_bridge_measurement": r.weigh_bridge_measurement or "",
-				}
-			)
-	return pending
+	"""Disabled: Local Paddy Purchase is disabled."""
+	return []
 
 
 def _grn_receipt_datetime_display(doc) -> str:
@@ -1431,7 +1311,6 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 			tp_qty,
 			tp_cumulative,
 			flt(doc.chhatni),
-			flt(doc.deduction),
 		)
 
 	return render_template_file(
@@ -1439,6 +1318,7 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 		{
 			"doc": doc,
 			"receipt_datetime_display": receipt_datetime_display,
+			"arrival_datetime_display": format_datetime(doc.arrival_datetime) if doc.arrival_datetime else "—",
 			"qc_datetime_display": format_datetime(doc.qc_datetime) if doc.qc_datetime else "—",
 			"gate_exit_datetime_display": format_datetime(doc.gate_exit_datetime) if doc.gate_exit_datetime else "—",
 			"transit_pass_datetime_display": _grn_transit_pass_datetime_display(doc),
@@ -1449,6 +1329,12 @@ def _render_grn_note_pass_html(doc, for_pdf: bool = False) -> str:
 			"qty_chhatni_received_pct": _format_grn_qty(doc.chhatni_received_pct),
 			"qty_tp_cumulative_deduction": _format_grn_qty(doc.tp_cumulative_deduction),
 			"qty_tp": _format_grn_qty(doc.tp_quantity),
+			"qty_load_weight": _format_grn_qty(doc.gross_vehicle_weight),
+			"qty_tare_weight": _format_grn_qty(doc.tare_weight),
+			"qty_gross_weight": _format_grn_qty(doc.gross_weight),
+			"qty_gunny_weight": _format_grn_qty(doc.gunny_weight),
+			"qty_deduction": _format_grn_qty(doc.deduction),
+			"qty_net_weight": _format_grn_qty(doc.net_weight),
 			"tp_pass_fulfilled": tp_pass_fulfilled,
 			"chhatni_display_status": chhatni_display_status,
 			"qr_image": qr_image_html(qr_text, size=118),

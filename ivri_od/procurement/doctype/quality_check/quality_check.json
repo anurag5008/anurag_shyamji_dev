@@ -208,6 +208,7 @@
    "label": "Paddy Type (In Bags)"
   },
   {
+   "cannot_add_rows": 1,
    "fieldname": "old_new_bags",
    "fieldtype": "Table",
    "label": "Paddy Type (In Bags)",
@@ -219,6 +220,7 @@
    "label": "Type of Bags"
   },
   {
+   "cannot_add_rows": 1,
    "fieldname": "type_of_pkt",
    "fieldtype": "Table",
    "label": "Type of Bags",

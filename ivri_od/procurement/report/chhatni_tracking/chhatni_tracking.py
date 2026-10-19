@@ -155,7 +155,7 @@ def get_data(filters):
 		tp_filled = _("Yes") if tp_qty > 0 and total_received >= tp_qty else _("No")
 		received_minus_tp = flt(max(total_received - tp_qty, 0), 3)
 		total_deduction = flt(grn.get("total_deduction"))
-		received_pct = received_chhatni_pct(total_deduction, tp_qty)
+		received_pct = received_chhatni_pct(total_received, tp_qty)
 
 		if tp_qty > 0 and total_received < tp_qty:
 			chhatni_status = _("Chhatni Not Received")

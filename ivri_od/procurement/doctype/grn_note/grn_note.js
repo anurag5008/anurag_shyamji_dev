@@ -3,13 +3,67 @@
 
 const GRN_NOTE_PASS_BTN = "btn-grn-note-pass";
 
+frappe.dom.set_style(`
+	.form-section[data-fieldname="entry_data_section"].empty-section:not(.hide-control) {
+		display: block !important;
+	}
+	.form-section[data-fieldname="entry_data_section"]:not(.hide-control) .section-head {
+		display: block !important;
+	}
+	[data-fieldname="qc_bag_details"] .grid-heading-row,
+	[data-fieldname="bag_weight_details"] .grid-heading-row,
+	[data-fieldname="type_of_pkt"] .grid-heading-row {
+		height: auto !important;
+		min-height: 32px;
+	}
+	[data-fieldname="qc_bag_details"] .grid-heading-row .grid-row,
+	[data-fieldname="bag_weight_details"] .grid-heading-row .grid-row,
+	[data-fieldname="type_of_pkt"] .grid-heading-row .grid-row {
+		height: auto !important;
+		min-height: 32px;
+	}
+	[data-fieldname="qc_bag_details"] .grid-heading-row .grid-static-col,
+	[data-fieldname="bag_weight_details"] .grid-heading-row .grid-static-col,
+	[data-fieldname="type_of_pkt"] .grid-heading-row .grid-static-col,
+	.grid-heading-row .grid-static-col[data-fieldname="jute_pkt_no"],
+	.grid-heading-row .grid-static-col[data-fieldname="no_of_plastic_bag"],
+	.grid-heading-row .grid-static-col[data-fieldname="jute_bags"],
+	.grid-heading-row .grid-static-col[data-fieldname="plastic_bags"],
+	.grid-heading-row .grid-static-col[data-fieldname="total_bags"] {
+		height: auto !important;
+		min-height: 32px;
+		padding-top: 6px !important;
+		padding-bottom: 6px !important;
+		white-space: normal !important;
+	}
+	[data-fieldname="qc_bag_details"] .grid-heading-row .static-area,
+	[data-fieldname="bag_weight_details"] .grid-heading-row .static-area,
+	[data-fieldname="type_of_pkt"] .grid-heading-row .static-area,
+	.grid-heading-row .grid-static-col[data-fieldname="jute_pkt_no"] .static-area,
+	.grid-heading-row .grid-static-col[data-fieldname="no_of_plastic_bag"] .static-area,
+	.grid-heading-row .grid-static-col[data-fieldname="jute_bags"] .static-area,
+	.grid-heading-row .grid-static-col[data-fieldname="plastic_bags"] .static-area,
+	.grid-heading-row .grid-static-col[data-fieldname="total_bags"] .static-area {
+		white-space: normal !important;
+		word-break: normal !important;
+		overflow: visible !important;
+		text-overflow: unset !important;
+		line-height: 1.25 !important;
+	}
+`);
+
 frappe.ui.form.on("GRN Note", {
 	onload(frm) {
 		setup_pass_unique_key_autocomplete(frm);
 		setup_rst_no_autocomplete(frm);
 		sync_grn_no_display(frm);
+		sync_section_visibility(frm);
+		setup_entry_details_grid(frm);
+		sync_entry_details_display(frm);
 	},
 	refresh(frm) {
+		frm.toggle_display("is_local_procurement", Boolean(frm.doc.is_local_procurement));
+		frm.toggle_display("local_purchase_order", Boolean(frm.doc.local_purchase_order));
 		setup_pass_unique_key_autocomplete(frm);
 		setup_rst_no_autocomplete(frm);
 		setup_qc_bag_details_grid(frm);
@@ -19,6 +73,8 @@ frappe.ui.form.on("GRN Note", {
 		sync_purchase_heading(frm);
 		sync_gate_exit_fields(frm);
 		sync_tp_fulfillment_display(frm);
+		sync_section_visibility(frm);
+		sync_entry_details_display(frm);
 		attach_grn_note_pass_buttons(frm);
 		if (!frm.doc.is_local_procurement && (frm.doc.pass_unique_key || "").trim() && !(frm.doc.mill_name || "").trim()) {
 			load_transit_pass_details(frm);
@@ -40,47 +96,18 @@ frappe.ui.form.on("GRN Note", {
 		load_rst_details(frm);
 	},
 	party_name(frm) {
-		const party = (frm.doc.party_name || "").trim();
-		if (!party || !frm.doc.is_local_procurement) {
-			return;
-		}
-		frappe.call({
-			method: "ivri_od.procurement.doctype.grn_note.grn_note.get_pending_rst_for_party",
-			args: { party_name: party },
-			callback(r) {
-				const list = r.message || [];
-				if (list.length === 1) {
-					frm.set_value("rst_no", list[0].rst_no);
-				} else if (list.length > 1) {
-					let d = new frappe.ui.Dialog({
-						title: __("Select Pending RST for {0}", [party]),
-						fields: [
-							{
-								fieldname: "selected_rst",
-								fieldtype: "Select",
-								label: __("Pending RST Transactions"),
-								reqd: 1,
-								options: list.map(item => ({
-									label: `${item.rst_no} | Vehicle: ${item.vehicle_no || "N/A"} | Date: ${item.entry_date} | PO: ${item.local_purchase_order || "N/A"}`,
-									value: item.rst_no
-								}))
-							}
-						],
-						primary_action_label: __("Select"),
-						primary_action(values) {
-							d.hide();
-							frm.set_value("rst_no", values.selected_rst);
-						}
-					});
-					d.show();
-				}
-			}
-		});
+		// Local procurement pending RST lookup is disabled
 	},
 	ppc_name(frm) {
 		if (frm.is_new()) {
 			refresh_grn_chhatni(frm);
 		}
+	},
+	entry_details_add(frm) {
+		sync_entry_details_display(frm);
+	},
+	entry_details_remove(frm) {
+		sync_entry_details_display(frm);
 	},
 });
 
@@ -491,9 +518,33 @@ function lock_child_grid(grid, flag) {
 	grid.wrapper.find(".grid-remove-rows").hide();
 }
 
+function sync_section_visibility(frm) {
+	frm.set_df_property("paddy_bags_section", "hidden", 1);
+	frm.set_df_property("old_new_bags", "hidden", 1);
+}
+
+function sync_entry_details_display(frm) {
+	if (frm.fields_dict.entry_data_section && frm.fields_dict.entry_data_section.collapse) {
+		frm.fields_dict.entry_data_section.collapse(false);
+	}
+	const has_records = (frm.doc.entry_details || []).length > 0;
+	frm.set_df_property("entry_details", "hidden", has_records ? 0 : 1);
+	if (!has_records && frm.fields_dict.entry_data_section?.wrapper) {
+		frm.fields_dict.entry_data_section.wrapper.removeClass("empty-section");
+		if (!frm.doc.is_local_procurement) {
+			frm.fields_dict.entry_data_section.wrapper.show();
+			frm.fields_dict.entry_data_section.wrapper.find(".section-head").show();
+		}
+	}
+}
+
 function setup_entry_details_grid(frm) {
 	const grid = frm.fields_dict.entry_details?.grid;
-	if (!grid || grid._grn_entry_grid_ready) {
+	if (!grid) {
+		return;
+	}
+	grid.set_column_disp(["entry_date", "entry_time"], false);
+	if (grid._grn_entry_grid_ready) {
 		return;
 	}
 	grid._grn_entry_grid_ready = true;
@@ -516,6 +567,7 @@ function set_entry_details(frm, rows) {
 	});
 	frm.refresh_field("entry_details");
 	setup_entry_details_grid(frm);
+	sync_entry_details_display(frm);
 }
 
 function set_qc_bag_details(frm, rows) {

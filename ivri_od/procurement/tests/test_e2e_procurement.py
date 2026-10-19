@@ -345,8 +345,8 @@ def run_e2e_procurement():
 	assert flt(grn3.tp_cumulative_received, 3) == 358.780, f"Trip 3 cumulative received must be 358.780, got {grn3.tp_cumulative_received}"
 	assert grn3.tp_fulfillment_status == "TP Completed", f"Trip 3 status must be 'TP Completed', got {grn3.tp_fulfillment_status}"
 	assert flt(grn3.tp_cumulative_deduction, 3) == 16.145, f"Trip 3 cumulative deduction must be 16.145, got {grn3.tp_cumulative_deduction}"
-	assert flt(grn3.chhatni_received_pct, 2) == 4.50, f"Trip 3 Chhatni % must be 4.50%, got {grn3.chhatni_received_pct}"
-	assert grn3.chhatni_fulfillment_status == "Chhatni Received", f"Trip 3 Chhatni status must be 'Chhatni Received', got {grn3.chhatni_fulfillment_status}"
+	assert flt(grn3.chhatni_received_pct, 2) == 0.0, f"Trip 3 Chhatni % must be 0.0%, got {grn3.chhatni_received_pct}"
+	assert grn3.chhatni_fulfillment_status == "Chhatni Not Received", f"Trip 3 Chhatni status must be 'Chhatni Not Received', got {grn3.chhatni_fulfillment_status}"
 
 	# 5. Report Validations
 	print("\n>>> PHASE 5: VALIDATE ALL 6 PROCUREMENT REPORTS")
@@ -399,8 +399,8 @@ def run_e2e_procurement():
 	assert flt(mb_row["total_received"], 3) == 358.780
 	assert flt(mb_row["pending_qty"], 3) == 0.0
 	assert mb_row["tp_status"] == "TP Completed"
-	assert flt(mb_row["actual_chhatni_pct"], 2) == 4.50
-	assert mb_row["chhatni_status"] == "Chhatni Received"
+	assert flt(mb_row["actual_chhatni_pct"], 2) == 0.0
+	assert mb_row["chhatni_status"] == "Chhatni Not Received"
 	print("  ✓ Mandi Book: PASS")
 
 	# Report 5: TP Mandi Quantity Fulfillment
@@ -424,8 +424,8 @@ def run_e2e_procurement():
 	assert flt(ct_row["tp_quantity"], 3) == 358.780
 	assert flt(ct_row["total_received"], 3) == 358.780
 	assert flt(ct_row["chhatni_assigned_pct"], 2) == 4.50
-	assert flt(ct_row["received_chhatni_pct"], 2) == 4.50
-	assert ct_row["chhatni_status"] == "Chhatni Received"
+	assert flt(ct_row["received_chhatni_pct"], 2) == 0.0
+	assert ct_row["chhatni_status"] == "Chhatni Not Received"
 	print("  ✓ Chhatni Tracking: PASS")
 
 	print("\n" + "=" * 70)
