@@ -29,7 +29,10 @@ add_to_apps_screen = [
 # ------------------
 
 # include js, css files in header of desk.html
-app_include_js = "/assets/ivri_od/js/disable_quick_entry.js"
+app_include_js = [
+	"/assets/ivri_od/js/disable_quick_entry.js",
+	"portal_detail_table.bundle.js",
+]
 # app_include_css = "/assets/ivri_od/css/ivri_od.css"
 # include js, css files in header of web template
 # web_include_css = "/assets/ivri_od/css/ivri_od.css"
@@ -140,6 +143,9 @@ doctype_js = {"Report": "public/js/procurement_report_redirect.js"}
 # Document Events
 # ---------------
 # Hook on document methods and events
+
+# Portal sites and their sections (SCMS, DCRO, WINGS) used by Portal Data Extraction.
+fixtures = [{"dt": "Portal Site"}]
 
 doc_events = {
 	"DocType": {

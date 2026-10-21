@@ -16,6 +16,60 @@ FLOW_INTRO = (
 	"<b>Gate</b> → <b>Weigh &amp; QC</b> → <b>Entry / RST / GRN</b>."
 )
 
+# Rice handover: one page lists every report built from SCMS portal data.
+RRC_WORKSPACE = "RRC Detail from SCMS"
+RRC_WORKSPACE_SLUG = "rrc-detail-from-scms"
+# Custom HTML Block on each portal report page: "Manual Entry" button with a
+# drop-down of that page's forms in procurement/portal_manual.py (group "rrc" or
+# "dcro"; code in public/js/portal_detail_table.bundle.js).
+RRC_MANUAL_BLOCK = "RRC Manual Entry"
+MANUAL_BLOCK_HTML = """<div class="manual-entry">
+	<div class="manual-entry-dropdown">
+		<button class="btn btn-primary btn-sm manual-entry-button">Manual Entry &#9662;</button>
+		<div class="dropdown-menu manual-entry-menu"></div>
+	</div>
+	<span class="text-muted small">Enter {portal} rows by hand when they cannot be read from the portal.
+	Rows read from the portal always replace them.</span>
+</div>"""
+MANUAL_BLOCK_STYLE = """.manual-entry { display: flex; align-items: center; gap: 12px; padding: 4px 0; }
+.manual-entry-dropdown { position: relative; }
+.manual-entry-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 1000; min-width: 260px; }"""
+MANUAL_BLOCK_SCRIPT = 'ivri_od.portal.setup_manual_entry_block(root_element, "{group}");'
+RRC_REPORTS: list[tuple[str, str, str]] = [
+	# (report, icon, colour)
+	("RRC DC Summary from SCMS", "truck", "Blue"),
+	("RRC Transit Pass from SCMS", "file-text", "Cyan"),
+	("Gunny Stock Register Details from SCMS", "package", "Green"),
+	("Lot Search from SCMS", "search", "Purple"),
+	("Rejected Lot for RRC from SCMS", "x-circle", "Red"),
+	("Pending Lot In for RRC from SCMS", "clock", "Orange"),
+]
+
+# Paddy release: one page lists every report built from DCRO portal data.
+DCRO_WORKSPACE = "DCRO Details"
+DCRO_WORKSPACE_SLUG = "dcro-details"
+DCRO_MANUAL_BLOCK = "DCRO Manual Entry"
+DCRO_REPORTS: list[tuple[str, str, str]] = [
+	("Paddy Release from DCRO", "truck", "Green"),
+	("View DC from DCRO", "file-text", "Blue"),
+	("DC Transit Challan from DCRO", "file-check", "Orange"),
+]
+
+# One line per DC: lots to deliver (View DC) against lots delivered (DC Transit Challan,
+# SCMS Lot Search). Built from DCRO and SCMS together, so it sits on the Procurement page.
+DC_TRACK_REPORT = "DC Track"
+
+# FCI depot data: one page lists every report built from WINGS (fciarms.in) portal data.
+WINGS_WORKSPACE = "WINGS Details"
+WINGS_WORKSPACE_SLUG = "wings-details"
+WINGS_MANUAL_BLOCK = "WINGS Manual Entry"
+WINGS_REPORTS: list[tuple[str, str, str]] = [
+	("TEC Report from WINGS", "file-check", "Blue"),
+	("Stack Status from WINGS", "layers", "Purple"),
+	("Booking Delivery Status from WINGS", "truck", "Green"),
+	("Targets Advanced Paddy from WINGS", "target", "Orange"),
+]
+
 WORKSPACE_SHORTCUTS = [
 	{"label": "Gate Entry", "type": "DocType", "link_to": "Gate Entry", "icon": "log-in", "color": "Blue"},
 	{
@@ -48,6 +102,7 @@ WORKSPACE_SHORTCUTS = [
 	},
 	{"label": "RST Details", "type": "DocType", "link_to": "RST Details", "icon": "clipboard-list", "color": "Grey"},
 	{"label": "GRN Note", "type": "DocType", "link_to": "GRN Note", "icon": "file-check", "color": "Orange"},
+	{"label": DC_TRACK_REPORT, "type": "Report", "link_to": DC_TRACK_REPORT, "icon": "check-square", "color": "Purple"},
 	{
 		"label": "Module Overview",
 		"type": "Report",
@@ -56,6 +111,50 @@ WORKSPACE_SHORTCUTS = [
 		"color": "Purple",
 	},
 ]
+
+# Box "Government Portals Reports" among the module cards of the Procurement page:
+# a link to each portal's page of reports. A Custom HTML Block drawn like the other
+# cards, because a card's links can only open a DocType, Page or Report, not a workspace.
+PORTAL_SHORTCUTS = [
+	{
+		"label": DCRO_WORKSPACE,
+		"type": "URL",
+		"url": "/app/" + DCRO_WORKSPACE_SLUG,
+		"link_to": "",
+		"icon": "truck",
+		"color": "Green",
+	},
+	{
+		"label": WINGS_WORKSPACE,
+		"type": "URL",
+		"url": "/app/" + WINGS_WORKSPACE_SLUG,
+		"link_to": "",
+		"icon": "layers",
+		"color": "Blue",
+	},
+	{
+		"label": RRC_WORKSPACE,
+		"type": "URL",
+		"url": "/app/" + RRC_WORKSPACE_SLUG,
+		"link_to": "",
+		"icon": "file-text",
+		"color": "Cyan",
+	},
+]
+PORTAL_SECTION = "Government Portals Reports"
+PORTAL_CARD_STYLE = """.portal-card { margin: -7px; padding: 10px 12px; border: 1px solid var(--border-color);
+	border-radius: var(--border-radius-lg); background: var(--card-bg); height: calc(100% + 14px); box-sizing: border-box; }
+.portal-card-title { font-size: var(--text-base); font-weight: 600; color: var(--heading-color, var(--text-color)); }
+.portal-link { display: block; text-decoration: none; font-size: var(--text-sm); color: var(--text-color);
+	padding: 4px; margin-left: -4px; border-radius: var(--border-radius-md); }
+.portal-link:first-of-type { margin-top: 12px; }
+.portal-link:hover { color: var(--invert-neutral); }"""
+PORTAL_CARD_SCRIPT = """root_element.querySelectorAll("a[data-route]").forEach((a) =>
+	a.addEventListener("click", (e) => {
+		e.preventDefault();
+		frappe.set_route(a.dataset.route);
+	})
+);"""
 
 WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 	(
@@ -82,6 +181,14 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("PPAS Data Extraction", "DocType"),
 			("PPAS Transit Pass Import", "DocType"),
 			("PPAS Transit Pass", "DocType"),
+		],
+	),
+	(
+		"Govt portals",
+		[
+			("Portal Data Extraction", "DocType"),
+			("Portal Record", "DocType"),
+			("Portal Site", "DocType"),
 		],
 	),
 	(
@@ -116,6 +223,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Mandi Book", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
 			("Entry Report", "Report"),
+			(DC_TRACK_REPORT, "Report"),
 		],
 	),
 ]
@@ -141,6 +249,10 @@ QUERY_REPORTS = {
 	"Mandi Book",
 	"Vehicle Gate Movement Summary",
 	"Entry Report",
+	DC_TRACK_REPORT,
+	*(name for name, _icon, _color in RRC_REPORTS),
+	*(name for name, _icon, _color in DCRO_REPORTS),
+	*(name for name, _icon, _color in WINGS_REPORTS),
 }
 
 
@@ -182,7 +294,30 @@ def build_workspace_content() -> str:
 		blocks.append(
 			{"id": _block_id(), "type": "card", "data": {"card_name": card_name, "col": 4}}
 		)
+		if card_name == "Govt portals":
+			blocks.append(
+				{"id": _block_id(), "type": "custom_block", "data": {"custom_block_name": PORTAL_SECTION, "col": 4}}
+			)
 	return json.dumps(blocks)
+
+
+def _ensure_portal_card_block():
+	"""The "Government Portals Reports" box: links to DCRO Details, WINGS Details, RRC Detail from SCMS."""
+	links = "".join(
+		f'<a class="portal-link" href="{row["url"]}" data-route="{row["url"].rsplit("/", 1)[-1]}">{row["label"]}</a>'
+		for row in PORTAL_SHORTCUTS
+	)
+	html = f'<div class="portal-card"><div class="portal-card-title">{PORTAL_SECTION}</div>{links}</div>'
+	if frappe.db.exists("Custom HTML Block", PORTAL_SECTION):
+		doc = frappe.get_doc("Custom HTML Block", PORTAL_SECTION)
+	else:
+		doc = frappe.new_doc("Custom HTML Block")
+	doc.update({"html": html, "style": PORTAL_CARD_STYLE, "script": PORTAL_CARD_SCRIPT, "private": 0})
+	doc.flags.ignore_permissions = True
+	if doc.is_new():
+		doc.insert(set_name=PORTAL_SECTION)
+	else:
+		doc.save()
 
 
 def ensure_procurement_workspace_after_migrate():
@@ -196,6 +331,9 @@ def sync_procurement_desk_ui():
 
 	ensure_standard_procurement_reports()
 	apply_procurement_workspace()
+	apply_rrc_workspace()
+	apply_dcro_workspace()
+	apply_wings_workspace()
 	_import_procurement_sidebar()
 	_cleanup_hidden_workspace_links()
 	frappe.clear_cache()
@@ -277,16 +415,20 @@ def apply_procurement_workspace():
 	if not doc.type:
 		doc.type = "Workspace"
 
+	_ensure_portal_card_block()
 	doc.content = build_workspace_content()
+	doc.custom_blocks = []
+	doc.append("custom_blocks", {"custom_block_name": PORTAL_SECTION, "label": PORTAL_SECTION})
 
 	doc.shortcuts = []
 	for row in WORKSPACE_SHORTCUTS:
-		if not _workspace_target_exists(row["link_to"], row["type"]):
+		if row["type"] != "URL" and not _workspace_target_exists(row["link_to"], row["type"]):
 			continue
 		child = doc.append("shortcuts", {})
 		child.label = row["label"]
 		child.type = row["type"]
 		child.link_to = row["link_to"]
+		child.url = row.get("url") or ""
 		child.icon = row.get("icon") or ""
 		child.color = row.get("color") or "Grey"
 		child.doc_view = "List"
@@ -332,6 +474,132 @@ def apply_procurement_workspace():
 	doc.flags.ignore_links = True
 	doc.save(ignore_version=True)
 	frappe.db.commit()
+
+
+def apply_rrc_workspace():
+	"""Page "RRC Detail from SCMS": a shortcut and a link for each SCMS report."""
+	_apply_portal_workspace(
+		RRC_WORKSPACE,
+		"file-text",
+		"Rice handover data read from the SCMS portal with <b>Portal Data Extraction</b>.",
+		RRC_REPORTS,
+		"SCMS reports",
+		RRC_MANUAL_BLOCK,
+		"rrc",
+		"SCMS",
+	)
+
+
+def apply_dcro_workspace():
+	"""Page "DCRO Details": a shortcut and a link for each DCRO report (paddy release)."""
+	_apply_portal_workspace(
+		DCRO_WORKSPACE,
+		"truck",
+		"Paddy release data read from the DCRO portal with <b>Portal Data Extraction</b>.",
+		DCRO_REPORTS,
+		"DCRO reports",
+		DCRO_MANUAL_BLOCK,
+		"dcro",
+		"DCRO",
+	)
+
+
+def apply_wings_workspace():
+	"""Page "WINGS Details": a shortcut and a link for each WINGS report (TEC, stack status)."""
+	_apply_portal_workspace(
+		WINGS_WORKSPACE,
+		"layers",
+		"TEC, stack, booking/delivery and target data read from the WINGS portal (fciarms.in) with <b>Portal Data Extraction</b>.",
+		WINGS_REPORTS,
+		"WINGS reports",
+		WINGS_MANUAL_BLOCK,
+		"wings",
+		"WINGS",
+	)
+
+
+def _apply_portal_workspace(title, icon, intro, report_list, card, block, group, portal):
+	"""A page of portal reports with a Manual Entry button (none when ``block`` is
+	None). A child page of Procurement (not an app of its own), opened from its
+	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers."""
+	reports = [r for r in report_list if frappe.db.exists("Report", r[0])]
+	if block:
+		_ensure_manual_entry_block(block, group, portal)
+	if frappe.db.exists("Workspace", title):
+		doc = frappe.get_doc("Workspace", title)
+	else:
+		doc = frappe.new_doc("Workspace")
+		doc.name = doc.title = doc.label = title
+	doc.update(
+		{
+			"module": "Procurement",
+			"app": "ivri_od",
+			"public": 1,
+			"is_hidden": 0,
+			"icon": icon,
+			"type": "Workspace",
+			"parent_page": "Procurement",
+		}
+	)
+	blocks = [
+		{
+			"id": _block_id(),
+			"type": "header",
+			"data": {"text": f'<span class="h4"><b>{title}</b></span>', "col": 12},
+		},
+		{"id": _block_id(), "type": "paragraph", "data": {"text": intro, "col": 12}},
+	]
+	doc.shortcuts = []
+	doc.links = []
+	doc.custom_blocks = []
+	if block:
+		blocks.append({"id": _block_id(), "type": "custom_block", "data": {"custom_block_name": block, "col": 12}})
+		doc.append("custom_blocks", {"custom_block_name": block, "label": block})
+	doc.append("links", {"type": "Card Break", "label": card, "link_count": len(reports)})
+	for name, report_icon, color in reports:
+		doc.append(
+			"shortcuts",
+			{
+				"label": name,
+				"type": "Report",
+				"link_to": name,
+				"icon": report_icon,
+				"color": color,
+				"report_ref_doctype": "Portal Record",
+			},
+		)
+		doc.append(
+			"links",
+			{"type": "Link", "label": name, "link_type": "Report", "link_to": name, "is_query_report": 1},
+		)
+		blocks.append({"id": _block_id(), "type": "shortcut", "data": {"shortcut_name": name, "col": 4}})
+	blocks.append({"id": _block_id(), "type": "card", "data": {"card_name": card, "col": 4}})
+	doc.content = json.dumps(blocks)
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_links = True
+	doc.save(ignore_version=True)
+	frappe.db.commit()
+
+
+def _ensure_manual_entry_block(name, group, portal):
+	"""Public block (no roles): the server checks who may save manual rows."""
+	if frappe.db.exists("Custom HTML Block", name):
+		doc = frappe.get_doc("Custom HTML Block", name)
+	else:
+		doc = frappe.new_doc("Custom HTML Block")
+	doc.update(
+		{
+			"html": MANUAL_BLOCK_HTML.format(portal=portal),
+			"style": MANUAL_BLOCK_STYLE,
+			"script": MANUAL_BLOCK_SCRIPT.format(group=group),
+			"private": 0,
+		}
+	)
+	doc.flags.ignore_permissions = True
+	if doc.is_new():
+		doc.insert(set_name=name)
+	else:
+		doc.save()
 
 
 def _workspace_target_exists(link_to: str, link_type: str) -> bool:

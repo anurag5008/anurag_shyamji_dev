@@ -21,6 +21,20 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("abstract_physical", "abstract_physical.json"),
 	("mill_ppc_season_quantity_summary", "mill_ppc_season_quantity_summary.json"),
 	("entry_report", "entry_report.json"),
+	("rrc_dc_summary_from_scms", "rrc_dc_summary_from_scms.json"),
+	("rrc_transit_pass_from_scms", "rrc_transit_pass_from_scms.json"),
+	("gunny_stock_register_details_from_scms", "gunny_stock_register_details_from_scms.json"),
+	("lot_search_from_scms", "lot_search_from_scms.json"),
+	("paddy_release_from_dcro", "paddy_release_from_dcro.json"),
+	("view_dc_from_dcro", "view_dc_from_dcro.json"),
+	("dc_transit_challan_from_dcro", "dc_transit_challan_from_dcro.json"),
+	("dc_track", "dc_track.json"),
+	("tec_report_from_wings", "tec_report_from_wings.json"),
+	("stack_status_from_wings", "stack_status_from_wings.json"),
+	("booking_delivery_status_from_wings", "booking_delivery_status_from_wings.json"),
+	("targets_advanced_paddy_from_wings", "targets_advanced_paddy_from_wings.json"),
+	("rejected_lot_for_rrc_from_scms", "rejected_lot_for_rrc_from_scms.json"),
+	("pending_lot_in_for_rrc_from_scms", "pending_lot_in_for_rrc_from_scms.json"),
 )
 
 

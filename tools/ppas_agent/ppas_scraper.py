@@ -6,6 +6,7 @@ import pandas as pd
 from bs4 import BeautifulSoup
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 
 
 # ============================================================
@@ -311,8 +312,11 @@ def start_ppas_session():
     )
 
 
+    # close_fds: on Windows chromedriver would otherwise inherit the agent's
+    # port 8765 and keep it blocked after the agent exits.
     driver = webdriver.Chrome(
-        options=options
+        options=options,
+        service=Service(popen_kw={"close_fds": True})
     )
 
 

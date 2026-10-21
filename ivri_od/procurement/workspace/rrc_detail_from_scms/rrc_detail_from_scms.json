@@ -1,0 +1,161 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"d4e4ca7572\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>RRC Detail from SCMS</b></span>\", \"col\": 12}}, {\"id\": \"d672cfdb05\", \"type\": \"paragraph\", \"data\": {\"text\": \"Rice handover data read from the SCMS portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"5c552095ed\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"RRC Manual Entry\", \"col\": 12}}, {\"id\": \"97167dbdce\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC DC Summary from SCMS\", \"col\": 4}}, {\"id\": \"fa082f85f1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC Transit Pass from SCMS\", \"col\": 4}}, {\"id\": \"92b72484ea\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gunny Stock Register Details from SCMS\", \"col\": 4}}, {\"id\": \"f42250c671\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Lot Search from SCMS\", \"col\": 4}}, {\"id\": \"9ddf96c30d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Rejected Lot for RRC from SCMS\", \"col\": 4}}, {\"id\": \"3765c2d07f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Pending Lot In for RRC from SCMS\", \"col\": 4}}, {\"id\": \"3057a6f925\", \"type\": \"card\", \"data\": {\"card_name\": \"SCMS reports\", \"col\": 4}}]",
+ "creation": "2026-10-14 14:11:04.219740",
+ "custom_blocks": [
+  {
+   "custom_block_name": "RRC Manual Entry",
+   "label": "RRC Manual Entry"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "file-text",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "RRC Detail from SCMS",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "SCMS reports",
+   "link_count": 6,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "RRC DC Summary from SCMS",
+   "link_count": 0,
+   "link_to": "RRC DC Summary from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "RRC Transit Pass from SCMS",
+   "link_count": 0,
+   "link_to": "RRC Transit Pass from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Gunny Stock Register Details from SCMS",
+   "link_count": 0,
+   "link_to": "Gunny Stock Register Details from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Lot Search from SCMS",
+   "link_count": 0,
+   "link_to": "Lot Search from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Rejected Lot for RRC from SCMS",
+   "link_count": 0,
+   "link_to": "Rejected Lot for RRC from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Pending Lot In for RRC from SCMS",
+   "link_count": 0,
+   "link_to": "Pending Lot In for RRC from SCMS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-21 11:53:39.606151",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "RRC Detail from SCMS",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Procurement",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "icon": "truck",
+   "label": "RRC DC Summary from SCMS",
+   "link_to": "RRC DC Summary from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Cyan",
+   "doc_view": "",
+   "icon": "file-text",
+   "label": "RRC Transit Pass from SCMS",
+   "link_to": "RRC Transit Pass from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "icon": "package",
+   "label": "Gunny Stock Register Details from SCMS",
+   "link_to": "Gunny Stock Register Details from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "icon": "search",
+   "label": "Lot Search from SCMS",
+   "link_to": "Lot Search from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Red",
+   "doc_view": "",
+   "icon": "x-circle",
+   "label": "Rejected Lot for RRC from SCMS",
+   "link_to": "Rejected Lot for RRC from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "clock",
+   "label": "Pending Lot In for RRC from SCMS",
+   "link_to": "Pending Lot In for RRC from SCMS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  }
+ ],
+ "title": "RRC Detail from SCMS",
+ "type": "Workspace"
+}

@@ -1,0 +1,239 @@
+{
+ "actions": [],
+ "autoname": "format:PDE-{YYYY}-{#####}",
+ "creation": "2026-10-13 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "site",
+  "mill",
+  "rows_to_save",
+  "column_break_main",
+  "status",
+  "download_receipts",
+  "read_full_table",
+  "last_extracted_on",
+  "last_section",
+  "mill_id",
+  "summary_section",
+  "records_extracted",
+  "records_inserted",
+  "column_break_counts",
+  "records_updated",
+  "records_unchanged",
+  "column_break_errors",
+  "records_failed",
+  "receipts_saved",
+  "runs_section",
+  "runs",
+  "log_section",
+  "extraction_log"
+ ],
+ "fields": [
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Site",
+   "options": "Portal Site",
+   "reqd": 1,
+   "description": "Log in, open any page from the portal menu, set filters and click Search. Each search is saved under the page's section."
+  },
+  {
+   "fieldname": "mill",
+   "fieldtype": "Link",
+   "label": "Mill No.",
+   "options": "Mill Master",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "The mill whose portal account you log in with. Every row read is saved under this Mill No.: one extraction per mill."
+  },
+  {
+   "fieldname": "rows_to_save",
+   "fieldtype": "Select",
+   "label": "Rows to Save",
+   "options": "All\nLatest Entry\nLast 5\nLast 10\nLast 20",
+   "default": "All",
+   "description": "For each Search, save only the newest rows (by the table's date column; without one, the first rows as shown on the portal). Use Last 5 to test a page."
+  },
+  {
+   "fieldname": "column_break_main",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Draft",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Status",
+   "options": "Draft\nConnected\nCompleted\nFailed",
+   "read_only": 1
+  },
+  {
+   "default": "1",
+   "description": "Save receipt PDFs found in the result table.",
+   "fieldname": "download_receipts",
+   "fieldtype": "Check",
+   "label": "Download Receipts"
+  },
+  {
+   "fieldname": "read_full_table",
+   "fieldtype": "Check",
+   "label": "Read Full Table",
+   "default": "0",
+   "description": "Read every row, also rows already in the ERP (catches changes in older rows). Leave unticked to read only new or changed rows."
+  },
+  {
+   "fieldname": "last_extracted_on",
+   "fieldtype": "Datetime",
+   "label": "Last Extracted On",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Date and time of the last read saved from the portal. The list shows \"Today\" when it was today."
+  },
+  {
+   "fieldname": "last_section",
+   "fieldtype": "Data",
+   "label": "Last Section",
+   "read_only": 1,
+   "in_list_view": 1,
+   "description": "Page read in the last run (e.g. TEC Report, View DC)."
+  },
+  {
+   "fieldname": "mill_id",
+   "fieldtype": "Data",
+   "label": "Mill ID on Portal",
+   "in_list_view": 0,
+   "in_standard_filter": 0,
+   "description": "The mill's ID as read by the agent from the portal (on WINGS the portal's own code). For checking only: rows are saved under the Mill No.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_section",
+   "fieldtype": "Section Break",
+   "label": "Totals (all runs)"
+  },
+  {
+   "default": "0",
+   "fieldname": "records_extracted",
+   "fieldtype": "Int",
+   "label": "Total Records Extracted",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_inserted",
+   "fieldtype": "Int",
+   "label": "New Records Inserted",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_counts",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "records_updated",
+   "fieldtype": "Int",
+   "label": "Existing Records Updated",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_unchanged",
+   "fieldtype": "Int",
+   "label": "Unchanged Records",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_errors",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "0",
+   "fieldname": "records_failed",
+   "fieldtype": "Int",
+   "label": "Errors",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "receipts_saved",
+   "fieldtype": "Int",
+   "label": "Receipts Saved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "runs_section",
+   "fieldtype": "Section Break",
+   "label": "Extraction Runs"
+  },
+  {
+   "description": "One line per Search on the portal. The section is named from the page the table came from.",
+   "fieldname": "runs",
+   "fieldtype": "Table",
+   "label": "Runs",
+   "options": "Portal Extraction Run",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "log_section",
+   "fieldtype": "Section Break",
+   "label": "Log"
+  },
+  {
+   "fieldname": "extraction_log",
+   "fieldtype": "Long Text",
+   "label": "Extraction Log",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [
+  {
+   "link_doctype": "Portal Record",
+   "link_fieldname": "extraction"
+  }
+ ],
+ "modified": "2026-10-21 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Data Extraction",
+ "naming_rule": "Expression",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "site,status",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "site",
+ "track_changes": 1
+}

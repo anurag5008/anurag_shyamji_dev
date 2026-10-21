@@ -1,0 +1,136 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 18:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "section",
+  "mill_id",
+  "status",
+  "extracted_on",
+  "records_extracted",
+  "records_inserted",
+  "records_updated",
+  "records_unchanged",
+  "records_failed",
+  "receipts_saved",
+  "page_heading",
+  "page_url",
+  "page_filters"
+ ],
+ "fields": [
+  {
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section",
+   "read_only": 1,
+   "columns": 3
+  },
+  {
+   "fieldname": "mill_id",
+   "fieldtype": "Data",
+   "label": "Mill No.",
+   "read_only": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Status",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "extracted_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Extracted On",
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "default": "0",
+   "fieldname": "records_extracted",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Rows",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_inserted",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "New",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_updated",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Updated",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_unchanged",
+   "fieldtype": "Int",
+   "label": "Unchanged",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "records_failed",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Errors",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "receipts_saved",
+   "fieldtype": "Int",
+   "label": "Receipts Saved",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_heading",
+   "fieldtype": "Data",
+   "label": "Page Heading",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_url",
+   "fieldtype": "Small Text",
+   "label": "Page URL",
+   "read_only": 1
+  },
+  {
+   "fieldname": "page_filters",
+   "fieldtype": "Small Text",
+   "label": "Page Filters",
+   "read_only": 1,
+   "description": "Filter values saved with each row of this search (see Page Filter Columns)."
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-21 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Extraction Run",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

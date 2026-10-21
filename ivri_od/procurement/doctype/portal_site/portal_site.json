@@ -1,0 +1,101 @@
+{
+ "actions": [],
+ "autoname": "field:site_name",
+ "creation": "2026-10-13 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "site_name",
+  "login_url",
+  "column_break_site",
+  "enabled",
+  "mill_id_labels",
+  "mill_id_xpath",
+  "sections_section",
+  "sections"
+ ],
+ "fields": [
+  {
+   "fieldname": "site_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Site",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "description": "Chrome opens this page so the user can log in.",
+   "fieldname": "login_url",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Login URL",
+   "options": "URL",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_site",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "mill_id_labels",
+   "fieldtype": "Small Text",
+   "label": "Mill ID Labels",
+   "default": "Mill ID, Mill Code, Miller Code, Miller ID",
+   "description": "Words the portal shows before the mill's ID (dashboard or page), comma separated, e.g. Mill ID, Miller Code. The agent reads the ID after login and saves it with every row; a row's own column with one of these names wins."
+  },
+  {
+   "fieldname": "mill_id_xpath",
+   "fieldtype": "Data",
+   "label": "Mill ID XPath",
+   "description": "XPath of the element that shows the mill's ID on the portal (dashboard header), e.g. //*[@id=\"layout-wrapper\"]/div[2]/div[1]/div/p[2]. Read from the landing dashboard after login and kept for the session; it wins over the rows' own mill columns. When set, Mill ID Labels pick the value inside that element (e.g. WINGS: State Code), else its last number is used."
+  },
+  {
+   "fieldname": "sections_section",
+   "fieldtype": "Section Break",
+   "label": "Sections"
+  },
+  {
+   "fieldname": "sections",
+   "fieldtype": "Table",
+   "label": "Sections",
+   "options": "Portal Site Section"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-15 19:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Site",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "Desk User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": [],
+ "track_changes": 1
+}

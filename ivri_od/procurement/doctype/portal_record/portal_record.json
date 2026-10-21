@@ -1,0 +1,270 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 16:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "site",
+  "section",
+  "mill_id",
+  "summary",
+  "column_break_record",
+  "receipt_file",
+  "receipt_url",
+  "documents",
+  "extraction",
+  "entry_source",
+  "details_source",
+  "data_section",
+  "row_html",
+  "row_data",
+  "details_section",
+  "detail_count",
+  "details_html",
+  "details",
+  "details_footer",
+  "tracking_section",
+  "record_key",
+  "row_hash",
+  "portal_row_sig",
+  "details_hash",
+  "column_break_tracking",
+  "first_seen_on",
+  "last_seen_on",
+  "seen_run",
+  "row_no"
+ ],
+ "fields": [
+  {
+   "fieldname": "site",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Site",
+   "options": "Portal Site",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Section",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mill_id",
+   "fieldtype": "Data",
+   "label": "Mill No.",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1,
+   "description": "The mill this row belongs to: the row's own Miller Code / Mill ID column, else the mill logged in on the portal."
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_record",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Click to download the receipt saved from the portal.",
+   "fieldname": "receipt_file",
+   "fieldtype": "Attach",
+   "in_list_view": 1,
+   "label": "Receipt",
+   "read_only": 1
+  },
+  {
+   "fieldname": "receipt_url",
+   "fieldtype": "Small Text",
+   "label": "Receipt Link on Portal",
+   "read_only": 1
+  },
+  {
+   "fieldname": "documents",
+   "fieldtype": "JSON",
+   "label": "Documents",
+   "read_only": 1,
+   "description": "Files saved from the row's document buttons, by column (e.g. Details, AC Note Doc)."
+  },
+  {
+   "fieldname": "extraction",
+   "fieldtype": "Link",
+   "label": "Last Extraction",
+   "options": "Portal Data Extraction",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entry_source",
+   "fieldtype": "Select",
+   "label": "Entered From",
+   "options": "Portal\nManual",
+   "default": "Portal",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Manual rows are replaced when the same row is read from the portal: portal data has priority."
+  },
+  {
+   "fieldname": "details_source",
+   "fieldtype": "Select",
+   "label": "Details Entered From",
+   "options": "\nPortal\nManual",
+   "read_only": 1
+  },
+  {
+   "fieldname": "data_section",
+   "fieldtype": "Section Break",
+   "label": "Portal Data"
+  },
+  {
+   "fieldname": "row_html",
+   "fieldtype": "HTML",
+   "label": "Row"
+  },
+  {
+   "fieldname": "row_data",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Row Data",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Details (e.g. lots of this DC)"
+  },
+  {
+   "default": "0",
+   "fieldname": "detail_count",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Detail Rows",
+   "read_only": 1
+  },
+  {
+   "fieldname": "details_html",
+   "fieldtype": "HTML",
+   "label": "Details"
+  },
+  {
+   "fieldname": "details",
+   "fieldtype": "Table",
+   "hidden": 1,
+   "label": "Details",
+   "options": "Portal Record Detail",
+   "read_only": 1
+  },
+  {
+   "description": "Footer lines of the detail table as shown on the portal (e.g. Total).",
+   "fieldname": "details_footer",
+   "fieldtype": "JSON",
+   "hidden": 1,
+   "label": "Details Footer",
+   "read_only": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "tracking_section",
+   "fieldtype": "Section Break",
+   "label": "Tracking"
+  },
+  {
+   "fieldname": "record_key",
+   "fieldtype": "Small Text",
+   "label": "Record Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "row_hash",
+   "fieldtype": "Data",
+   "label": "Row Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "portal_row_sig",
+   "fieldtype": "Data",
+   "label": "Portal Row Fingerprint",
+   "read_only": 1,
+   "search_index": 1,
+   "description": "Fingerprint of the row as read from the portal (agent). A row with a known fingerprint is skipped on the next read (section: Read Only New Rows)."
+  },
+  {
+   "fieldname": "details_hash",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Details Hash",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tracking",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "first_seen_on",
+   "fieldtype": "Datetime",
+   "label": "First Seen On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "last_seen_on",
+   "fieldtype": "Datetime",
+   "label": "Last Seen On",
+   "read_only": 1
+  },
+  {
+   "description": "Start of the search that last saw this row; rows of the newest search come first in reports.",
+   "fieldname": "seen_run",
+   "fieldtype": "Datetime",
+   "label": "Seen In Search Of",
+   "read_only": 1
+  },
+  {
+   "description": "Position of the row on the portal in that search (1 = first row).",
+   "fieldname": "row_no",
+   "fieldtype": "Int",
+   "label": "Row No. On Portal",
+   "read_only": 1
+  }
+ ],
+ "in_create": 1,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-21 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Record",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "delete": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1
+  },
+  {
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User"
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "section,summary",
+ "sort_field": "last_seen_on",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "summary",
+ "track_changes": 1
+}

@@ -1,0 +1,104 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"16d97acc51\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>DCRO Details</b></span>\", \"col\": 12}}, {\"id\": \"c1645f1188\", \"type\": \"paragraph\", \"data\": {\"text\": \"Paddy release data read from the DCRO portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"40fbf45c62\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"DCRO Manual Entry\", \"col\": 12}}, {\"id\": \"6dcc69aee7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Paddy Release from DCRO\", \"col\": 4}}, {\"id\": \"21a1cf16fd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"View DC from DCRO\", \"col\": 4}}, {\"id\": \"84ff8b3bc7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Transit Challan from DCRO\", \"col\": 4}}, {\"id\": \"cec5ef3ddd\", \"type\": \"card\", \"data\": {\"card_name\": \"DCRO reports\", \"col\": 4}}]",
+ "creation": "2026-10-14 18:29:21.612039",
+ "custom_blocks": [
+  {
+   "custom_block_name": "DCRO Manual Entry",
+   "label": "DCRO Manual Entry"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "truck",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "DCRO Details",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "DCRO reports",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Paddy Release from DCRO",
+   "link_count": 0,
+   "link_to": "Paddy Release from DCRO",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "View DC from DCRO",
+   "link_count": 0,
+   "link_to": "View DC from DCRO",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Transit Challan from DCRO",
+   "link_count": 0,
+   "link_to": "DC Transit Challan from DCRO",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-21 11:53:39.647833",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "DCRO Details",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Procurement",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "",
+   "icon": "truck",
+   "label": "Paddy Release from DCRO",
+   "link_to": "Paddy Release from DCRO",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "icon": "file-text",
+   "label": "View DC from DCRO",
+   "link_to": "View DC from DCRO",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "file-check",
+   "label": "DC Transit Challan from DCRO",
+   "link_to": "DC Transit Challan from DCRO",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  }
+ ],
+ "title": "DCRO Details",
+ "type": "Workspace"
+}

@@ -1,0 +1,123 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"1ea018205c\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>WINGS Details</b></span>\", \"col\": 12}}, {\"id\": \"71612adda8\", \"type\": \"paragraph\", \"data\": {\"text\": \"TEC, stack, booking/delivery and target data read from the WINGS portal (fciarms.in) with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"56c209e44a\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"WINGS Manual Entry\", \"col\": 12}}, {\"id\": \"381b5a2514\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"TEC Report from WINGS\", \"col\": 4}}, {\"id\": \"85d3b3bc21\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stack Status from WINGS\", \"col\": 4}}, {\"id\": \"2a324a2c80\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Booking Delivery Status from WINGS\", \"col\": 4}}, {\"id\": \"3fbaf7ac87\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Targets Advanced Paddy from WINGS\", \"col\": 4}}, {\"id\": \"4aac4f98d6\", \"type\": \"card\", \"data\": {\"card_name\": \"WINGS reports\", \"col\": 4}}]",
+ "creation": "2026-10-15 16:07:22.617816",
+ "custom_blocks": [
+  {
+   "custom_block_name": "WINGS Manual Entry",
+   "label": "WINGS Manual Entry"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "layers",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "WINGS Details",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "WINGS reports",
+   "link_count": 4,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "TEC Report from WINGS",
+   "link_count": 0,
+   "link_to": "TEC Report from WINGS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Stack Status from WINGS",
+   "link_count": 0,
+   "link_to": "Stack Status from WINGS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Booking Delivery Status from WINGS",
+   "link_count": 0,
+   "link_to": "Booking Delivery Status from WINGS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Targets Advanced Paddy from WINGS",
+   "link_count": 0,
+   "link_to": "Targets Advanced Paddy from WINGS",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-21 11:53:39.686130",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "WINGS Details",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Procurement",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "icon": "file-check",
+   "label": "TEC Report from WINGS",
+   "link_to": "TEC Report from WINGS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Purple",
+   "doc_view": "",
+   "icon": "layers",
+   "label": "Stack Status from WINGS",
+   "link_to": "Stack Status from WINGS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Green",
+   "doc_view": "",
+   "icon": "truck",
+   "label": "Booking Delivery Status from WINGS",
+   "link_to": "Booking Delivery Status from WINGS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  },
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "target",
+   "label": "Targets Advanced Paddy from WINGS",
+   "link_to": "Targets Advanced Paddy from WINGS",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report"
+  }
+ ],
+ "title": "WINGS Details",
+ "type": "Workspace"
+}

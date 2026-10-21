@@ -1,9 +1,14 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"0cf917208e\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"79a303e7f3\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"25218b00b6\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"0cf1d6ca7c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"acfdfe2080\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"2367e73143\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Manual PPAS Import\", \"col\": 3}}, {\"id\": \"2e9ad21b8f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"ab1bf10e80\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"d9f7980ead\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"d63b40592c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"72b210e601\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"d1f9395c01\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"e8a18ff215\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"8a6718c5a0\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"ebc7363461\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"747dca0679\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"6cfecf32e7\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"487371d0c8\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"ad2742d11a\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"ca6077c670\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"92a081f1f2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"31900898fa\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"86cffb6a0d\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"5b9a1daaed\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"820aa91fc5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"fe50c74135\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Manual PPAS Import\", \"col\": 3}}, {\"id\": \"8693282c52\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"13ff350455\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"e94148bdfb\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"3b9e3559a9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"cacc17de65\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Track\", \"col\": 3}}, {\"id\": \"f94db05b4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"cbb01b484d\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"aa84492b8a\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"2903383121\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"093ff96a7f\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"5d3d830ca2\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"ff7ac755de\", \"type\": \"card\", \"data\": {\"card_name\": \"Govt portals\", \"col\": 4}}, {\"id\": \"51b2384b32\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Government Portals Reports\", \"col\": 4}}, {\"id\": \"58ba03c0b9\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"f7ab386516\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"98beda6d12\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"606fe54efc\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
  "creation": "2026-10-01 12:04:12.928182",
- "custom_blocks": [],
+ "custom_blocks": [
+  {
+   "custom_block_name": "Government Portals Reports",
+   "label": "Government Portals Reports"
+  }
+ ],
  "docstatus": 0,
  "doctype": "Workspace",
  "hide_custom": 0,
@@ -154,6 +159,45 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Govt portals",
+   "link_count": 3,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal Data Extraction",
+   "link_count": 0,
+   "link_to": "Portal Data Extraction",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal Record",
+   "link_count": 0,
+   "link_to": "Portal Record",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Portal Site",
+   "link_count": 0,
+   "link_to": "Portal Site",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Gate",
    "link_count": 2,
    "link_type": "DocType",
@@ -252,7 +296,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 7,
+   "link_count": 8,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -326,9 +370,19 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Track",
+   "link_count": 0,
+   "link_to": "DC Track",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-10-06 12:41:16.901767",
+ "modified": "2026-10-21 11:53:39.510722",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",
@@ -345,7 +399,8 @@
    "icon": "log-in",
    "label": "Gate Entry",
    "link_to": "Gate Entry",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Cyan",
@@ -353,7 +408,8 @@
    "icon": "file-text",
    "label": "PPAS Transit Pass",
    "link_to": "PPAS Transit Pass",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Teal",
@@ -361,7 +417,8 @@
    "icon": "clipboard",
    "label": "Manual PPAS Import",
    "link_to": "PPAS Transit Pass Import",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Green",
@@ -369,7 +426,8 @@
    "icon": "package",
    "label": "Weigh Bridge",
    "link_to": "Weigh Bridge Measurement",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Yellow",
@@ -377,7 +435,8 @@
    "icon": "clipboard-check",
    "label": "Quality Check",
    "link_to": "Quality Check",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Grey",
@@ -385,7 +444,8 @@
    "icon": "clipboard-list",
    "label": "RST Details",
    "link_to": "RST Details",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
   },
   {
    "color": "Orange",
@@ -393,7 +453,18 @@
    "icon": "file-check",
    "label": "GRN Note",
    "link_to": "GRN Note",
-   "type": "DocType"
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "Purple",
+   "doc_view": "List",
+   "icon": "check-square",
+   "label": "DC Track",
+   "link_to": "DC Track",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report",
+   "url": ""
   },
   {
    "color": "Purple",
@@ -402,7 +473,8 @@
    "label": "Module Overview",
    "link_to": "Procurement Module Overview",
    "report_ref_doctype": "Season Master",
-   "type": "Report"
+   "type": "Report",
+   "url": ""
   }
  ],
  "title": "Procurement",

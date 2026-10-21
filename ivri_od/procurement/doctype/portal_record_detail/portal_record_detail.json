@@ -1,0 +1,49 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 20:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 0,
+ "engine": "InnoDB",
+ "field_order": [
+  "line_no",
+  "summary",
+  "detail_data"
+ ],
+ "fields": [
+  {
+   "fieldname": "line_no",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "No.",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "summary",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Detail",
+   "read_only": 1,
+   "columns": 9
+  },
+  {
+   "fieldname": "detail_data",
+   "fieldtype": "JSON",
+   "label": "Detail Data",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-13 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Record Detail",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "ASC",
+ "states": []
+}

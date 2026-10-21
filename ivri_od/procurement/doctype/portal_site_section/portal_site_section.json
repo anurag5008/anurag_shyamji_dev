@@ -1,0 +1,135 @@
+{
+ "actions": [],
+ "creation": "2026-10-13 16:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_name",
+  "page_match",
+  "table_match",
+  "filter_columns",
+  "extract_on_click",
+  "extract_only_on_click",
+  "read_on_open",
+  "read_new_only",
+  "key_columns",
+  "detail_link_text",
+  "detail_table_id",
+  "download_receipt",
+  "receipt_link_text",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Section",
+   "reqd": 1
+  },
+  {
+   "description": "Part of the page address that identifies this section, e.g. LotSearch.aspx. Tables extracted from a matching page are saved under this section name.",
+   "fieldname": "page_match",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Page URL Contains",
+   "reqd": 1
+  },
+  {
+   "description": "When a page has several tables or tabs: text that picks this section's table. Matched against the table's HTML id, the id of an element around it (e.g. report_div), the title shown above the table, or the label of the open tab; spaces and case are ignored (e.g. Rejected Lot, Gunny Stock Register Details).",
+   "fieldname": "table_match",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Table Match"
+  },
+  {
+   "fieldname": "filter_columns",
+   "fieldtype": "Small Text",
+   "label": "Page Filter Columns",
+   "description": "Search filters saved as columns of every row, one per line as Column Name = words in the filter's label or id. Example: KMS Year = kms. A line with only * saves every filter under its own label."
+  },
+  {
+   "fieldname": "extract_on_click",
+   "fieldtype": "Data",
+   "label": "Extract On Click",
+   "description": "Besides Search/Show, also read the table after a click on these buttons or elements (label or id, comma separated). Example: Save, dvmillerhistory. A search box id (e.g. gvDCDetails_filter) reads after a value is typed in it and Enter is pressed."
+  },
+  {
+   "default": "0",
+   "depends_on": "extract_on_click",
+   "fieldname": "extract_only_on_click",
+   "fieldtype": "Check",
+   "label": "Only On These Clicks",
+   "description": "Read this page only after the Extract On Click buttons or search box on this page (e.g. DCRO DC Transit Challan: type in the gvDCDetails_filter search box and press Enter). Other Search/Show/View-like clicks, such as the menu button or Show, do not start a read."
+  },
+  {
+   "fieldname": "read_on_open",
+   "fieldtype": "Check",
+   "label": "Read On Page Open",
+   "default": "0",
+   "description": "Read this page's table as soon as the page opens, without a Search click (e.g. WINGS e_tec). A page with several sections gives one read per table."
+  },
+  {
+   "fieldname": "read_new_only",
+   "fieldtype": "Check",
+   "label": "Read Only New Rows",
+   "default": "1",
+   "description": "Skip rows already in the ERP unchanged: no documents or details opened, nothing sent. A changed row is read again. When the table lists newest dates first, reading stops at the first saved row (changes in older rows are then caught by Read Full Table on Portal Data Extraction)."
+  },
+  {
+   "description": "Comma-separated column headers that identify one row (e.g. Challan No). Leave blank to treat the whole row as the key.",
+   "fieldname": "key_columns",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Key Columns"
+  },
+  {
+   "description": "Text or column header of the button in each row that opens more detail (e.g. View, or Delivered for the WINGS TEC report). The agent opens it for every row (also a pop-up) and saves the detail table as child rows.",
+   "fieldname": "detail_link_text",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Detail Link Text"
+  },
+  {
+   "description": "HTML id of the table on the detail page (e.g. gdvGetPassRegister). Its header row gives the column names of the detail rows. Leave blank to use the biggest table. With no Detail Link Text, this is read on the page the document button opens, before Print. id[n] reads column n of each row of that id (like XPath //*[@id=\"id\"]/tr/td[n]); several with commas, e.g. DCRO View DC: grdDepotFCIbody[4], grdDepotRRCbody[4] (number of lots).",
+   "fieldname": "detail_table_id",
+   "fieldtype": "Data",
+   "label": "Detail Table ID"
+  },
+  {
+   "default": "0",
+   "description": "Save the document behind each row's Action button (e.g. the transit challan) as a PDF, every time this page is extracted.",
+   "fieldname": "download_receipt",
+   "fieldtype": "Check",
+   "label": "Download Challan/Receipt"
+  },
+  {
+   "depends_on": "download_receipt",
+   "description": "Label or column of the button that opens the document (e.g. Print). Several documents: separate with commas. To save the print format of the page that opens, add \" > \" and its button, e.g. Details > Print, AC Note Doc. Only \"> Print\": the agent picks the row button itself, then clicks Print. Leave blank to let the agent pick the print/view/challan button.",
+   "fieldname": "receipt_link_text",
+   "fieldtype": "Data",
+   "label": "Receipt Link Text"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "istable": 1,
+ "links": [],
+ "modified": "2026-10-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Portal Site Section",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
