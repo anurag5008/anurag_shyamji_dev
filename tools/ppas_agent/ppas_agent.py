@@ -8,6 +8,12 @@ from ppas_scraper import (
     close_ppas_session
 )
 
+from portal_scraper import (
+    start_portal_session,
+    get_portal_session,
+    close_portal_session
+)
+
 import os
 import re
 import threading
@@ -19,6 +25,11 @@ from datetime import datetime
 # ============================================================
 
 app = Flask(__name__)
+
+# Keep keys in the order they were built: portal columns must stay in the
+# website's order (Flask sorts them A-Z by default).
+app.json.sort_keys = False
+app.config["JSON_SORT_KEYS"] = False
 
 CORS(app)
 
@@ -71,7 +82,29 @@ def health():
     return jsonify({
         "status": "ok",
         "service": "PPAS Agent",
-        "message": "PPAS Agent is running"
+        "message": "PPAS Agent is running",
+        "portal": True,
+        # Raise when the portal data format changes; the ERP refuses older agents.
+        # 2: website column order kept, detail footer ("Total") sent apart.
+        # 3: per-section document download (e.g. Transit Challan via the Action button).
+        # 4: documents printed in a hidden Chrome; the user's page never changes tab.
+        # 5: logout detected while saving documents.
+        # 6: documents saved by clicking the row button (e.g. Transit Challan eye icon) like a user.
+        # 7: pages with several tables or tabs (Table Match); table id/title/tab sent to the ERP.
+        # 8: search filters on the page (e.g. KMS Year, Depot) sent to the ERP.
+        # 9: row documents per tab (e.g. Lot Search "Print"), not for every table on the page.
+        # 10: "Extract On Click": extra buttons/elements that start a read (e.g. DCRO Save, dvmillerhistory).
+        # 11: Rows to Save limit (stop paging early) and /portal/finish (Close Session keeps rows read so far).
+        # 12: several documents per row by column header (DCRO DC Transit Challan: Details, AC Note Doc); PDF or image.
+        # 13: "Details > Print" (save the page's own print format); a document page must match its row.
+        # 14: "> Print" alone: the agent picks the row button, then clicks Print (SCMS Transit Challan, DCRO View DC).
+        # 15: WINGS: table found by a div id around it (table_ids); detail button clicked like a user
+        #     when it runs a script (pop-up), found by its column header (TEC report "Delivered").
+        # 16: Mill ID (dashboard / page), "Read On Page Open", one result per table of a page (WINGS e_tec).
+        # 17: Mill ID read from the site's "Mill ID XPath" first (WINGS dashboard header).
+        # 18: /portal/notify (message in Chrome after a save); Mill ID only from the XPath on the landing dashboard.
+        # 19: only new or changed rows (known_rows fingerprints); row_sig and position sent per row.
+        "portal_version": 19
     })
 
 
@@ -657,6 +690,209 @@ def download(filename):
                 str(e)
 
         }), 500
+
+
+
+# ============================================================
+# PORTAL EXTRACTION (SCMS / DCRO / WINGS)
+# Every call after /portal/start must send the token it returned.
+# ============================================================
+
+def _portal_token():
+
+    return (
+        request.headers.get("X-Portal-Token")
+        or request.args.get("token")
+        or (request.get_json(silent=True) or {}).get("token")
+    )
+
+
+def _portal_session_or_error():
+
+    session = get_portal_session(
+        _portal_token()
+    )
+
+    if session is None:
+
+        return None, (jsonify({
+            "success": False,
+            "error": "No active portal session. Click Connect Session again."
+        }), 404)
+
+    return session, None
+
+
+@app.route("/portal/start", methods=["POST"])
+def portal_start():
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+
+        session = start_portal_session(
+            data,
+            os.path.dirname(os.path.abspath(__file__))
+        )
+
+        return jsonify({
+            "success": True,
+            "token": session.token,
+            **session.status()
+        })
+
+    except Exception as e:
+
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
+
+
+@app.route("/portal/status", methods=["GET"])
+def portal_status():
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    return jsonify({
+        "success": True,
+        **session.status()
+    })
+
+
+@app.route("/portal/extract_now", methods=["POST"])
+def portal_extract_now():
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    session.request_extract()
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/portal/settings", methods=["POST"])
+def portal_settings():
+    """ERP form changed "Rows to Save" while the session is open."""
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    session.set_row_limit((request.get_json(silent=True) or {}).get("row_limit"))
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/portal/finish", methods=["POST"])
+def portal_finish():
+    """Close Session: stop the read in progress and keep the rows read so far."""
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    session.request_finish()
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/portal/notify", methods=["POST"])
+def portal_notify():
+    """Show a short message in the portal's Chrome window (e.g. "'TEC Report' saved in ERP")."""
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    body = request.get_json(silent=True) or {}
+    session.notify(str(body.get("message") or "")[:300], str(body.get("color") or "green"))
+
+    return jsonify({
+        "success": True
+    })
+
+
+@app.route("/portal/result", methods=["GET"])
+def portal_result():
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    result = session.get_result(
+        request.args.get("result_id", ""),
+        offset=max(int(request.args.get("offset", 0)), 0),
+        limit=min(max(int(request.args.get("limit", 50)), 1), 100)
+    )
+
+    if result is None:
+
+        return jsonify({
+            "success": False,
+            "error": "Result not found. Search again on the portal."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        **result
+    })
+
+
+@app.route("/portal/receipt", methods=["GET"])
+def portal_receipt():
+
+    session, error = _portal_session_or_error()
+
+    if error:
+        return error
+
+    doc = request.args.get("doc")
+    receipt = session.get_receipt(
+        request.args.get("result_id", ""),
+        int(request.args.get("row", -1)),
+        int(doc) if doc not in (None, "") else None
+    )
+
+    if receipt is None:
+
+        return jsonify({
+            "success": False,
+            "error": "Receipt not found."
+        }), 404
+
+    return jsonify({
+        "success": True,
+        **receipt
+    })
+
+
+@app.route("/portal/close", methods=["POST"])
+def portal_close():
+
+    closed = close_portal_session(
+        _portal_token()
+    )
+
+    return jsonify({
+        "success": True,
+        "closed": closed
+    })
 
 
 # ============================================================
