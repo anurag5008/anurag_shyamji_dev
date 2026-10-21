@@ -1094,6 +1094,31 @@ def click_triggers_for(click_triggers, url):
     return out
 
 
+def trigger_hint(click_triggers, url):
+    """What the user does on the page at ``url`` to start a read, from its "Extract On
+    Click" texts: a search box id (DCRO DC Transit Challan, gvDCDetails_filter) is
+    typed in and Enter pressed; anything else is a button to click (View DC: Show)."""
+    url = (url or "").lower()
+    boxes, buttons = False, []
+    for item in click_triggers or []:
+        match = (item.get("page_match") or "").strip().lower()
+        if not (match and match in url):
+            continue
+        for text in str(item.get("triggers") or "").split(","):
+            text = text.strip()
+            if re.search(r"_filter$|search", text, re.IGNORECASE):
+                boxes = True
+            elif text and text not in buttons:
+                buttons.append(text)
+    hints = [" or ".join(f'click "{b}"' for b in buttons)] if buttons else []
+    if boxes:
+        hints.append("type a value in the table's Search box and press Enter")
+    if buttons and not boxes:
+        # Enter in a filter box is not a click on the button: the table may not be reloaded yet.
+        return hints[0] + " (pressing Enter in a box does not start the read)"
+    return " or ".join(hints) or "click Search"
+
+
 def only_clicks_for(click_triggers, url):
     """True when the page at ``url`` is read only after its own "Extract On Click"
     buttons ("Only On These Clicks", e.g. DCRO DC Transit Challan: Show), not after
@@ -1572,11 +1597,9 @@ class PortalSession:
         time.sleep(POLL_SECONDS)
 
     def _say_waiting_for_trigger(self):
-        self._set(
-            "watching",
-            "Not read yet. Set the filters, then use the trigger set for this page "
-            "(e.g. type in the table's Search box and press Enter).",
-        )
+        # Page's own trigger, e.g. View DC: click "Show"; DC Transit Challan: Search box + Enter.
+        hint = trigger_hint(self.click_triggers, self.driver.current_url)
+        self._set("watching", f"Not read yet. Set the filters, then {hint}.")
 
     def _say_logged_in(self):
         mill = f" Mill ID: {self.mill_id}." if self.mill_id else " Mill ID not found on the dashboard yet."

@@ -26,7 +26,7 @@
     "parent": "DCRO",
     "section_name": "View DC",
     "page_match": "ViewDC",
-    "extract_on_click": "Show",
+    "extract_on_click": "Show, tabledata_filter",
     "extract_only_on_click": 1,
     "filter_columns": "*",
     "key_columns": "DC Code(RRC)",

@@ -125,3 +125,4 @@ ivri_od.patches.v1_0.rename_view_dc_lot_quantity_to_lots
 ivri_od.patches.v1_0.dcro_read_after_search_box
 ivri_od.patches.v1_0.backfill_portal_extraction_mill
 ivri_od.patches.v1_0.view_dc_kms_year
+ivri_od.patches.v1_0.dcro_view_dc_search_box
