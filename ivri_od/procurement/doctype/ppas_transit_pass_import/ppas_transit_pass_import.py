@@ -48,14 +48,12 @@ def process_and_save_import(name=None, season=None, paste_data=None, miller=None
 		doc = frappe.get_doc("PPAS Transit Pass Import", name)
 		doc.season = season
 		doc.paste_data = paste_data
-		doc.miller = miller
 	else:
 		doc = frappe.new_doc("PPAS Transit Pass Import")
 		doc.season = season
 		doc.paste_data = paste_data
-		doc.miller = miller
 
-	result = process_manual_ppas_paste(doc.season, doc.paste_data, doc.miller)
+	result = process_manual_ppas_paste(doc.season, doc.paste_data, miller=getattr(doc, "miller", miller))
 	if not result.get("items"):
 		frappe.throw(_("No PPAS rows found in pasted data"))
 
@@ -79,15 +77,17 @@ def push_valid_to_transit_pass(name):
 
 	doc = frappe.get_doc("PPAS Transit Pass Import", name)
 	valid_items = [
-		manual_item_from_import_child(row) for row in doc.import_items if row.row_status == "Valid"
+		manual_item_from_import_child(row)
+		for row in doc.import_items
+		if getattr(row, "row_status", None) in (None, "", "Valid")
 	]
 	if not valid_items:
-		frappe.throw(_("No valid rows to push. Check Row Status in Import Items."))
+		frappe.throw(_("No rows to push. Check Import Items."))
 
 	import_result = import_manual_ppas_valid_rows(doc.season, valid_items)
 
 	if doc.paste_data:
-		result = process_manual_ppas_paste(doc.season, doc.paste_data, doc.miller)
+		result = process_manual_ppas_paste(doc.season, doc.paste_data, getattr(doc, "miller", None))
 		_apply_process_result(doc, result)
 		doc.save()
 

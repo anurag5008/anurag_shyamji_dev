@@ -34,8 +34,38 @@ class TargetAllocation(Document):
 	def validate(self):
 		self.target_quantity = flt(self.target_quantity)
 		self.chhatni = flt(self.chhatni)
+		self.validate_agent_details()
+		self.sync_agent_name()
 		self.validate_unique_ppc_mill_season()
 		self.set_latest_chutney_from_assign()
+
+	def validate_agent_details(self):
+		seen = set()
+		for row in self.get("agent_details") or []:
+			if not (row.agent_name or "").strip():
+				continue
+			agent_name = row.agent_name.strip()
+			if agent_name in seen:
+				frappe.throw(
+					frappe._("Agent '{0}' is added more than once in Agent Details.").format(agent_name)
+				)
+			seen.add(agent_name)
+
+	def sync_agent_name(self):
+		agent_rows = [
+			row.agent_name.strip()
+			for row in (self.get("agent_details") or [])
+			if (row.agent_name or "").strip()
+		]
+		if agent_rows:
+			if not (self.agent_name or "").strip() or self.agent_name.strip() not in agent_rows:
+				self.agent_name = agent_rows[0]
+		elif (self.agent_name or "").strip() and (
+			self.is_new() or not frappe.db.exists("Target Allocation Agent", {"parent": self.name})
+		):
+			self.append("agent_details", {"agent_name": self.agent_name.strip()})
+		elif not agent_rows:
+			self.agent_name = ""
 
 	def validate_unique_ppc_mill_season(self):
 		if not (self.ppc_name and self.mill_name and self.season):

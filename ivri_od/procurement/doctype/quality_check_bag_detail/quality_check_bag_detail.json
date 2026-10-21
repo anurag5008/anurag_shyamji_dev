@@ -10,7 +10,7 @@
  ],
  "fields": [
   {
-   "columns": 2,
+   "columns": 4,
    "fieldname": "jute_pkt_no",
    "fieldtype": "Int",
    "in_list_view": 1,
@@ -18,11 +18,11 @@
    "non_negative": 1
   },
   {
-   "columns": 2,
+   "columns": 4,
    "fieldname": "no_of_plastic_bag",
    "fieldtype": "Int",
    "in_list_view": 1,
-   "label": "No of Plastic Bag (Bags)",
+   "label": "Plastic Bag No (Bags)",
    "non_negative": 1
   }
  ],

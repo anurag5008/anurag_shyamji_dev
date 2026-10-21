@@ -33,9 +33,18 @@ function refresh_latest_chutney(frm) {
 	});
 }
 
+function sync_primary_agent(frm) {
+	let rows = (frm.doc.agent_details || []).filter((r) => (r.agent_name || "").trim());
+	let primary = rows.length ? rows[0].agent_name : "";
+	if (frm.doc.agent_name !== primary) {
+		frm.set_value("agent_name", primary);
+	}
+}
+
 frappe.ui.form.on("Target Allocation", {
 	setup(frm) {
-		frm.set_query("agent_name", () => ({
+		frm.set_df_property("agent_name", "hidden", 1);
+		frm.set_query("agent_name", "agent_details", () => ({
 			filters: { is_active: 1 },
 		}));
 	},
@@ -53,8 +62,20 @@ frappe.ui.form.on("Target Allocation", {
 	},
 
 	refresh(frm) {
+		frm.set_df_property("agent_name", "hidden", 1);
 		if (frm.doc.ppc_name && frm.doc.mill_name && frm.doc.season) {
 			refresh_latest_chutney(frm);
 		}
 	},
+
+	agent_details_remove(frm) {
+		sync_primary_agent(frm);
+	},
 });
+
+frappe.ui.form.on("Target Allocation Agent", {
+	agent_name(frm) {
+		sync_primary_agent(frm);
+	},
+});
+

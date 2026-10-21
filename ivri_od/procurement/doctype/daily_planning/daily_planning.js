@@ -7,11 +7,9 @@ const ALLOW_ANY_PLAN_DATE = true;
 frappe.ui.form.on("Daily Planning", {
 	onload(frm) {
 		restrict_plan_date(frm);
-		setup_pacs_query(frm);
 	},
 	refresh(frm) {
 		restrict_plan_date(frm);
-		setup_pacs_query(frm);
 		update_trucks_from_transit_pass(frm);
 	},
 	plan_date(frm) {
@@ -19,9 +17,6 @@ frappe.ui.form.on("Daily Planning", {
 		update_trucks_from_transit_pass(frm);
 	},
 	ppc_name(frm) {
-		update_trucks_from_transit_pass(frm);
-	},
-	pacs_name(frm) {
 		update_trucks_from_transit_pass(frm);
 	},
 	trucks_sent(frm) {
@@ -35,18 +30,6 @@ frappe.ui.form.on("Daily Planning", {
 		return sync_trucks_before_save(frm);
 	},
 });
-
-function setup_pacs_query(frm) {
-	frm.set_query("pacs_name", () => {
-		if (!frm.doc.ppc_name) {
-			return {};
-		}
-		return {
-			query: "ivri_od.procurement.doctype.daily_planning.daily_planning.get_pacs_for_ppc",
-			filters: { ppc_name: frm.doc.ppc_name },
-		};
-	});
-}
 
 function get_allowed_date_range() {
 	const today = frappe.datetime.get_today();

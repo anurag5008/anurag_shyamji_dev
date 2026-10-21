@@ -50,7 +50,6 @@ function process_ppas_paste_data(frm) {
 		args: {
 			name: frm.is_new() ? null : frm.doc.name,
 			season: frm.doc.season,
-			miller: frm.doc.miller,
 			paste_data: frm.doc.paste_data,
 		},
 		freeze: true,
@@ -89,11 +88,13 @@ function push_to_ppas_transit_pass(frm) {
 		return;
 	}
 
-	const valid_count = (frm.doc.import_items || []).filter((row) => row.row_status === "Valid").length;
+	const valid_count = (frm.doc.import_items || []).filter(
+		(row) => !row.row_status || row.row_status === "Valid"
+	).length;
 	if (!valid_count) {
 		frappe.msgprint({
 			title: __("Nothing to push"),
-			message: __("No valid rows. Click Process Data after pasting PPAS rows."),
+			message: __("No rows to push. Click Process Data after pasting PPAS rows."),
 			indicator: "orange",
 		});
 		return;

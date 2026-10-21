@@ -20,9 +20,7 @@
   "delay_in_days",
   "accepted_date",
   "accepted_time",
-  "action",
-  "row_status",
-  "error_message"
+  "action"
  ],
  "fields": [
   {
@@ -135,23 +133,6 @@
    "fieldname": "action",
    "fieldtype": "Data",
    "label": "Action",
-   "read_only": 1
-  },
-  {
-   "columns": 1,
-   "fieldname": "row_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Row Status",
-   "options": "Valid\nDuplicate\nFailed",
-   "read_only": 1
-  },
-  {
-   "columns": 2,
-   "fieldname": "error_message",
-   "fieldtype": "Small Text",
-   "in_list_view": 1,
-   "label": "Error Message",
    "read_only": 1
   }
  ],

@@ -29,37 +29,6 @@
   "pacs",
   "ppc",
   "mill_name",
-  "entry_data_section",
-  "entry_details",
-  "weighment_section",
-  "rst_no",
-  "is_farmer_or_agent",
-  "agent_name",
-  "local_purchase_order",
-  "gunny_type",
-  "jute_bags",
-  "column_break_rst",
-  "plastic_bags",
-  "total_bags",
-  "gross_vehicle_weight",
-  "tare_weight",
-  "column_break_rst_2",
-  "gross_weight",
-  "gunny_weight",
-  "deduction",
-  "net_weight",
-  "weigh_bridge_measurement",
-  "tp_fulfillment_section",
-  "received_quantity",
-  "tp_cumulative_received",
-  "tp_cumulative_deduction",
-  "column_break_tp_fulfillment",
-  "chhatni_received_pct",
-  "tp_chhatni_balance",
-  "column_break_tp_fulfillment_2",
-  "tp_fulfillment_status",
-  "chhatni_fulfillment_status",
-  "chhatni_fulfillment_remark",
   "gate_section",
   "vehicle_no",
   "driver_name",
@@ -74,6 +43,23 @@
   "arrival_date",
   "arrival_time",
   "gate_out_time",
+  "weighment_section",
+  "rst_no",
+  "is_farmer_or_agent",
+  "agent_name",
+  "local_purchase_order",
+  "gunny_type",
+  "jute_bags",
+  "plastic_bags",
+  "total_bags",
+  "column_break_rst",
+  "gross_vehicle_weight",
+  "tare_weight",
+  "gross_weight",
+  "gunny_weight",
+  "deduction",
+  "net_weight",
+  "weigh_bridge_measurement",
   "quality_section",
   "quality_check",
   "qc_sample_no",
@@ -93,7 +79,20 @@
   "paddy_variety",
   "paddy_bags_section",
   "old_new_bags",
-  "qc_bag_details"
+  "qc_bag_details",
+  "entry_data_section",
+  "entry_details",
+  "tp_fulfillment_section",
+  "received_quantity",
+  "tp_cumulative_received",
+  "tp_cumulative_deduction",
+  "column_break_tp_fulfillment",
+  "chhatni_received_pct",
+  "tp_chhatni_balance",
+  "column_break_tp_fulfillment_2",
+  "tp_fulfillment_status",
+  "chhatni_fulfillment_status",
+  "chhatni_fulfillment_remark"
  ],
  "fields": [
   {
@@ -119,8 +118,13 @@
    "unique": 1
   },
   {
-   "fieldname": "column_break_grn_no",
-   "fieldtype": "Column Break"
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pass Unique Key",
+   "mandatory_depends_on": "eval:!doc.is_local_procurement"
   },
   {
    "default": "Now",
@@ -147,31 +151,8 @@
    "read_only": 1
   },
   {
-   "default": "0",
-   "depends_on": "eval:doc.is_local_procurement",
-   "fieldname": "is_local_procurement",
-   "fieldtype": "Check",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Local Procurement",
-   "read_only": 1
-  },
-  {
-   "bold": 1,
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "local_procurement_note",
-   "fieldtype": "Data",
-   "label": "Purchase",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "pass_unique_key",
-   "fieldtype": "Autocomplete",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Pass Unique Key",
-   "mandatory_depends_on": "eval:!doc.is_local_procurement"
+   "fieldname": "column_break_grn_no",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "cmr_season",
@@ -185,6 +166,28 @@
    "fieldtype": "Float",
    "label": "Chhatni (Kg per Quintal)",
    "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "depends_on": "eval:doc.is_local_procurement",
+   "fieldname": "is_local_procurement",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Local Procurement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_ytzu",
+   "fieldtype": "Column Break"
+  },
+  {
+   "bold": 1,
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "local_procurement_note",
+   "fieldtype": "Data",
+   "label": "Purchase",
    "read_only": 1
   },
   {
@@ -206,16 +209,23 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_tp",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "tp_quantity",
    "fieldtype": "Float",
    "label": "TP Quantity (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "label": "Bags (In No.)",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_tp",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "pacs",
@@ -242,17 +252,94 @@
    "read_only": 1
   },
   {
-   "collapsible": 1,
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "entry_data_section",
+   "fieldname": "gate_section",
    "fieldtype": "Section Break",
-   "label": "Entry Data"
+   "label": "Gate Details"
   },
   {
-   "fieldname": "entry_details",
-   "fieldtype": "Table",
-   "label": "Entry Details (for this TP)",
-   "options": "GRN Entry Detail",
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Vehicle",
+   "read_only": 1
+  },
+  {
+   "fieldname": "driver_name",
+   "fieldtype": "Data",
+   "label": "Driver Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mobile_no",
+   "fieldtype": "Data",
+   "label": "Driver Mobile No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "party_name",
+   "fieldtype": "Data",
+   "label": "Party Name",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_gate",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "arrival_datetime",
+   "fieldtype": "Datetime",
+   "label": "Arrival Date & Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_exit_datetime",
+   "fieldtype": "Datetime",
+   "label": "Gate Exit Date & Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_entry",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Gate Entry ID",
+   "options": "Gate Entry",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_exit",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Gate Exit",
+   "options": "Gate Exit",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_exit_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Gate Exit Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "arrival_date",
+   "fieldtype": "Date",
+   "hidden": 1,
+   "label": "Arrival Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "arrival_time",
+   "fieldtype": "Time",
+   "hidden": 1,
+   "label": "Arrival Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "gate_out_time",
+   "fieldtype": "Time",
+   "hidden": 1,
+   "label": "Gate Exit Time",
    "read_only": 1
   },
   {
@@ -297,56 +384,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "weigh_bridge_measurement",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Weigh Bridge Measurement",
-   "options": "Weigh Bridge Measurement",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_rst",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "gross_vehicle_weight",
-   "fieldtype": "Float",
-   "label": "Load Weight (QT)",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gross_weight",
-   "fieldtype": "Float",
-   "label": "Gross Weight (QT)",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "fieldname": "tare_weight",
-   "fieldtype": "Float",
-   "label": "Tare Weight (QT)",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "fieldname": "deduction",
-   "fieldtype": "Float",
-   "label": "Deduction (QT)",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "fieldname": "net_weight",
-   "fieldtype": "Float",
-   "in_list_view": 1,
-   "label": "Net Weight (QT)",
-   "non_negative": 1,
-   "precision": "3",
+   "fieldname": "gunny_type",
+   "fieldtype": "Select",
+   "label": "Gunny Type",
+   "options": "\nGunny Gross\nGunny Cut",
    "read_only": 1
   },
   {
@@ -374,96 +415,31 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "tp_fulfillment_section",
-   "fieldtype": "Section Break",
-   "label": "TP & Chhatni Fulfillment"
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "received_quantity",
-   "fieldtype": "Float",
-   "label": "This GRN Received (QT)",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "column_break_tp_fulfillment",
+   "fieldname": "column_break_rst",
    "fieldtype": "Column Break"
   },
   {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "tp_cumulative_received",
+   "fieldname": "gross_vehicle_weight",
    "fieldtype": "Float",
-   "label": "Pass Total Received So Far (QT)",
+   "label": "Load Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "tp_chhatni_balance",
+   "fieldname": "tare_weight",
    "fieldtype": "Float",
-   "label": "Received (QT) - TP + Chhatni",
-   "precision": "3",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "chhatni_received_pct",
-   "fieldtype": "Float",
-   "label": "Chhatni % Received",
-   "non_negative": 1,
-   "precision": "2",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "tp_cumulative_deduction",
-   "fieldtype": "Float",
-   "label": "Progressive Deduction Total (QT)",
+   "label": "Tare Weight (QT)",
    "non_negative": 1,
    "precision": "3",
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "tp_fulfillment_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "TP Status",
-   "options": "\nIn Progress\nTP Completed",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "column_break_tp_fulfillment_2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "chhatni_fulfillment_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "label": "Chhatni Status",
-   "options": "\nChhatni Not Received\nChhatni Pending\nChhatni Received\nExtra Chhatni Received",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:!doc.is_local_procurement",
-   "fieldname": "chhatni_fulfillment_remark",
-   "fieldtype": "Small Text",
-   "label": "Chhatni Note",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gunny_type",
-   "fieldtype": "Select",
-   "label": "Gunny Type",
-   "options": "\nGunny Gross\nGunny Cut",
+   "fieldname": "gross_weight",
+   "fieldtype": "Float",
+   "label": "Gross Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
    "read_only": 1
   },
   {
@@ -475,86 +451,28 @@
    "read_only": 1
   },
   {
-   "fieldname": "gate_section",
-   "fieldtype": "Section Break",
-   "label": "Vehicle Movement"
+   "fieldname": "deduction",
+   "fieldtype": "Float",
+   "label": "Deduction (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
   },
   {
-   "fieldname": "vehicle_no",
-   "fieldtype": "Data",
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
    "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Vehicle",
+   "label": "Net Weight (QT)",
+   "non_negative": 1,
+   "precision": "3",
    "read_only": 1
   },
   {
-   "fieldname": "driver_name",
-   "fieldtype": "Data",
-   "label": "Driver Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "mobile_no",
-   "fieldtype": "Data",
-   "label": "Driver Mobile No",
-   "read_only": 1
-  },
-  {
-   "fieldname": "party_name",
-   "fieldtype": "Data",
-   "label": "Party Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_gate",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "arrival_datetime",
-   "fieldtype": "Datetime",
-   "label": "Arrival Date & Time",
-   "read_only": 1
-  },
-  {
-   "fieldname": "arrival_date",
-   "fieldtype": "Date",
-   "hidden": 1,
-   "label": "Arrival Date",
-   "read_only": 1
-  },
-  {
-   "fieldname": "arrival_time",
-   "fieldtype": "Time",
-   "hidden": 1,
-   "label": "Arrival Time",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gate_exit",
+   "fieldname": "weigh_bridge_measurement",
    "fieldtype": "Link",
    "hidden": 1,
-   "label": "Gate Exit",
-   "options": "Gate Exit",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gate_exit_datetime",
-   "fieldtype": "Datetime",
-   "label": "Gate Exit Date & Time",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gate_exit_date",
-   "fieldtype": "Date",
-   "hidden": 1,
-   "label": "Gate Exit Date",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gate_out_time",
-   "fieldtype": "Time",
-   "hidden": 1,
-   "label": "Gate Exit Time",
+   "label": "Weigh Bridge Measurement",
+   "options": "Weigh Bridge Measurement",
    "read_only": 1
   },
   {
@@ -578,6 +496,34 @@
    "read_only": 1
   },
   {
+   "fieldname": "qc_datetime",
+   "fieldtype": "Datetime",
+   "label": "Date & Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qc_decision",
+   "fieldtype": "Data",
+   "label": "Quality Test",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_qc",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "unloading_point",
+   "fieldtype": "Data",
+   "label": "Unloading Point",
+   "read_only": 1
+  },
+  {
+   "fieldname": "unloader_name",
+   "fieldtype": "Data",
+   "label": "Staff Name",
+   "read_only": 1
+  },
+  {
    "fieldname": "ppc_name",
    "fieldtype": "Data",
    "in_list_view": 1,
@@ -586,39 +532,13 @@
    "read_only": 1
   },
   {
-   "fieldname": "paddy_type",
+   "fieldname": "paddy_quality",
    "fieldtype": "Data",
-   "label": "Paddy Type",
+   "label": "Paddy Quality",
    "read_only": 1
   },
   {
-   "fieldname": "paddy_variety",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Paddy Variety"
-  },
-  {
-   "fieldname": "qc_bag_details",
-   "fieldtype": "Table",
-   "label": "Bag Details (from QC)",
-   "options": "Quality Check Bag Detail",
-   "read_only": 1
-  },
-  {
-   "fieldname": "qc_datetime",
-   "fieldtype": "Datetime",
-   "label": "Date & Time",
-   "read_only": 1
-  },
-  {
-   "fieldname": "no_of_bags",
-   "fieldtype": "Int",
-   "label": "Bags (In No.)",
-   "non_negative": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_qc",
+   "fieldname": "column_break_qc2",
    "fieldtype": "Column Break"
   },
   {
@@ -638,46 +558,9 @@
    "read_only": 1
   },
   {
-   "fieldname": "unloader_name",
+   "fieldname": "paddy_type",
    "fieldtype": "Data",
-   "label": "Staff Name",
-   "read_only": 1
-  },
-  {
-   "fieldname": "gate_entry",
-   "fieldtype": "Link",
-   "hidden": 1,
-   "label": "Gate Entry ID",
-   "options": "Gate Entry",
-   "read_only": 1
-  },
-  {
-   "fieldname": "unloading_point",
-   "fieldtype": "Data",
-   "label": "Unloading Point",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_break_qc2",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "old_new_bags",
-   "fieldtype": "Table",
-   "label": "Paddy Type (In Bags)",
-   "options": "Quality Check Old New Bag Detail",
-   "read_only": 1
-  },
-  {
-   "fieldname": "paddy_quality",
-   "fieldtype": "Data",
-   "label": "Paddy Quality",
-   "read_only": 1
-  },
-  {
-   "fieldname": "qc_decision",
-   "fieldtype": "Data",
-   "label": "Quality Test",
+   "label": "Paddy Type",
    "read_only": 1
   },
   {
@@ -695,17 +578,128 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_ytzu",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_rst_2",
-   "fieldtype": "Column Break"
+   "fieldname": "paddy_variety",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Paddy Variety"
   },
   {
    "fieldname": "paddy_bags_section",
    "fieldtype": "Section Break",
    "label": "Paddy Type (In Bags)"
+  },
+  {
+   "fieldname": "old_new_bags",
+   "fieldtype": "Table",
+   "label": "Paddy Type (In Bags)",
+   "options": "Quality Check Old New Bag Detail",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qc_bag_details",
+   "fieldtype": "Table",
+   "label": "Bag Details (from QC)",
+   "options": "Quality Check Bag Detail",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "entry_data_section",
+   "fieldtype": "Section Break",
+   "label": "Entry Data"
+  },
+  {
+   "fieldname": "entry_details",
+   "fieldtype": "Table",
+   "label": "Entry Details (for this TP)",
+   "options": "GRN Entry Detail",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_fulfillment_section",
+   "fieldtype": "Section Break",
+   "label": "TP & Chhatni Fulfillment"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "received_quantity",
+   "fieldtype": "Float",
+   "label": "This GRN Received (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_cumulative_received",
+   "fieldtype": "Float",
+   "label": "Pass Total Received So Far (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_cumulative_deduction",
+   "fieldtype": "Float",
+   "label": "Progressive Deduction Total (QT)",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "column_break_tp_fulfillment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "chhatni_received_pct",
+   "fieldtype": "Float",
+   "label": "Chhatni % Received",
+   "non_negative": 1,
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_chhatni_balance",
+   "fieldtype": "Float",
+   "label": "Received (QT) - TP + Chhatni",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "column_break_tp_fulfillment_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "tp_fulfillment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP Status",
+   "options": "\nPending\nIn Progress\nTP Completed",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "chhatni_fulfillment_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Chhatni Status",
+   "options": "\nChhatni Not Received\nChhatni Pending\nChhatni Received\nExtra Chhatni Received",
+   "read_only": 1
+  },
+  {
+   "depends_on": "eval:!doc.is_local_procurement",
+   "fieldname": "chhatni_fulfillment_remark",
+   "fieldtype": "Small Text",
+   "label": "Chhatni Note",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,

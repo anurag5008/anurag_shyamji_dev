@@ -17,11 +17,26 @@ from ivri_od.procurement.transit_pass_resolve import (
 class RSTDetails(Document):
 	def validate(self):
 		ensure_doc_datetime(self, "entry_datetime", date_field="entry_date", time_field="entry_time")
+		self._validate_not_local_procurement()
 		self._validate_unique_rst_no()
 		self._sync_mill_and_agent_from_transit_pass()
 		self._validate_mill_name()
 		self._set_tp_status()
 		self._validate_local_purchase_order()
+
+	def _validate_not_local_procurement(self):
+		before = self.get_doc_before_save()
+		is_existing_local = before and getattr(before, "tp_status", None) == "Local Procurement"
+		if (self.local_purchase_order or "").strip() and not is_existing_local:
+			frappe.throw(
+				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
+				title=_("Local Procurement Disabled"),
+			)
+		if is_private_procurement_rst(self) and not is_existing_local:
+			frappe.throw(
+				_("Local Paddy Purchase is disabled. Government Procurement requires a valid Transit Pass No and PPC."),
+				title=_("Local Procurement Disabled"),
+			)
 
 	def on_trash(self):
 		wbm_name = self.weigh_bridge_measurement
@@ -188,12 +203,40 @@ class RSTDetails(Document):
 				}
 			)
 		else:
+			tp_vehicle_no = ""
+			if transit_pass.pass_unique_key:
+				tp_vehicle_no = (
+					frappe.db.get_value(
+						"PPAS Transit Pass",
+						{"pass_unique_key": transit_pass.pass_unique_key},
+						"vehicle_no",
+					)
+					or ""
+				)
+
+			rst_v = (self.vehicle_no or "").strip().upper()
+			tp_v = (tp_vehicle_no or "").strip().upper()
+
+			if rst_v and tp_v:
+				if rst_v == tp_v:
+					same_truck = 0
+					actual_truck = ""
+				else:
+					same_truck = 1
+					actual_truck = rst_v
+			elif rst_v and not tp_v:
+				same_truck = 1
+				actual_truck = rst_v
+			else:
+				same_truck = 0
+				actual_truck = ""
+
 			values.update(
 				{
 					"is_farmer_or_agent": 0,
 					"agent_name": self.agent_name,
-					"same_truck_as_transit_pass": 1,
-					"actual_truck_no": (self.vehicle_no or "").strip().upper(),
+					"same_truck_as_transit_pass": same_truck,
+					"actual_truck_no": actual_truck,
 					"pass_unique_key": transit_pass.pass_unique_key,
 					"vehicle_no": "",
 				}
@@ -284,8 +327,7 @@ def try_get_matching_transit_pass(doc):
 
 @frappe.whitelist()
 def check_private_procurement(tp_no=None, party_name=None):
-	doc = frappe._dict(tp_no=(tp_no or "").strip(), party_name=(party_name or "").strip())
-	return {"is_private": is_private_procurement_rst(doc)}
+	return {"is_private": False}
 
 
 @frappe.whitelist()

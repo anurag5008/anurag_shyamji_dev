@@ -8,15 +8,14 @@
  "engine": "InnoDB",
  "field_order": [
   "season",
-  "miller",
   "paste_section",
   "paste_data",
+  "import_items_section",
+  "import_items",
   "summary_section",
   "total_records",
   "duplicate_records",
-  "failed_records",
-  "import_items_section",
-  "import_items"
+  "failed_records"
  ],
  "fields": [
   {
@@ -29,11 +28,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "miller",
-   "fieldtype": "Data",
-   "label": "Miller"
-  },
-  {
    "fieldname": "paste_section",
    "fieldtype": "Section Break",
    "label": "Paste PPAS Data"
@@ -42,6 +36,19 @@
    "fieldname": "paste_data",
    "fieldtype": "Long Text",
    "label": "Paste PPAS Data Here"
+  },
+  {
+   "fieldname": "import_items_section",
+   "fieldtype": "Section Break",
+   "label": "Import Items"
+  },
+  {
+   "cannot_add_rows": 1,
+   "fieldname": "import_items",
+   "fieldtype": "Table",
+   "label": "Import Items",
+   "options": "PPAS Transit Pass Import Item",
+   "reqd": 0
   },
   {
    "fieldname": "summary_section",
@@ -68,19 +75,6 @@
    "fieldtype": "Int",
    "label": "Failed Records",
    "read_only": 1
-  },
-  {
-   "fieldname": "import_items_section",
-   "fieldtype": "Section Break",
-   "label": "Import Items"
-  },
-  {
-   "cannot_add_rows": 1,
-   "fieldname": "import_items",
-   "fieldtype": "Table",
-   "label": "Import Items",
-   "options": "PPAS Transit Pass Import Item",
-   "reqd": 0
   }
  ],
  "links": [],

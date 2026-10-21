@@ -12,11 +12,10 @@
   "season",
   "ppc_name",
   "tp_no",
-  "column_break_tp_lookup",
-  "pass_unique_key",
-  "transit_pass_no",
   "column_break_tp",
   "tp_quantity",
+  "pass_unique_key",
+  "transit_pass_no",
   "pacs_name",
   "entry_details_section",
   "agent_name",
@@ -65,8 +64,16 @@
    "reqd": 1
   },
   {
-   "fieldname": "column_break_tp_lookup",
+   "fieldname": "column_break_tp",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tp_quantity",
+   "fieldtype": "Float",
+   "label": "TP Quantity",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "pass_unique_key",
@@ -84,24 +91,13 @@
    "read_only": 1
   },
   {
-   "fieldname": "column_break_tp",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "tp_quantity",
-   "fieldtype": "Float",
-   "label": "TP Quantity",
-   "non_negative": 1,
-   "precision": "3",
-   "read_only": 1
-  },
-  {
    "fieldname": "pacs_name",
    "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "PACS Name",
-   "read_only": 1
+   "read_only": 1,
+   "hidden": 1
   },
   {
    "fieldname": "entry_details_section",
@@ -117,10 +113,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "column_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
    "fieldname": "entry_quantity",
    "fieldtype": "Float",
    "in_list_view": 1,
@@ -128,6 +120,10 @@
    "non_negative": 1,
    "precision": "3",
    "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
   },
   {
    "fieldname": "entry_price_per_quintal",

@@ -19,13 +19,20 @@ const QC_CHILD_TABLE_CONFIG = [
 const QC_CHILD_TABLES = QC_CHILD_TABLE_CONFIG.map((cfg) => cfg.fieldname);
 
 frappe.ui.form.on("Quality Check", {
+	setup(frm) {
+		setup_qc_child_table_grids(frm);
+	},
 	onload(frm) {
 		setup_vehicle_no_autocomplete(frm);
 		setup_qc_child_table_grids(frm);
 	},
 	refresh(frm) {
+		frm.toggle_display("is_farmer_or_agent", Boolean(frm.doc.is_farmer_or_agent));
 		setup_vehicle_no_autocomplete(frm);
 		sync_qc_decision_from_returns(frm);
+		setup_qc_child_table_grids(frm);
+	},
+	onload_post_render(frm) {
 		setup_qc_child_table_grids(frm);
 	},
 	validate(frm) {
@@ -45,23 +52,27 @@ frappe.ui.form.on("Quality Check", {
 			frm.set_value("farmer_name", frm.doc.farmer_name.trim());
 		}
 	},
-	old_new_bags(frm) {
-		qc_child_table_changed(frm, "old_new_bags");
-	},
-	old_new_bags_add(frm) {
-		qc_child_table_changed(frm, "old_new_bags");
+	old_new_bags_add(frm, cdt, cdn) {
+		if ((frm.doc.old_new_bags || []).length > 1 && cdn) {
+			frappe.model.remove_child(frm.doc, "old_new_bags", cdn);
+			frm.refresh_field("old_new_bags");
+		}
+		setup_qc_child_table_grids(frm);
 	},
 	old_new_bags_remove(frm) {
-		qc_child_table_changed(frm, "old_new_bags");
+		ensure_single_qc_grid_row(frm, "old_new_bags");
+		setup_qc_child_table_grids(frm);
 	},
-	type_of_pkt(frm) {
-		qc_child_table_changed(frm, "type_of_pkt");
-	},
-	type_of_pkt_add(frm) {
-		qc_child_table_changed(frm, "type_of_pkt");
+	type_of_pkt_add(frm, cdt, cdn) {
+		if ((frm.doc.type_of_pkt || []).length > 1 && cdn) {
+			frappe.model.remove_child(frm.doc, "type_of_pkt", cdn);
+			frm.refresh_field("type_of_pkt");
+		}
+		setup_qc_child_table_grids(frm);
 	},
 	type_of_pkt_remove(frm) {
-		qc_child_table_changed(frm, "type_of_pkt");
+		ensure_single_qc_grid_row(frm, "type_of_pkt");
+		setup_qc_child_table_grids(frm);
 	},
 });
 
@@ -97,90 +108,71 @@ function validate_qc_child_tables_single_row(frm) {
 	}
 }
 
-function qc_child_table_changed(frm, fieldname) {
-	enforce_single_qc_grid_row(frm, fieldname);
-	sync_qc_child_table_limits(frm);
-}
-
 function setup_qc_child_table_grids(frm) {
-	const apply = () => {
-		QC_CHILD_TABLES.forEach((fieldname) => {
-			bind_qc_single_row_grid(frm, fieldname);
-			sync_qc_child_table_limits(frm, fieldname);
-		});
-	};
-	apply();
-	setTimeout(apply, 0);
-}
+	QC_CHILD_TABLES.forEach((fieldname) => {
+		frm.set_df_property(fieldname, "cannot_add_rows", true);
+		frm.set_df_property(fieldname, "cannot_delete_rows", true);
 
-function bind_qc_single_row_grid(frm, fieldname) {
-	const grid = frm.fields_dict[fieldname]?.grid;
-	if (!grid) {
-		return;
-	}
-
-	if (!grid._qc_orig_add_new_row) {
-		grid._qc_orig_add_new_row = grid.add_new_row.bind(grid);
-	}
-
-	grid.add_new_row = function (...args) {
-		if ((frm.doc[fieldname] || []).length >= 1) {
-			sync_qc_child_table_limits(frm, fieldname);
-			return;
+		const meta_df = frappe.meta.get_docfield(frm.doctype, fieldname, frm.docname);
+		if (meta_df) {
+			meta_df.cannot_add_rows = true;
+			meta_df.cannot_delete_rows = true;
 		}
-		return grid._qc_orig_add_new_row(...args);
-	};
 
-	grid.wrapper.off("click.qc-single-row");
-	grid.wrapper.on("click.qc-single-row", ".grid-add-row", (e) => {
-		if ((frm.doc[fieldname] || []).length >= 1) {
-			e.preventDefault();
-			e.stopImmediatePropagation();
-			sync_qc_child_table_limits(frm, fieldname);
-			return false;
-		}
-	});
-}
+		ensure_single_qc_grid_row(frm, fieldname);
 
-function enforce_single_qc_grid_row(frm, fieldname) {
-	const rows = frm.doc[fieldname] || [];
-	if (rows.length <= 1) {
-		return;
-	}
-	while (frm.doc[fieldname].length > 1) {
-		const last = frm.doc[fieldname][frm.doc[fieldname].length - 1];
-		frappe.model.remove_child(frm.doc, fieldname, last.name);
-	}
-	frm.refresh_field(fieldname);
-}
-
-function sync_qc_child_table_limits(frm, fieldname) {
-	const tables = fieldname ? [fieldname] : QC_CHILD_TABLES;
-	tables.forEach((table_fieldname) => {
-		const row_count = (frm.doc[table_fieldname] || []).length;
-		const at_limit = row_count >= 1;
-
-		frm.set_df_property(table_fieldname, "cannot_add_rows", at_limit ? 1 : 0);
-
-		const grid = frm.fields_dict[table_fieldname]?.grid;
+		const field = frm.get_field(fieldname);
+		const grid = field?.grid;
 		if (!grid) {
 			return;
 		}
 
-		grid.cannot_add_rows = at_limit;
+		Object.defineProperty(grid, "cannot_add_rows", {
+			get() {
+				return true;
+			},
+			set() {},
+			configurable: true,
+		});
+		Object.defineProperty(grid, "cannot_delete_rows", {
+			get() {
+				return true;
+			},
+			set() {},
+			configurable: true,
+		});
+
 		if (grid.df) {
-			grid.df.cannot_add_rows = at_limit ? 1 : 0;
+			grid.df.cannot_add_rows = true;
+			grid.df.cannot_delete_rows = true;
 		}
 
-		if (typeof grid.setup_toolbar === "function") {
-			grid.setup_toolbar();
+		grid.add_new_row = function () {
+			return false;
+		};
+
+		if (!grid._qc_toolbar_patched) {
+			grid._qc_toolbar_patched = true;
+			const orig_setup_toolbar = grid.setup_toolbar.bind(grid);
+			grid.setup_toolbar = function () {
+				orig_setup_toolbar();
+				this.wrapper
+					.find(".grid-add-row, .grid-add-multiple-rows, .grid-duplicate-rows")
+					.addClass("hidden")
+					.hide();
+			};
 		}
 
-		grid.wrapper
-			.find(".grid-add-row, .grid-add-multiple-rows, .grid-duplicate-rows")
-			.toggleClass("hidden", at_limit)
-			.prop("disabled", at_limit);
+		grid.setup_toolbar();
 	});
+}
+
+function ensure_single_qc_grid_row(frm, fieldname) {
+	const rows = frm.doc[fieldname] || [];
+	if (rows.length === 0) {
+		frm.add_child(fieldname);
+		frm.refresh_field(fieldname);
+	}
 }
 
 function clear_qc_source_mode_fields(frm) {

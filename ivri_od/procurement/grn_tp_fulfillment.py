@@ -26,12 +26,13 @@ def required_chhatni_qt(tp_qty: float, chhatni_percentage: float) -> float:
 	return flt(flt(tp_qty) * flt(chhatni_percentage) / 100, 3)
 
 
-def received_chhatni_pct(total_deduction: float, tp_qty: float) -> float:
-	"""Chhatni % received on the TP = sum of deductions ÷ TP quantity × 100."""
+def received_chhatni_pct(received_qty: float, tp_qty: float) -> float:
+	"""Received Chhatni % = max(0, ((Total Qty Received - TP Qty) / TP Qty) * 100)."""
 	tp_qty = flt(tp_qty)
-	if tp_qty <= 0:
+	received_qty = flt(received_qty)
+	if tp_qty <= 0 or received_qty <= tp_qty:
 		return 0.0
-	return flt(flt(total_deduction) / tp_qty * 100, 2)
+	return flt(((received_qty - tp_qty) / tp_qty) * 100.0, 2)
 
 
 def tp_chhatni_balance_qt(tp_qty: float, cumulative_received: float, total_deduction: float) -> float:
@@ -47,10 +48,70 @@ def tp_chhatni_balance_qt(tp_qty: float, cumulative_received: float, total_deduc
 
 
 def tp_fulfillment_status(tp_qty: float, cumulative_net_received: float) -> str:
-	"""Canonical TP fulfillment status based on cumulative final net weight received."""
-	if flt(tp_qty) > 0 and flt(cumulative_net_received) >= flt(tp_qty):
+	"""Canonical TP fulfillment status based on cumulative final net weight received.
+
+	Rules:
+	1. Pending: Total valid GRN net_weight = 0 QTL.
+	2. In Progress: Total valid GRN net_weight > 0 QTL and < TP quantity.
+	3. TP Completed: Total valid GRN net_weight >= TP quantity.
+	"""
+	tp_qty = flt(tp_qty)
+	cumulative = flt(cumulative_net_received)
+	if cumulative <= 0:
+		return "Pending"
+	if tp_qty > 0 and cumulative >= tp_qty:
 		return "TP Completed"
 	return "In Progress"
+
+
+def calculate_tp_status_for_pass(pass_unique_key: str | None) -> str:
+	"""Calculate Transit Pass (TP) status using all valid submitted, non-cancelled GRN Notes linked by PPAS Unique Key.
+
+	Rules:
+	1. Pending: Total valid GRN net_weight = 0 QTL.
+	2. In Progress: Total valid GRN net_weight > 0 QTL and < TP quantity.
+	3. TP Completed: Total valid GRN net_weight >= TP quantity.
+
+	Qualifying GRN Notes:
+	- pass_unique_key matching the pass
+	- is_local_procurement == 0
+	- docstatus == 1 (submitted only; draft docstatus=0 and cancelled docstatus=2 are excluded)
+	"""
+	key = (pass_unique_key or "").strip()
+	if not key:
+		return "Pending"
+
+	tp_qty = flt(
+		frappe.db.get_value(
+			"PPAS Transit Pass",
+			{"pass_unique_key": key},
+			"quantity",
+		)
+	)
+	if not tp_qty:
+		tp_qty = flt(
+			frappe.db.get_value(
+				"GRN Note",
+				{"pass_unique_key": key},
+				"tp_quantity",
+			)
+		)
+
+	rows = frappe.get_all(
+		"GRN Note",
+		filters={
+			"pass_unique_key": key,
+			"is_local_procurement": 0,
+			"docstatus": 1,
+		},
+		fields=["net_weight"],
+	)
+
+	total_net_weight = flt(sum(flt(r.net_weight or 0.0) for r in rows), 3)
+	return tp_fulfillment_status(tp_qty, total_net_weight)
+
+
+get_tp_status_for_pass = calculate_tp_status_for_pass
 
 
 def remaining_tp_quantity(tp_qty: float, cumulative_net_received: float) -> float:
@@ -89,10 +150,11 @@ def calculate_chhatni_metrics(
 	total_deduction = flt(total_deduction)
 
 	required_qt = required_chhatni_qt(tp_qty, chhatni_rate)
-	actual_pct = received_chhatni_pct(total_deduction, tp_qty)
+	actual_pct = received_chhatni_pct(cumulative_received, tp_qty)
 	assigned_pct = flt(chhatni_rate, 2)
 	deviation_pct = flt(actual_pct - assigned_pct, 2)
 	tolerance_pct = flt(CHHATNI_TOLERANCE_PCT, 2)
+	excess_qty = flt(max(cumulative_received - tp_qty, 0.0), 3)
 
 	if tp_qty <= 0:
 		status = CHHATNI_NOT_RECEIVED
@@ -100,15 +162,15 @@ def calculate_chhatni_metrics(
 	elif chhatni_rate <= 0:
 		status = CHHATNI_PENDING
 		remark = _(
-			"Sum of deductions is {0} QT, which is {1}% of TP {2} QT. "
+			"Excess received quantity is {0} QT, which is {1}% of TP {2} QT. "
 			"Assigned chhatni rate is not set."
-		).format(flt(total_deduction, 3), flt(actual_pct, 2), flt(tp_qty, 3))
+		).format(flt(excess_qty, 3), flt(actual_pct, 2), flt(tp_qty, 3))
 	else:
 		base_remark = _(
-			"Sum of deductions is {0} QT, which is {1}% of TP {2} QT. "
+			"Excess received quantity is {0} QT, which is {1}% of TP {2} QT. "
 			"Required chhatni is {3} QT (TP × {4}% ÷ 100)."
 		).format(
-			flt(total_deduction, 3),
+			flt(excess_qty, 3),
 			flt(actual_pct, 2),
 			flt(tp_qty, 3),
 			flt(required_qt, 3),
@@ -121,17 +183,17 @@ def calculate_chhatni_metrics(
 		if actual_compare > upper_bound + 1e-6:
 			status = EXTRA_CHHATNI_RECEIVED
 			remark = _(
-				"{0} Deduction percentage ({1}%) exceeds assigned chhatni ({2}%) by more than {3} percentage points, so extra chhatni is received."
+				"{0} Received chhatni percentage ({1}%) exceeds assigned chhatni ({2}%) by more than {3} percentage points, so extra chhatni is received."
 			).format(base_remark, flt(actual_pct, 2), flt(assigned_pct, 2), tolerance_pct)
 		elif actual_compare >= lower_bound - 1e-6:
 			status = CHHATNI_RECEIVED
 			remark = _(
-				"{0} Deduction percentage ({1}%) is within ±{2} percentage points of assigned chhatni ({3}%), so chhatni is received."
+				"{0} Received chhatni percentage ({1}%) is within ±{2} percentage points of assigned chhatni ({3}%), so chhatni is received."
 			).format(base_remark, flt(actual_pct, 2), tolerance_pct, flt(assigned_pct, 2))
 		else:
 			status = CHHATNI_NOT_RECEIVED
 			remark = _(
-				"{0} Deduction percentage ({1}%) is below assigned chhatni ({2}%) by more than {3} percentage points, so chhatni is not received."
+				"{0} Received chhatni percentage ({1}%) is below assigned chhatni ({2}%) by more than {3} percentage points, so chhatni is not received."
 			).format(base_remark, flt(actual_pct, 2), flt(assigned_pct, 2), tolerance_pct)
 
 	return {
@@ -279,7 +341,7 @@ def _refresh_tp_fulfillment_for_pass(pass_unique_key: str):
 			"received_quantity": received,
 			"tp_cumulative_received": cumulative,
 			"tp_chhatni_balance": tp_chhatni_balance_qt(tp_qty, cumulative, deduction_sum),
-			"chhatni_received_pct": received_chhatni_pct(deduction_sum, tp_qty),
+			"chhatni_received_pct": received_chhatni_pct(cumulative, tp_qty),
 			"tp_cumulative_deduction": deduction_sum,
 			"tp_fulfillment_status": tp_status,
 			"chhatni_fulfillment_status": chhatni_status,

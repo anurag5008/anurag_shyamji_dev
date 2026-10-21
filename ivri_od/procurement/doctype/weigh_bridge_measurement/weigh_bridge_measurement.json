@@ -12,19 +12,20 @@
   "is_farmer_or_agent",
   "agent_name",
   "transit_pass_section",
-  "pass_unique_key",
+  "transit_pass_no",
   "pacs_name",
+  "pass_unique_key",
   "column_break_tp",
   "tp_weight",
   "no_of_bags",
   "weighment_section",
-  "date",
-  "rst_no",
   "party_name",
   "local_purchase_order",
-  "column_break_weighment",
-  "tp_status",
+  "rst_no",
   "quality_check",
+  "column_break_weighment",
+  "date",
+  "tp_status",
   "quality_test",
   "truck_section",
   "truck_no_in_tp",
@@ -36,19 +37,13 @@
   "commodity",
   "gunny_type",
   "total_bags",
-  "column_break_load",
   "load_weight",
   "tare_weight",
+  "column_break_load",
   "gross_weight",
-  "column_break_load_2",
   "gunny_weight",
   "deduction",
   "net_weight",
-  "slno_of_qc",
-  "transit_pass_no",
-  "total_jute_empty_qt",
-  "total_plastic_empty_qt",
-  "vehicle_no",
   "section_break_rnxd",
   "bag_weight_details"
  ],
@@ -94,18 +89,9 @@
    "label": "Transit Pass"
   },
   {
-   "depends_on": "eval:!doc.is_farmer_or_agent",
-   "fieldname": "pass_unique_key",
-   "fieldtype": "Autocomplete",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Pass Unique Key",
-   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
-  },
-  {
    "fieldname": "transit_pass_no",
    "fieldtype": "Data",
-   "hidden": 1,
+   "hidden": 0,
    "label": "Transit Pass No",
    "read_only": 1
   },
@@ -118,6 +104,20 @@
   },
   {
    "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Autocomplete",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Pass Unique Key",
+   "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
+   "fieldname": "column_break_tp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:!doc.is_farmer_or_agent",
    "fieldname": "tp_weight",
    "fieldtype": "Float",
    "label": "TP Weight (QT)",
@@ -126,21 +126,15 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:!doc.is_farmer_or_agent",
-   "fieldname": "column_break_tp",
-   "fieldtype": "Column Break"
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "label": "Bags (In No.)",
+   "non_negative": 1
   },
   {
    "fieldname": "weighment_section",
    "fieldtype": "Section Break",
    "label": "Weighment"
-  },
-  {
-   "fieldname": "rst_no",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "RST No"
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent",
@@ -161,23 +155,11 @@
    "read_only": 1
   },
   {
-   "fieldname": "tp_status",
-   "fieldtype": "Select",
+   "fieldname": "rst_no",
+   "fieldtype": "Data",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "TP Status",
-   "options": "\nTP Received\nTP Not Received\nLocal Procurement",
-   "read_only": 1
-  },
-  {
-   "fieldname": "slno_of_qc",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Sl No of QC",
-   "non_negative": 1,
-   "read_only": 1
+   "label": "RST No"
   },
   {
    "fieldname": "quality_check",
@@ -186,6 +168,27 @@
    "in_standard_filter": 1,
    "label": "Quality Check SL NO",
    "options": "Quality Check",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_weighment",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "Now",
+   "fieldname": "date",
+   "fieldtype": "Datetime",
+   "label": "Date & Time",
+   "read_only": 1,
+   "reqd": 1
+  },
+  {
+   "fieldname": "tp_status",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP Status",
+   "options": "\nTP Received\nTP Not Received\nLocal Procurement",
    "read_only": 1
   },
   {
@@ -201,13 +204,6 @@
    "fieldname": "truck_section",
    "fieldtype": "Section Break",
    "label": "Vehicle"
-  },
-  {
-   "fieldname": "vehicle_no",
-   "fieldtype": "Data",
-   "hidden": 1,
-   "label": "Vehicle No",
-   "read_only": 1
   },
   {
    "depends_on": "eval:!doc.is_farmer_or_agent",
@@ -256,14 +252,22 @@
    "label": "Commodity"
   },
   {
-   "fieldname": "no_of_bags",
-   "fieldtype": "Int",
-   "label": "Bags (In No.)",
-   "non_negative": 1
+   "fieldname": "gunny_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Gunny Type",
+   "options": "Gunny Gross\nGunny Cut",
+   "reqd": 1
   },
   {
-   "fieldname": "column_break_load",
-   "fieldtype": "Column Break"
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "fieldname": "total_bags",
+   "fieldtype": "Int",
+   "hidden": 1,
+   "label": "Total Bags",
+   "non_negative": 1,
+   "read_only": 1
   },
   {
    "fieldname": "load_weight",
@@ -280,6 +284,10 @@
    "precision": "3"
   },
   {
+   "fieldname": "column_break_load",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "gross_weight",
    "fieldtype": "Float",
    "label": "Gross Weight (QT)",
@@ -288,13 +296,12 @@
    "read_only": 1
   },
   {
-   "fieldname": "gunny_type",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Gunny Type",
-   "options": "Gunny Gross\nGunny Cut",
-   "reqd": 1
+   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
+   "fieldname": "gunny_weight",
+   "fieldtype": "Float",
+   "label": "Gunny Weight (QT)",
+   "non_negative": 1,
+   "precision": "3"
   },
   {
    "default": "0",
@@ -314,12 +321,8 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
-   "fieldname": "gunny_weight",
-   "fieldtype": "Float",
-   "label": "Gunny Weight (QT)",
-   "non_negative": 1,
-   "precision": "3"
+   "fieldname": "section_break_rnxd",
+   "fieldtype": "Section Break"
   },
   {
    "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
@@ -329,11 +332,12 @@
    "options": "Weigh Bridge Bag Detail"
   },
   {
-   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
-   "fieldname": "total_bags",
+   "fieldname": "slno_of_qc",
    "fieldtype": "Int",
    "hidden": 1,
-   "label": "Total Bags",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Sl No of QC",
    "non_negative": 1,
    "read_only": 1
   },
@@ -356,24 +360,11 @@
    "read_only": 1
   },
   {
-   "fieldname": "section_break_rnxd",
-   "fieldtype": "Section Break"
-  },
-  {
-   "default": "Now",
-   "fieldname": "date",
-   "fieldtype": "Datetime",
-   "label": "Date & Time",
-   "read_only": 1,
-   "reqd": 1
-  },
-  {
-   "fieldname": "column_break_weighment",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "column_break_load_2",
-   "fieldtype": "Column Break"
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Vehicle No",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
