@@ -25,6 +25,10 @@ function setup_portal_new_menu(page) {
 					PORTAL_NEW_GROUP
 				);
 			});
+			// PPAS is its own DocType (PPAS Data Extraction), not a Portal Site.
+			if (frappe.model.can_create("PPAS Data Extraction")) {
+				page.add_inner_button(__("PPAS"), () => frappe.new_doc("PPAS Data Extraction"), PORTAL_NEW_GROUP);
+			}
 			page.set_inner_btn_group_as_primary(PORTAL_NEW_GROUP);
 		});
 }

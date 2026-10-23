@@ -51,6 +51,16 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Depo Master",
+   "link_count": 0,
+   "link_to": "Depo Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "District Master",
    "link_count": 0,
    "link_to": "District Master",
@@ -376,6 +386,16 @@
    "label": "TP Mandi Fulfillment",
    "link_count": 0,
    "link_to": "TP Mandi Quantity Fulfillment",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Rice Dispatch",
+   "link_count": 0,
+   "link_to": "Rice Dispatch",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

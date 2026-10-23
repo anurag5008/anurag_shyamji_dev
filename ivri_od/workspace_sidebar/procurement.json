@@ -67,6 +67,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "warehouse",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Depo Master",
+   "link_to": "Depo Master",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "map",
    "indent": 1,
    "keep_closed": 1,
@@ -179,6 +191,18 @@
    "label": "PPAS",
    "show_arrow": 0,
    "type": "Section Break"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "layers",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "PPAS Details",
+   "link_to": "PPAS Details",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
   },
   {
    "child": 1,
@@ -479,6 +503,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "percent",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Chhatni",
+   "link_to": "Chhatni",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "file-spreadsheet",
    "indent": 1,
    "keep_closed": 1,
@@ -561,6 +597,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "package",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Rice Dispatch",
+   "link_type": "URL",
+   "url": "/app/query-report/Rice%20Dispatch",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "truck",
    "indent": 1,
    "keep_closed": 1,
@@ -571,7 +619,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-19 14:30:00.000000",
+ "modified": "2026-10-22 19:30:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",

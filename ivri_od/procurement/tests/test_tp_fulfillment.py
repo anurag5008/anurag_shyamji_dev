@@ -312,7 +312,8 @@ class TestTPFulfillment(FrappeTestCase):
 		self.assertEqual(row["excess_received_qty"], 0.0)
 		self.assertEqual(row["tp_status"], "In Progress")
 		self.assertEqual(row["actual_chhatni_pct"], 0.0)
-		self.assertEqual(row["chhatni_status"], "Chhatni Not Received")
+		# Mandi Book status comes from saved Chhatni records; none exist for this pass yet.
+		self.assertEqual(row["chhatni_status"], "Chhatni Pending")
 
 	def test_adding_grn_to_reach_300_completes_tp(self):
 		"""Verify that adding enough Net Weight to reach 300 QTL marks TP as Completed in GRN and Mandi Book."""

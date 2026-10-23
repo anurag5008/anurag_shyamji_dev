@@ -3,16 +3,59 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import MagicMock, patch
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
 
+from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.report.abstract_physical.abstract_physical import (
+	chhatni_qt_by_season_ppc,
 	execute,
 	get_columns,
 	get_data,
 )
+
+
+def grn_totals(ppc_code: str, season: str) -> tuple[float, float]:
+	"""Expected Physical Paddy and Entry Qty from the source GRN Notes of this PPC and season.
+
+	Government GRNs that are not cancelled; Physical Paddy = their net weight, Entry Qty = their
+	GRN Entry Detail rows. Read straight from the records, not through the report code.
+	"""
+	grns = [
+		g
+		for g in frappe.get_all(
+			"GRN Note",
+			filters={"is_local_procurement": 0, "docstatus": ["<", 2]},
+			fields=["name", "ppc", "ppc_name", "pass_unique_key", "cmr_season", "net_weight"],
+		)
+		if f"({ppc_code})" in " ".join(filter(None, (g.ppc, g.ppc_name, g.pass_unique_key)))
+		and resolve_season_master_name(g.cmr_season) == season
+	]
+	physical = sum(flt(g.net_weight) for g in grns)
+	entry = 0.0
+	if grns:
+		entry = sum(
+			flt(q)
+			for q in frappe.get_all(
+				"GRN Entry Detail",
+				filters={
+					"parent": ["in", [g.name for g in grns]],
+					"parenttype": "GRN Note",
+					"parentfield": "entry_details",
+				},
+				pluck="entry_quantity",
+			)
+		)
+	return flt(physical, 3), flt(entry, 3)
+
+
+def chhatni_total(ppc: str, season: str) -> float:
+	"""Expected Chhatni Quantity: sum of Chhatni (QT) of the saved Chhatni records."""
+	rows = frappe.get_all("Chhatni", filters={"ppc_name": ppc, "season": season}, pluck="chhatni_qt")
+	return flt(sum(flt(qt) for qt in rows), 3)
 
 
 class TestAbstractPhysical(FrappeTestCase):
@@ -75,33 +118,36 @@ class TestAbstractPhysical(FrappeTestCase):
 		self.assertEqual(pct_no_tp, 0.0)
 
 	def test_aggregation_duduka(self):
-		"""DUDUKA on Kharif 2025: Physical = 666.176, Entry = 200.0, Chhatni = 23.659."""
+		"""DUDUKA on Kharif 2025: Physical, Entry and Chhatni match their source records."""
 		columns, data = execute({"ppc_name": "S1050113", "season": "Kharif 2025"})
 		self.assertEqual(len(data), 1)
 		row = data[0]
 
 		self.assertEqual(row["season"], "Kharif 2025")
 		self.assertEqual(row["ppc"], "DUDUKA(S1050113)")
-		self.assertAlmostEqual(row["physical_paddy"], 666.176, places=3)
-		self.assertAlmostEqual(row["entry_qty"], 200.0, places=3)
-		self.assertAlmostEqual(row["chhatni_quantity"], 23.659, places=3)
+		physical, entry = grn_totals("S1050113", "Kharif 2025")
+		self.assertGreater(physical, 0, "DUDUKA needs GRNs on this site for a meaningful check")
+		self.assertAlmostEqual(row["physical_paddy"], physical, places=3)
+		self.assertAlmostEqual(row["entry_qty"], entry, places=3)
+		self.assertAlmostEqual(row["chhatni_quantity"], chhatni_total("S1050113", "Kharif 2025"), places=3)
 		self.assertGreater(row["tp_quantity"], 3000.0)
 
 		expected_pct = flt((row["chhatni_quantity"] / (row["tp_quantity"] - row["entry_qty"])) * 100.0, 2)
 		self.assertEqual(row["chhatni_pct"], expected_pct)
 
 	def test_aggregation_dholmandal(self):
-		"""DHOLMANDAL on Kharif 2025: Physical = 1738.55, Chhatni = 74.25."""
+		"""DHOLMANDAL on Kharif 2025: Physical = 1738.55, Chhatni = its Chhatni records."""
 		columns, data = execute({"ppc_name": "S1051411", "season": "Kharif 2025"})
 		self.assertEqual(len(data), 1)
 		row = data[0]
 
 		self.assertEqual(row["ppc"], "DHOLMANDAL(S1051411)")
 		self.assertAlmostEqual(row["physical_paddy"], 1738.55, places=2)
-		self.assertAlmostEqual(row["chhatni_quantity"], 74.25, places=2)
+		self.assertAlmostEqual(row["chhatni_quantity"], chhatni_total("S1051411", "Kharif 2025"), places=3)
 		self.assertAlmostEqual(row["entry_qty"], 0.0, places=3)
 		self.assertAlmostEqual(row["tp_quantity"], 4699.19, places=2)
-		self.assertEqual(row["chhatni_pct"], 1.58)
+		expected_pct = flt((row["chhatni_quantity"] / (row["tp_quantity"] - row["entry_qty"])) * 100.0, 2)
+		self.assertEqual(row["chhatni_pct"], expected_pct)
 
 	def test_season_separation(self):
 		"""Kharif and Rabi seasons return their respective allocated PPCs."""
@@ -249,3 +295,59 @@ def run():
 		raise RuntimeError(f"Tests failed: {len(result.failures)} failures, {len(result.errors)} errors")
 	print(f"All {result.testsRun} tests passed successfully!")
 	return True
+
+
+class TestAbstractPhysicalChhatniNoDB(unittest.TestCase):
+	"""Chhatni Quantity = cumulative Chhatni (QT) per Season + PPC. Mocked: no site, no database."""
+
+	def setUp(self):
+		frappe.local.lang = "en"
+		self.ppcs = {code: frappe._dict(name=code) for code in ("S1", "S2")}
+		patchers = [
+			# flt(value, precision) reads the rounding method from System Settings; use Frappe's default.
+			patch.object(frappe, "get_system_settings", MagicMock(return_value=None), create=True),
+			patch(
+				"ivri_od.procurement.report.abstract_physical.abstract_physical.resolve_season_master_name",
+				side_effect=lambda s: (s or "").strip() or None,
+			),
+		]
+		for patcher in patchers:
+			patcher.start()
+			self.addCleanup(patcher.stop)
+
+	def _totals(self, rows, tp_meta=None):
+		with patch.object(frappe, "get_all", return_value=[frappe._dict(r) for r in rows], create=True):
+			return chhatni_qt_by_season_ppc(lambda code: self.ppcs.get(code), tp_meta or {})
+
+	def _row(self, name, qt, season="Kharif 2025", ppc="S1", key=""):
+		return {"name": name, "season": season, "ppc_name": ppc, "pass_unique_key": key, "chhatni_qt": qt}
+
+	def test_multiple_records_of_one_ppc_are_summed(self):
+		totals = self._totals([self._row("CH-1", 3.465), self._row("CH-2", 10), self._row("CH-3", 1.535)])
+		self.assertEqual(totals[("Kharif 2025", "S1")], 15.0)
+
+	def test_same_record_is_not_counted_twice(self):
+		totals = self._totals([self._row("CH-1", 4.2), self._row("CH-1", 4.2)])
+		self.assertEqual(totals[("Kharif 2025", "S1")], 4.2)
+
+	def test_ppcs_and_seasons_are_kept_apart(self):
+		totals = self._totals(
+			[self._row("CH-1", 2), self._row("CH-2", 3, ppc="S2"), self._row("CH-3", 7, season="Rabi 2025")]
+		)
+		self.assertEqual(
+			dict(totals), {("Kharif 2025", "S1"): 2.0, ("Kharif 2025", "S2"): 3.0, ("Rabi 2025", "S1"): 7.0}
+		)
+
+	def test_season_and_ppc_from_transit_pass_when_missing(self):
+		tp_meta = {"KEY-1": {"season": "Kharif 2025", "ppc_doc": self.ppcs["S2"]}}
+		totals = self._totals([self._row("CH-1", 5, season="", ppc="", key="KEY-1")], tp_meta)
+		self.assertEqual(totals[("Kharif 2025", "S2")], 5.0)
+
+	def test_record_without_season_or_ppc_is_left_out(self):
+		self.assertEqual(dict(self._totals([self._row("CH-1", 5, season="", ppc="UNKNOWN")])), {})
+
+	def test_chhatni_pct_uses_existing_formula(self):
+		# Chhatni % = cumulative Chhatni QT / (TP Quantity - Entry Qty) x 100
+		chhatni_qt, tp_qty, entry_qty = 20.0, 3726.81, 0.0
+		self.assertEqual(flt((chhatni_qt / (tp_qty - entry_qty)) * 100.0, 2), 0.54)
+

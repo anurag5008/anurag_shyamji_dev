@@ -303,7 +303,7 @@ def _render_gate_entry_pass_html(doc, for_pdf: bool = False) -> str:
 			"doc": doc,
 			"entry_datetime_display": entry_datetime_display,
 			"party_name": party_name,
-			"qr_image": qr_image_html(qr_text),
+			"qr_image": qr_image_html(qr_text, module_px=4),
 			"qr_text": qr_text,
 			"for_pdf": for_pdf,
 		},

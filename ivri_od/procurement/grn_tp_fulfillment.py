@@ -35,6 +35,69 @@ def received_chhatni_pct(received_qty: float, tp_qty: float) -> float:
 	return flt(((received_qty - tp_qty) / tp_qty) * 100.0, 2)
 
 
+def chhatni_pct_band(actual_pct: float, assigned_pct: float) -> str:
+	"""Compare in percentage points: "above", "within" or "below" Assigned ± CHHATNI_TOLERANCE_PCT.
+
+	Assigned 4% gives 3.70% - 4.30% (not 4% × 1.003).
+	"""
+	tolerance_pct = flt(CHHATNI_TOLERANCE_PCT, 2)
+	assigned_pct = flt(assigned_pct, 2)
+	actual_compare = flt(actual_pct, 4)
+	if actual_compare > flt(assigned_pct + tolerance_pct, 4) + 1e-6:
+		return "above"
+	if actual_compare >= flt(assigned_pct - tolerance_pct, 4) - 1e-6:
+		return "within"
+	return "below"
+
+
+def actual_chhatni_pct(chhatni_qt: float, base_qt: float) -> float:
+	"""Chhatni QT ÷ base quantity × 100; 0 when the base is zero or empty.
+
+	Chhatni DocType uses TP Quantity as the base; Mandi Book uses Net Weight (QT).
+	"""
+	base_qt = flt(base_qt)
+	if base_qt <= 0:
+		return 0.0
+	return flt(flt(chhatni_qt) / base_qt * 100.0, 2)
+
+
+def chhatni_from_rate(net_weight_qt: float, chhatni_kg_per_qtl: float, tp_qty: float = 0) -> dict:
+	"""Chhatni KG = Net Weight (QT) × rate; Chhatni QT = KG ÷ 100; Received % = Chhatni QT ÷ TP Quantity × 100.
+
+	Example: 280 QT × 4 kg/Qtl = 1120 KG = 11.2 QT; with TP 250 QT that is 4.48%.
+	Received % is 0 when TP Quantity is zero or empty.
+	"""
+	net_weight_qt = flt(net_weight_qt, 3)
+	if net_weight_qt <= 0:
+		return {"chhatni_kg": 0.0, "chhatni_qt": 0.0, "received_chhatni_pct": 0.0}
+	chhatni_kg = flt(net_weight_qt * flt(chhatni_kg_per_qtl), 3)
+	chhatni_qt = flt(chhatni_kg / 100.0, 3)
+	return {
+		"chhatni_kg": chhatni_kg,
+		"chhatni_qt": chhatni_qt,
+		"received_chhatni_pct": actual_chhatni_pct(chhatni_qt, tp_qty),
+	}
+
+
+def actual_chhatni_status(tp_qty: float, received_pct: float, assigned_pct: float) -> str:
+	"""Status from actual Chhatni records (Mandi Book): above band -> Extra, within -> Received, below -> Pending."""
+	if flt(tp_qty) <= 0:
+		return CHHATNI_NOT_RECEIVED
+	if flt(assigned_pct) <= 0:
+		return CHHATNI_PENDING
+	return {
+		"above": EXTRA_CHHATNI_RECEIVED,
+		"within": CHHATNI_RECEIVED,
+		"below": CHHATNI_PENDING,
+	}[chhatni_pct_band(received_pct, assigned_pct)]
+
+
+def excess_after_chhatni_qt(tp_qty: float, cumulative_received: float, chhatni_qt: float) -> float:
+	"""Excess Received Qty = max(Total Qty Received − TP Qty − actual Chhatni QT, 0)."""
+	value = flt(cumulative_received) - flt(tp_qty) - flt(chhatni_qt)
+	return flt(max(value, 0.0), 3)
+
+
 def tp_chhatni_balance_qt(tp_qty: float, cumulative_received: float, total_deduction: float) -> float:
 	"""Pass total received − (TP quantity + sum of deductions).
 
@@ -176,16 +239,14 @@ def calculate_chhatni_metrics(
 			flt(required_qt, 3),
 			flt(assigned_pct, 2),
 		)
-		lower_bound = flt(assigned_pct - tolerance_pct, 4)
-		upper_bound = flt(assigned_pct + tolerance_pct, 4)
-		actual_compare = flt(actual_pct, 4)
+		band = chhatni_pct_band(actual_pct, assigned_pct)
 
-		if actual_compare > upper_bound + 1e-6:
+		if band == "above":
 			status = EXTRA_CHHATNI_RECEIVED
 			remark = _(
 				"{0} Received chhatni percentage ({1}%) exceeds assigned chhatni ({2}%) by more than {3} percentage points, so extra chhatni is received."
 			).format(base_remark, flt(actual_pct, 2), flt(assigned_pct, 2), tolerance_pct)
-		elif actual_compare >= lower_bound - 1e-6:
+		elif band == "within":
 			status = CHHATNI_RECEIVED
 			remark = _(
 				"{0} Received chhatni percentage ({1}%) is within ±{2} percentage points of assigned chhatni ({3}%), so chhatni is received."

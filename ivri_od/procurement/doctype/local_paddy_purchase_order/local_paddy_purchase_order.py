@@ -39,8 +39,6 @@ def compute_po_status(ordered_qty: float, received_qty: float, current_status: s
 
 class LocalPaddyPurchaseOrder(Document):
 	def validate(self):
-		if self.is_new():
-			frappe.throw(_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."))
 		self._normalize_fields()
 		self._validate_ordered_quantity()
 		self._compute_quantities_and_status()

@@ -9,6 +9,7 @@ import uuid
 
 import frappe
 from frappe.modules.import_file import import_file_by_path
+from frappe.utils import escape_html
 
 
 FLOW_INTRO = (
@@ -78,29 +79,65 @@ WINGS_REPORTS: list[tuple[str, str, str]] = [
 	("Targets Advanced Paddy from WINGS", "target", "Orange"),
 ]
 
+# PPAS: one page like WINGS Details, with the PPAS Transit Pass list and a Manual Entry
+# button that opens the existing PPAS Transit Pass Import form. Not named "PPAS Transit Pass":
+# that slug is the DocType's own list route.
+PPAS_WORKSPACE = "PPAS Details"
+PPAS_WORKSPACE_SLUG = "ppas-details"
+PPAS_MANUAL_BLOCK = "PPAS Manual Entry"
+PPAS_DOCTYPES: list[tuple[str, str, str]] = [
+	("PPAS Transit Pass", "file-text", "Cyan"),
+]
+PPAS_MANUAL_BLOCK_HTML = """<div class="manual-entry">
+	<div class="manual-entry-dropdown">
+		<button class="btn btn-primary btn-sm manual-entry-button">Manual Entry &#9662;</button>
+		<div class="dropdown-menu manual-entry-menu"></div>
+	</div>
+	<span class="text-muted small">Import PPAS transit passes by hand when they cannot be read from the PPAS portal.</span>
+</div>"""
+# Same drop-down as setup_manual_entry_block, but its option opens a DocType form
+# (PPAS Transit Pass Import), not a portal_manual.py dialog.
+PPAS_MANUAL_BLOCK_SCRIPT = """const button = root_element.querySelector(".manual-entry-button");
+const menu = root_element.querySelector(".manual-entry-menu");
+const forms = [
+	{ label: __("PPAS Transit Pass Import (Manual)"), doctype: "PPAS Transit Pass Import" },
+].filter((f) => frappe.model.can_create(f.doctype));
+if (!forms.length) {
+	root_element.querySelector(".manual-entry").style.display = "none";
+}
+button.addEventListener("click", () => {
+	if (menu.style.display === "block") {
+		menu.style.display = "none";
+		return;
+	}
+	menu.innerHTML = "";
+	forms.forEach((f) => {
+		const item = document.createElement("a");
+		item.href = "#";
+		item.className = "dropdown-item";
+		item.textContent = f.label;
+		item.addEventListener("click", (e) => {
+			e.preventDefault();
+			menu.style.display = "none";
+			frappe.new_doc(f.doctype);
+		});
+		menu.appendChild(item);
+	});
+	menu.style.display = "block";
+});"""
+
+# Quick shortcuts: only the core daily flow, in the order a truck moves through the mill
+# (8 = two full rows). Everything else is in the module cards and the sidebar:
+# Manual PPAS Import (PPAS Details > Manual Entry), DC Track and Module Overview (Reports card).
 WORKSPACE_SHORTCUTS = [
-	{"label": "Gate Entry", "type": "DocType", "link_to": "Gate Entry", "icon": "log-in", "color": "Blue"},
 	{
-		"label": "PPAS Transit Pass",
+		"label": "Transit Pass",  # "PPAS Transit Pass" is cut off at this width; same link
 		"type": "DocType",
 		"link_to": "PPAS Transit Pass",
 		"icon": "file-text",
 		"color": "Cyan",
 	},
-	{
-		"label": "Manual PPAS Import",
-		"type": "DocType",
-		"link_to": "PPAS Transit Pass Import",
-		"icon": "clipboard",
-		"color": "Teal",
-	},
-	{
-		"label": "Weigh Bridge",
-		"type": "DocType",
-		"link_to": "Weigh Bridge Measurement",
-		"icon": "package",
-		"color": "Green",
-	},
+	{"label": "Gate Entry", "type": "DocType", "link_to": "Gate Entry", "icon": "log-in", "color": "Blue"},
 	{
 		"label": "Quality Check",
 		"type": "DocType",
@@ -109,7 +146,16 @@ WORKSPACE_SHORTCUTS = [
 		"color": "Yellow",
 	},
 	{"label": "RST Details", "type": "DocType", "link_to": "RST Details", "icon": "clipboard-list", "color": "Grey"},
+	{
+		"label": "Weigh Bridge",
+		"type": "DocType",
+		"link_to": "Weigh Bridge Measurement",
+		"icon": "package",
+		"color": "Green",
+	},
+	{"label": "Gate Exit", "type": "DocType", "link_to": "Gate Exit", "icon": "log-out", "color": "Blue"},
 	{"label": "GRN Note", "type": "DocType", "link_to": "GRN Note", "icon": "file-check", "color": "Orange"},
+	{"label": "Mandi Book", "type": "Report", "link_to": "Mandi Book", "icon": "book-open", "color": "Purple"},
 	{"label": DC_TRACK_REPORT, "type": "Report", "link_to": DC_TRACK_REPORT, "icon": "check-square", "color": "Purple"},
 	{"label": DC_DETAILS_REPORT, "type": "Report", "link_to": DC_DETAILS_REPORT, "icon": "layout-grid", "color": "Green"},
 	{
@@ -156,15 +202,46 @@ PORTAL_SHORTCUTS = [
 		"icon": "file-text",
 		"color": "Cyan",
 	},
+	# Moved here from the PPAS card; opens the PPAS Details page (PPAS Transit Pass + Manual Entry).
+	{
+		"label": "PPAS Transit Pass",
+		"type": "URL",
+		"url": "/app/" + PPAS_WORKSPACE_SLUG,
+		"link_to": "",
+		"icon": "file-text",
+		"color": "Cyan",
+	},
 ]
+# "Procurement desk" heading with the ivri_od logo: the logo set on the site's ivri_od
+# Desktop Icon, else the app's own image, so no site's logo is kept in this app.
+PROCUREMENT_HEADER_BLOCK = "Procurement Header"
+DEFAULT_IVRI_OD_LOGO = "/assets/ivri_od/images/procurement.svg"
+PROCUREMENT_HEADER_STYLE = """.procurement-header { display: flex; align-items: center; gap: 14px; padding: 6px 0 2px; }
+.procurement-logo { height: 48px; width: 48px; object-fit: contain; flex-shrink: 0; }
+.procurement-text { min-width: 0; }
+.procurement-title { margin: 0; font-size: 26px; line-height: 1.2; font-weight: 700; letter-spacing: -0.01em;
+	color: var(--heading-color, var(--text-color)); }
+.procurement-subtitle { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: var(--text-muted); }
+.procurement-subtitle b { font-weight: 500; color: var(--text-color); }"""
+# Section headings ("Quick shortcuts", "All modules"): clearer than the default header text.
+SECTION_HEADING = '<span style="font-size: 16px; font-weight: 600; color: var(--heading-color, var(--text-color));">{}</span>'
 PORTAL_SECTION = "Government Portals Reports"
+PORTAL_CARD_TITLE = "Portal reports"  # shown title; the block keeps its name PORTAL_SECTION
+LINK_ARROW = (
+	'<svg class="portal-arrow" viewBox="0 0 24 24" aria-hidden="true">'
+	'<path d="M7 17 17 7M7 7h10v10" fill="none" stroke="currentColor" stroke-width="2" '
+	'stroke-linecap="round" stroke-linejoin="round"/></svg>'
+)
 PORTAL_CARD_STYLE = """.portal-card { margin: -7px; padding: 10px 12px; border: 1px solid var(--border-color);
 	border-radius: var(--border-radius-lg); background: var(--card-bg); height: calc(100% + 14px); box-sizing: border-box; }
-.portal-card-title { font-size: var(--text-base); font-weight: 600; color: var(--heading-color, var(--text-color)); }
-.portal-link { display: block; text-decoration: none; font-size: var(--text-sm); color: var(--text-color);
+.portal-card-title { font-size: 14px; line-height: 1.3; font-weight: 500; letter-spacing: 0.015em;
+	color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.portal-link { display: flex; align-items: center; gap: 6px; width: fit-content; text-decoration: none;
+	font-size: 13px; line-height: 1.5; font-weight: 420; color: var(--text-color);
 	padding: 4px; margin-left: -4px; border-radius: var(--border-radius-md); }
 .portal-link:first-of-type { margin-top: 12px; }
-.portal-link:hover { color: var(--invert-neutral); }"""
+.portal-link:hover { background: var(--subtle-fg); }
+.portal-arrow { width: 12px; height: 12px; color: var(--text-muted); flex-shrink: 0; }"""
 PORTAL_CARD_SCRIPT = """root_element.querySelectorAll("a[data-route]").forEach((a) =>
 	a.addEventListener("click", (e) => {
 		e.preventDefault();
@@ -172,12 +249,16 @@ PORTAL_CARD_SCRIPT = """root_element.querySelectorAll("a[data-route]").forEach((
 	})
 );"""
 
+# Two rows of four boxes with about four links each, so no card is mostly empty
+# (row 1: setup and data sources, row 2: mill operations and reports). The
+# "Portal reports" box (PORTAL_SECTION) is placed after "Govt portals".
 WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 	(
 		"Masters",
 		[
 			("Mill Master", "DocType"),
 			("PPC Master", "DocType"),
+			("Depo Master", "DocType"),
 			("District Master", "DocType"),
 			("Agent Master", "DocType"),
 			("Season Master", "DocType"),
@@ -188,19 +269,15 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 	(
 		"Season & targets",
 		[
+			("Season Master", "DocType"),
 			("Target Allocation", "DocType"),
 			("Chhatni Assign", "DocType"),
 			("Daily Planning", "DocType"),
 		],
 	),
-	(
-		"PPAS",
-		[
-			("PPAS Data Extraction", "DocType"),
-			("PPAS Transit Pass Import", "DocType"),
-			("PPAS Transit Pass", "DocType"),
-		],
-	),
+	# No PPAS card: PPAS Transit Pass is under Portal reports (PPAS Details, with Manual Entry
+	# for PPAS Transit Pass Import); PPAS Data Extraction is created from Portal Data
+	# Extraction > Add > PPAS and listed in the sidebar.
 	(
 		"Govt portals",
 		[
@@ -210,23 +287,19 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Gate",
+		"Gate & weighing",
 		[
 			("Gate Entry", "DocType"),
-			("Gate Exit", "DocType"),
-		],
-	),
-	(
-		"Weigh & quality",
-		[
 			("Weigh Bridge Measurement", "DocType"),
 			("Quality Check", "DocType"),
+			("Gate Exit", "DocType"),
 		],
 	),
 	(
 		"Receipt & GRN",
 		[
 			("Entry", "DocType"),
+			("Chhatni", "DocType"),
 			("RST Details", "DocType"),
 			("GRN Note", "DocType"),
 		],
@@ -244,9 +317,15 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Abstract Report", "Report"),
 			("Abstract Physical", "Report"),
 			("TP Mandi Quantity Fulfillment", "Report"),
+			("Rice Dispatch", "Report"),
+		],
+	),
+	(
+		"Registers",
+		[
 			("Mandi Book", "Report"),
-			("Vehicle Gate Movement Summary", "Report"),
 			("Entry Report", "Report"),
+			("Vehicle Gate Movement Summary", "Report"),
 			(DC_TRACK_REPORT, "Report"),
 			(DC_DETAILS_REPORT, "Report"),
 		],
@@ -271,6 +350,7 @@ QUERY_REPORTS = {
 	"Abstract Report",
 	"Abstract Physical",
 	"TP Mandi Quantity Fulfillment",
+	"Rice Dispatch",
 	"Mandi Book",
 	"Vehicle Gate Movement Summary",
 	"Entry Report",
@@ -290,14 +370,13 @@ def build_workspace_content() -> str:
 	blocks: list[dict] = [
 		{
 			"id": _block_id(),
-			"type": "header",
-			"data": {"text": '<span class="h4"><b>Procurement desk</b></span>', "col": 12},
+			"type": "custom_block",
+			"data": {"custom_block_name": PROCUREMENT_HEADER_BLOCK, "col": 12},
 		},
-		{"id": _block_id(), "type": "paragraph", "data": {"text": FLOW_INTRO, "col": 12}},
 		{
 			"id": _block_id(),
 			"type": "header",
-			"data": {"text": '<span class="h4"><b>Quick shortcuts</b></span>', "col": 12},
+			"data": {"text": SECTION_HEADING.format("Quick shortcuts"), "col": 12},
 		},
 	]
 	for row in WORKSPACE_SHORTCUTS:
@@ -313,27 +392,53 @@ def build_workspace_content() -> str:
 		{
 			"id": _block_id(),
 			"type": "header",
-			"data": {"text": '<span class="h4"><b>All modules</b></span>', "col": 12},
+			"data": {"text": SECTION_HEADING.format("All modules"), "col": 12},
 		}
 	)
+	# 7 cards + the Government Portals Reports box = 8 boxes at col 3: two full rows of four
+	# (setup and data sources, then mill operations and reports).
 	for card_name, _items in WORKSPACE_CARDS:
 		blocks.append(
-			{"id": _block_id(), "type": "card", "data": {"card_name": card_name, "col": 4}}
+			{"id": _block_id(), "type": "card", "data": {"card_name": card_name, "col": 3}}
 		)
 		if card_name == "Govt portals":
 			blocks.append(
-				{"id": _block_id(), "type": "custom_block", "data": {"custom_block_name": PORTAL_SECTION, "col": 4}}
+				{"id": _block_id(), "type": "custom_block", "data": {"custom_block_name": PORTAL_SECTION, "col": 3}}
 			)
 	return json.dumps(blocks)
 
 
+def _ensure_procurement_header_block():
+	"""The "Procurement desk" heading with the ivri_od logo beside it."""
+	logo = frappe.db.get_value("Desktop Icon", "ivri_od", "logo_url") or DEFAULT_IVRI_OD_LOGO
+	html = (
+		'<div class="procurement-header">'
+		f'<img class="procurement-logo" src="{escape_html(logo)}" alt="">'
+		'<div class="procurement-text">'
+		'<h1 class="procurement-title">Procurement desk</h1>'
+		f'<p class="procurement-subtitle">{FLOW_INTRO}</p>'
+		"</div></div>"
+	)
+	if frappe.db.exists("Custom HTML Block", PROCUREMENT_HEADER_BLOCK):
+		doc = frappe.get_doc("Custom HTML Block", PROCUREMENT_HEADER_BLOCK)
+	else:
+		doc = frappe.new_doc("Custom HTML Block")
+	doc.update({"html": html, "style": PROCUREMENT_HEADER_STYLE, "script": "", "private": 0})
+	doc.flags.ignore_permissions = True
+	if doc.is_new():
+		doc.insert(set_name=PROCUREMENT_HEADER_BLOCK)
+	else:
+		doc.save()
+
+
 def _ensure_portal_card_block():
-	"""The "Government Portals Reports" box: links to DCRO Details, WINGS Details, RRC Detail from SCMS."""
+	"""The "Government Portals Reports" box: links to DCRO Details, WINGS Details, RRC Detail from SCMS, PPAS Details."""
 	links = "".join(
-		f'<a class="portal-link" href="{row["url"]}" data-route="{row["url"].rsplit("/", 1)[-1]}">{row["label"]}</a>'
+		f'<a class="portal-link" href="{row["url"]}" data-route="{row["url"].rsplit("/", 1)[-1]}">'
+		f'<span>{row["label"]}</span>{LINK_ARROW}</a>'
 		for row in PORTAL_SHORTCUTS
 	)
-	html = f'<div class="portal-card"><div class="portal-card-title">{PORTAL_SECTION}</div>{links}</div>'
+	html = f'<div class="portal-card"><div class="portal-card-title">{PORTAL_CARD_TITLE}</div>{links}</div>'
 	if frappe.db.exists("Custom HTML Block", PORTAL_SECTION):
 		doc = frappe.get_doc("Custom HTML Block", PORTAL_SECTION)
 	else:
@@ -360,6 +465,7 @@ def sync_procurement_desk_ui():
 	apply_rrc_workspace()
 	apply_dcro_workspace()
 	apply_wings_workspace()
+	apply_ppas_workspace()
 	apply_rice_workspace()
 	_import_procurement_sidebar()
 	_cleanup_hidden_workspace_links()
@@ -443,8 +549,10 @@ def apply_procurement_workspace():
 		doc.type = "Workspace"
 
 	_ensure_portal_card_block()
+	_ensure_procurement_header_block()
 	doc.content = build_workspace_content()
 	doc.custom_blocks = []
+	doc.append("custom_blocks", {"custom_block_name": PROCUREMENT_HEADER_BLOCK, "label": PROCUREMENT_HEADER_BLOCK})
 	doc.append("custom_blocks", {"custom_block_name": PORTAL_SECTION, "label": PORTAL_SECTION})
 
 	doc.shortcuts = []
@@ -545,6 +653,43 @@ def apply_wings_workspace():
 	)
 
 
+def apply_ppas_workspace():
+	"""Page "PPAS Details": the PPAS Transit Pass list and a Manual Entry button for PPAS Transit Pass Import."""
+	_apply_portal_workspace(
+		PPAS_WORKSPACE,
+		"file-text",
+		"Transit passes read from the PPAS portal with <b>PPAS Data Extraction</b>.",
+		PPAS_DOCTYPES,
+		"PPAS",
+		PPAS_MANUAL_BLOCK,
+		None,
+		"PPAS",
+		link_type="DocType",
+		block_html=PPAS_MANUAL_BLOCK_HTML,
+		block_script=PPAS_MANUAL_BLOCK_SCRIPT,
+		show_card=False,
+	)
+
+
+def _apply_portal_workspace(
+	title,
+	icon,
+	intro,
+	report_list,
+	card,
+	block,
+	group,
+	portal,
+	link_type="Report",
+	block_html=None,
+	block_script=None,
+	show_card=True,
+):
+	"""A page of portal reports (or DocTypes, with ``link_type``) with a Manual Entry button (none when
+	``block`` is None). A child page of Procurement (not an app of its own), opened from its
+	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers.
+	``show_card=False`` keeps only the shortcuts, for a page whose card would repeat a single shortcut."""
+	reports = [r for r in report_list if frappe.db.exists(link_type, r[0])]
 def apply_rice_workspace():
 	"""Page "Rice Delivered Summary": DC Details (rice due and lots delivered per mill)."""
 	_apply_portal_workspace(
@@ -566,7 +711,7 @@ def _apply_portal_workspace(title, icon, intro, report_list, card, block, group,
 	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers."""
 	reports = [r for r in report_list if frappe.db.exists("Report", r[0])]
 	if block:
-		_ensure_manual_entry_block(block, group, portal)
+		_ensure_manual_entry_block(block, group, portal, block_html, block_script)
 	if frappe.db.exists("Workspace", title):
 		doc = frappe.get_doc("Workspace", title)
 	else:
@@ -597,25 +742,27 @@ def _apply_portal_workspace(title, icon, intro, report_list, card, block, group,
 	if block:
 		blocks.append({"id": _block_id(), "type": "custom_block", "data": {"custom_block_name": block, "col": 12}})
 		doc.append("custom_blocks", {"custom_block_name": block, "label": block})
-	doc.append("links", {"type": "Card Break", "label": card, "link_count": len(reports)})
+	if show_card:
+		doc.append("links", {"type": "Card Break", "label": card, "link_count": len(reports)})
 	for name, report_icon, color in reports:
-		doc.append(
-			"shortcuts",
-			{
-				"label": name,
-				"type": "Report",
-				"link_to": name,
-				"icon": report_icon,
-				"color": color,
-				"report_ref_doctype": "Portal Record",
-			},
-		)
-		doc.append(
-			"links",
-			{"type": "Link", "label": name, "link_type": "Report", "link_to": name, "is_query_report": 1},
-		)
+		shortcut = {"label": name, "type": link_type, "link_to": name, "icon": report_icon, "color": color}
+		if link_type == "Report":
+			shortcut["report_ref_doctype"] = "Portal Record"
+		doc.append("shortcuts", shortcut)
+		if show_card:
+			doc.append(
+				"links",
+				{
+					"type": "Link",
+					"label": name,
+					"link_type": link_type,
+					"link_to": name,
+					"is_query_report": 1 if link_type == "Report" else 0,
+				},
+			)
 		blocks.append({"id": _block_id(), "type": "shortcut", "data": {"shortcut_name": name, "col": 4}})
-	blocks.append({"id": _block_id(), "type": "card", "data": {"card_name": card, "col": 4}})
+	if show_card:
+		blocks.append({"id": _block_id(), "type": "card", "data": {"card_name": card, "col": 4}})
 	doc.content = json.dumps(blocks)
 	doc.flags.ignore_permissions = True
 	doc.flags.ignore_links = True
@@ -623,7 +770,7 @@ def _apply_portal_workspace(title, icon, intro, report_list, card, block, group,
 	frappe.db.commit()
 
 
-def _ensure_manual_entry_block(name, group, portal):
+def _ensure_manual_entry_block(name, group, portal, html=None, script=None):
 	"""Public block (no roles): the server checks who may save manual rows."""
 	if frappe.db.exists("Custom HTML Block", name):
 		doc = frappe.get_doc("Custom HTML Block", name)
@@ -631,9 +778,9 @@ def _ensure_manual_entry_block(name, group, portal):
 		doc = frappe.new_doc("Custom HTML Block")
 	doc.update(
 		{
-			"html": MANUAL_BLOCK_HTML.format(portal=portal),
+			"html": html or MANUAL_BLOCK_HTML.format(portal=portal),
 			"style": MANUAL_BLOCK_STYLE,
-			"script": MANUAL_BLOCK_SCRIPT.format(group=group),
+			"script": script or MANUAL_BLOCK_SCRIPT.format(group=group),
 			"private": 0,
 		}
 	)
@@ -657,7 +804,8 @@ def _workspace_target_exists(link_to: str, link_type: str) -> bool:
 
 def _link_label(link_to: str, link_type: str) -> str:
 	if link_type != "Report":
-		return link_to
+		# Shorter labels where the full DocType name is cut off in a card.
+		return {"Weigh Bridge Measurement": "Weigh Bridge"}.get(link_to, link_to)
 	return {
 		"Procurement Module Overview": "Module Overview",
 		"Season Mapping Receipt Summary": "Season Mapping Receipt",

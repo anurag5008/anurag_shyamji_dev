@@ -125,4 +125,11 @@ ivri_od.patches.v1_0.rename_view_dc_lot_quantity_to_lots
 ivri_od.patches.v1_0.dcro_read_after_search_box
 ivri_od.patches.v1_0.backfill_portal_extraction_mill
 ivri_od.patches.v1_0.view_dc_kms_year
+ivri_od.patches.v1_0.weigh_bridge_list_view_defaults
+ivri_od.patches.v1_0.weigh_bridge_list_view_tp_no
+ivri_od.patches.v1_0.weigh_bridge_list_view_show_tp_no
+ivri_od.patches.v1_0.weigh_bridge_list_view_actual_truck_no
+ivri_od.patches.v1_0.weigh_bridge_list_view_final_columns
+ivri_od.patches.v1_0.weigh_bridge_list_view_quality_columns
+ivri_od.patches.v1_0.rename_rice_dispatch_summary_report
 ivri_od.patches.v1_0.dcro_view_dc_search_box

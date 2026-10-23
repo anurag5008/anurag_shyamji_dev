@@ -22,6 +22,7 @@
   "party_name",
   "local_purchase_order",
   "rst_no",
+  "lot_no",
   "quality_check",
   "column_break_weighment",
   "date",
@@ -75,7 +76,6 @@
    "depends_on": "eval:doc.is_farmer_or_agent",
    "fieldname": "agent_name",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Party Name",
    "mandatory_depends_on": "eval:doc.is_farmer_or_agent && !doc.demo_rst_data",
@@ -92,8 +92,9 @@
    "fieldname": "transit_pass_no",
    "fieldtype": "Data",
    "hidden": 0,
-   "label": "Transit Pass No",
-   "read_only": 1
+   "label": "TP No",
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "depends_on": "eval:!doc.is_farmer_or_agent",
@@ -106,7 +107,6 @@
    "depends_on": "eval:!doc.is_farmer_or_agent",
    "fieldname": "pass_unique_key",
    "fieldtype": "Autocomplete",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Pass Unique Key",
    "mandatory_depends_on": "eval:!doc.is_farmer_or_agent"
@@ -162,9 +162,16 @@
    "label": "RST No"
   },
   {
+   "depends_on": "eval:doc.tp_status=='Rice Dispatch'",
+   "fieldname": "lot_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Lot No",
+   "read_only": 1
+  },
+  {
    "fieldname": "quality_check",
    "fieldtype": "Link",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Quality Check SL NO",
    "options": "Quality Check",
@@ -180,25 +187,26 @@
    "fieldtype": "Datetime",
    "label": "Date & Time",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "tp_status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "TP Status",
-   "options": "\nTP Received\nTP Not Received\nLocal Procurement",
+   "label": "Status",
+   "options": "\nTP Received\nTP Not Received\nLocal Procurement\nRice Dispatch",
    "read_only": 1
   },
   {
    "fieldname": "quality_test",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Quality Test",
    "options": "\nPending QC\nAccepted\nRejected\nPartially Accepted",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "truck_section",
@@ -209,9 +217,9 @@
    "depends_on": "eval:!doc.is_farmer_or_agent",
    "fieldname": "truck_no_in_tp",
    "fieldtype": "Data",
-   "in_list_view": 1,
    "label": "Truck No in TP",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "depends_on": "eval:doc.is_farmer_or_agent",
@@ -236,9 +244,9 @@
    "depends_on": "eval:doc.is_farmer_or_agent || doc.same_truck_as_transit_pass",
    "fieldname": "actual_truck_no",
    "fieldtype": "Autocomplete",
-   "in_list_view": 1,
    "label": "Actual Truck No",
-   "mandatory_depends_on": "eval:doc.is_farmer_or_agent || doc.same_truck_as_transit_pass"
+   "mandatory_depends_on": "eval:doc.is_farmer_or_agent || doc.same_truck_as_transit_pass",
+   "in_list_view": 1
   },
   {
    "fieldname": "load_section",
@@ -254,7 +262,6 @@
   {
    "fieldname": "gunny_type",
    "fieldtype": "Select",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Gunny Type",
    "options": "Gunny Gross\nGunny Cut",
@@ -335,7 +342,6 @@
    "fieldname": "slno_of_qc",
    "fieldtype": "Int",
    "hidden": 1,
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Sl No of QC",
    "non_negative": 1,
@@ -405,9 +411,9 @@
  ],
  "row_format": "Dynamic",
  "search_fields": "pass_unique_key,transit_pass_no,rst_no,tp_status,slno_of_qc,quality_check,truck_no_in_tp,actual_truck_no,vehicle_no,commodity",
- "sort_field": "modified",
+ "sort_field": "date",
  "sort_order": "DESC",
  "states": [],
- "title_field": "pass_unique_key",
+ "title_field": "rst_no",
  "track_changes": 1
 }

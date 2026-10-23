@@ -54,6 +54,21 @@ class GateExit(Document):
 		frappe.db.set_value(
 			"Gate Entry", self.gate_entry_in, "inside_mill", 0, update_modified=False
 		)
+		self._create_grn_notes()
+
+	def _create_grn_notes(self):
+		# GRN is generated when the vehicle leaves the mill, not at tare weight.
+		from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
+			create_grn_notes_after_gate_exit,
+		)
+
+		created = create_grn_notes_after_gate_exit(self.gate_entry_in)
+		if created:
+			frappe.msgprint(
+				_("GRN Note created: {0}").format(", ".join(frappe.bold(name) for name in created)),
+				indicator="green",
+				alert=True,
+			)
 
 	def on_trash(self):
 		if not self.gate_entry_in:

@@ -123,9 +123,9 @@ function set_weighment_flag(frm) {
 	const automatic = ["Paddy", "Rice"].includes(frm.doc.in_purpose);
 	const is_gate_in = frm.doc.in_out === "In";
 	frm.set_df_property("going_to_weighment", "read_only", automatic || !is_gate_in);
-	if (automatic && !frappe.utils.cint(frm.doc.going_to_weighment)) {
+	if (automatic && !cint(frm.doc.going_to_weighment)) {
 		frm.set_value("going_to_weighment", 1);
-	} else if (!is_gate_in && frappe.utils.cint(frm.doc.going_to_weighment)) {
+	} else if (!is_gate_in && cint(frm.doc.going_to_weighment)) {
 		frm.set_value("going_to_weighment", 0);
 	}
 }

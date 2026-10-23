@@ -4,25 +4,8 @@
 const KG_PER_QUINTAL = 100;
 const QTY_MAX_DECIMALS = 3;
 
-frappe.listview_settings["Weigh Bridge Measurement"] = {
-	onload(listview) {
-		listview.page.add_inner_button(__("TP Not Received"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "TP Not Received"],
-			]);
-		});
-		listview.page.add_inner_button(__("TP Received"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "TP Received"],
-			]);
-		});
-	},
-};
-
 function trimQty(val, maxDecimals = QTY_MAX_DECIMALS) {
-	const n = frappe.utils.flt(val, maxDecimals);
+	const n = flt(val, maxDecimals);
 	if (!n) {
 		return 0;
 	}
@@ -31,7 +14,7 @@ function trimQty(val, maxDecimals = QTY_MAX_DECIMALS) {
 
 /** Exact QT value for totals (3 decimals, no integer rounding). */
 function qtyFlt(val) {
-	return frappe.utils.flt(val, QTY_MAX_DECIMALS);
+	return flt(val, QTY_MAX_DECIMALS);
 }
 
 function inject_wbm_form_styles() {
@@ -482,7 +465,7 @@ function apply_bag_details_table(frm, rows) {
 		const child = frm.add_child("bag_weight_details");
 		child.jute_bags = row.jute_bags || 0;
 		child.plastic_bags = row.plastic_bags || 0;
-		child.total_bags = frappe.utils.cint(child.jute_bags) + frappe.utils.cint(child.plastic_bags);
+		child.total_bags = cint(child.jute_bags) + cint(child.plastic_bags);
 		child.weight_per_jute_kg = trimQty(
 			row.weight_per_jute_kg || prev.weight_per_jute_kg || 0
 		);
@@ -515,8 +498,8 @@ function bag_table_needs_qc_sync(frm, qc, bag_details) {
 	}
 	for (let i = 0; i < bag_details.length; i += 1) {
 		if (
-			frappe.utils.cint(rows[i].jute_bags) !== frappe.utils.cint(bag_details[i].jute_bags) ||
-			frappe.utils.cint(rows[i].plastic_bags) !== frappe.utils.cint(bag_details[i].plastic_bags)
+			cint(rows[i].jute_bags) !== cint(bag_details[i].jute_bags) ||
+			cint(rows[i].plastic_bags) !== cint(bag_details[i].plastic_bags)
 		) {
 			return true;
 		}
@@ -568,12 +551,12 @@ function sync_quality_from_qc(frm) {
 			const data = r.message || {};
 			const qc = data.quality_check || "";
 			const test = data.quality_test || "Pending QC";
-			const slno = frappe.utils.cint(data.slno_of_qc);
+			const slno = cint(data.slno_of_qc);
 			const bag_details = data.bag_details || [];
 			const gate_entry = data.gate_entry || "";
 			const prev_qc = frm.doc.quality_check || "";
 			const prev_test = frm.doc.quality_test || "";
-			const prev_slno = frappe.utils.cint(frm.doc.slno_of_qc);
+			const prev_slno = cint(frm.doc.slno_of_qc);
 
 			if (prev_qc !== qc) {
 				frm.doc.quality_check = qc;
@@ -701,11 +684,11 @@ function sum_gunny_from_bag_table(frm) {
 	let total_plastic_qt = 0;
 	(frm.doc.bag_weight_details || []).forEach((row) => {
 		const jute_qt = qtyFlt(
-			(frappe.utils.flt(row.weight_per_jute_kg) * frappe.utils.cint(row.jute_bags)) /
+			(flt(row.weight_per_jute_kg) * cint(row.jute_bags)) /
 				KG_PER_QUINTAL
 		);
 		const plastic_qt = qtyFlt(
-			(frappe.utils.flt(row.weight_per_plastic_kg) * frappe.utils.cint(row.plastic_bags)) /
+			(flt(row.weight_per_plastic_kg) * cint(row.plastic_bags)) /
 				KG_PER_QUINTAL
 		);
 		row.jute_total_qt = trimQty(jute_qt);
@@ -736,7 +719,7 @@ function sum_gunny_from_bag_table(frm) {
 function sync_total_bags_from_bag_table(frm) {
 	let total = 0;
 	(frm.doc.bag_weight_details || []).forEach((row) => {
-		row.total_bags = frappe.utils.cint(row.jute_bags) + frappe.utils.cint(row.plastic_bags);
+		row.total_bags = cint(row.jute_bags) + cint(row.plastic_bags);
 		total += row.total_bags;
 	});
 	frm.set_value("total_bags", total);
@@ -744,8 +727,8 @@ function sync_total_bags_from_bag_table(frm) {
 
 function recalculate_weights(frm, options = {}) {
 	sync_total_bags_from_bag_table(frm);
-	const load_weight = frappe.utils.flt(frm.doc.load_weight);
-	const tare_weight = frappe.utils.flt(frm.doc.tare_weight);
+	const load_weight = flt(frm.doc.load_weight);
+	const tare_weight = flt(frm.doc.tare_weight);
 
 	let gross_weight = 0;
 	if (load_weight && tare_weight) {
@@ -767,8 +750,8 @@ function recalculate_weights(frm, options = {}) {
 		frm.set_value("total_plastic_empty_qt", 0);
 	}
 
-	const gunny_weight = frappe.utils.flt(frm.doc.gunny_weight);
-	const deduction = frappe.utils.flt(frm.doc.deduction);
+	const gunny_weight = flt(frm.doc.gunny_weight);
+	const deduction = flt(frm.doc.deduction);
 
 	// Net paddy = gross − gunny − deduction.
 	const net_weight = qtyFlt(Math.max(gross_weight - gunny_weight - deduction, 0));

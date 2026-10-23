@@ -1,7 +1,30 @@
 // Copyright (c) 2026, Profezzo and contributors
 
+// Frappe v16 points a form's breadcrumb at the sidebar's app (Procurement). When the form was
+// opened from PPAS Details > Manual Entry, point it back at PPAS Details instead.
+const PPAS_DETAILS_WORKSPACE = "PPAS Details";
+const opened_from_ppas_details = new Set();
+
+function set_ppas_details_breadcrumb(frm) {
+	const prev = frappe.get_prev_route();
+	const from_page = prev[0] === "Workspaces" && prev[1] === PPAS_DETAILS_WORKSPACE;
+	// Process Data saves a new import under its real name; keep the link for that document.
+	const from_new_doc =
+		prev[0] === "Form" && prev[1] === frm.doctype && opened_from_ppas_details.has(prev[2]);
+	if (!from_page && !from_new_doc) {
+		return;
+	}
+	opened_from_ppas_details.add(frm.doc.name);
+	frappe.breadcrumbs.add({
+		type: "Custom",
+		label: __(PPAS_DETAILS_WORKSPACE),
+		route: "/desk/" + frappe.router.slug(PPAS_DETAILS_WORKSPACE),
+	});
+}
+
 frappe.ui.form.on("PPAS Transit Pass Import", {
 	refresh(frm) {
+		set_ppas_details_breadcrumb(frm);
 		frm.page.clear_primary_action();
 
 		frm.add_custom_button(__("Process Data"), () => process_ppas_paste_data(frm));

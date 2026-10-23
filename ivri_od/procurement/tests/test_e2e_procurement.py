@@ -4,7 +4,7 @@ Executes the complete procurement lifecycle for site shyamji:
 1. Target Allocation & Chhatni for all 48 PPCs in Kharif 2025.
 2. Entry record for TP 138.
 3. 3-step multi-GRN procurement sequence for TP 138:
-   Gate Entry (In) -> Quality Check -> RST Details / WBM -> GRN Note -> Gate Exit (Out)
+   Gate Entry (In) -> Quality Check -> RST Details / WBM -> Gate Exit (Out) -> GRN Note
    - Trip 1: 120.000 QTL Net, 5.400 QTL Deduction (Chhatni) -> Status: In Progress, Chhatni Not Received
    - Trip 2: 120.000 QTL Net, 5.400 QTL Deduction (Chhatni) -> Status: In Progress, Chhatni Not Received
    - Trip 3: 118.780 QTL Net, 5.345 QTL Deduction (Chhatni) -> Status: TP Completed, Chhatni Received
@@ -238,15 +238,13 @@ def execute_trip(trip_num: int, gross_wt: float, tare_wt: float, gunny_wt: float
 	assert flt(wbm.gunny_weight, 3) == gunny_wt, f"WBM gunny_weight {wbm.gunny_weight} != {gunny_wt}"
 	print(f"  Step 4a: WBM {wbm.name} verified (net_weight={wbm.net_weight}, gunny_weight={wbm.gunny_weight})")
 
-	grn_name = frappe.db.get_value("GRN Note", {"weigh_bridge_measurement": wbm_name}, "name")
-	assert grn_name, f"GRN Note not created for WBM {wbm_name}"
-	grn = frappe.get_doc("GRN Note", grn_name)
-	assert flt(grn.net_weight, 3) == expected_net, f"GRN net_weight {grn.net_weight} != {expected_net}"
-	assert flt(grn.gunny_weight, 3) == gunny_wt, f"GRN gunny_weight {grn.gunny_weight} != {gunny_wt}"
-	assert flt(grn.deduction, 3) == ded_wt, f"GRN deduction {grn.deduction} != {ded_wt}"
-	print(f"  Step 4b: GRN Note {grn.name} verified (net_weight={grn.net_weight}, deduction={grn.deduction})")
+	# GRN is generated after Gate Exit, not at tare weight.
+	assert not frappe.db.exists("GRN Note", {"weigh_bridge_measurement": wbm_name}), (
+		f"GRN Note must not exist before Gate Exit for WBM {wbm_name}"
+	)
+	print("  Step 4b: no GRN Note yet (vehicle still inside the mill)")
 
-	# Step 5: Gate Exit (Out)
+	# Step 5: Gate Exit (Out) -> GRN Note auto-generated
 	gx = frappe.new_doc("Gate Exit")
 	gx.out_purpose = "Others"
 	gx.out_purpose_detail = "Unloading complete"
@@ -256,6 +254,15 @@ def execute_trip(trip_num: int, gross_wt: float, tare_wt: float, gunny_wt: float
 	ge_inside = frappe.db.get_value("Gate Entry", ge.name, "inside_mill")
 	assert ge_inside == 0, f"Gate Entry inside_mill must be 0 after exit, got {ge_inside}"
 	print(f"  Step 5: Gate Exit {gx.name} recorded (Gate In inside_mill updated to 0)")
+
+	grn_name = frappe.db.get_value("GRN Note", {"weigh_bridge_measurement": wbm_name}, "name")
+	assert grn_name, f"GRN Note not created after Gate Exit for WBM {wbm_name}"
+	grn = frappe.get_doc("GRN Note", grn_name)
+	assert flt(grn.net_weight, 3) == expected_net, f"GRN net_weight {grn.net_weight} != {expected_net}"
+	assert flt(grn.gunny_weight, 3) == gunny_wt, f"GRN gunny_weight {grn.gunny_weight} != {gunny_wt}"
+	assert flt(grn.deduction, 3) == ded_wt, f"GRN deduction {grn.deduction} != {ded_wt}"
+	assert grn.gate_exit == gx.name, f"GRN gate_exit {grn.gate_exit} != {gx.name}"
+	print(f"  Step 5b: GRN Note {grn.name} created after exit (net_weight={grn.net_weight}, gate_exit={grn.gate_exit})")
 
 	frappe.db.commit()
 	refresh_tp_fulfillment_for_pass(TP_138_KEY)
@@ -372,7 +379,12 @@ def run_e2e_procurement():
 	assert duduka_ap, "DUDUKA row missing in Abstract Physical"
 	print(f"  Abstract Physical DUDUKA: TP Qty={duduka_ap['tp_quantity']}, Physical={duduka_ap['physical_paddy']}, Entry Qty={duduka_ap['entry_qty']}, Deduction={duduka_ap['chhatni_quantity']}, Chhatni%={duduka_ap['chhatni_pct']}")
 	assert flt(duduka_ap["physical_paddy"], 3) == 666.176, f"Physical paddy must be 666.176, got {duduka_ap['physical_paddy']}"
-	assert flt(duduka_ap["chhatni_quantity"], 3) == flt(7.514 + 16.145, 3), f"Chhatni qty must be 23.659, got {duduka_ap['chhatni_quantity']}"
+	# Chhatni Quantity = cumulative Chhatni (QT) of the saved Chhatni records for this PPC and season.
+	expected_chhatni = flt(
+		sum(flt(q) for q in frappe.get_all("Chhatni", filters={"ppc_name": PPC_CODE, "season": SEASON}, pluck="chhatni_qt")),
+		3,
+	)
+	assert flt(duduka_ap["chhatni_quantity"], 3) == expected_chhatni, f"Chhatni qty must be {expected_chhatni}, got {duduka_ap['chhatni_quantity']}"
 	print("  ✓ Abstract Physical: PASS")
 
 	# Report 3: Entry Report
@@ -400,7 +412,8 @@ def run_e2e_procurement():
 	assert flt(mb_row["pending_qty"], 3) == 0.0
 	assert mb_row["tp_status"] == "TP Completed"
 	assert flt(mb_row["actual_chhatni_pct"], 2) == 0.0
-	assert mb_row["chhatni_status"] == "Chhatni Not Received"
+	# Mandi Book status comes from saved Chhatni records; none exist for this pass yet.
+	assert mb_row["chhatni_status"] == "Chhatni Pending"
 	print("  ✓ Mandi Book: PASS")
 
 	# Report 5: TP Mandi Quantity Fulfillment

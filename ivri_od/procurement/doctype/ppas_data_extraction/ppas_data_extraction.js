@@ -1784,8 +1784,31 @@ async function render_ppas_column_mapping(frm) {
     `);
 }
 
+// Frappe v16 points a form's breadcrumb at the sidebar's app and this DocType's list. When the
+// form was opened from Portal Data Extraction > Add > PPAS, point it back at that list instead.
+const PORTAL_DATA_EXTRACTION = "Portal Data Extraction";
+const opened_from_portal_list = new Set();
+
+function set_portal_list_breadcrumb(frm) {
+    const prev = frappe.get_prev_route();
+    const from_list = prev[0] === "List" && prev[1] === PORTAL_DATA_EXTRACTION;
+    // The first save renames the new document; keep the link for the saved one.
+    const from_new_doc =
+        prev[0] === "Form" && prev[1] === frm.doctype && opened_from_portal_list.has(prev[2]);
+    if (!from_list && !from_new_doc) {
+        return;
+    }
+    opened_from_portal_list.add(frm.doc.name);
+    frappe.breadcrumbs.add({
+        type: "Custom",
+        label: __(PORTAL_DATA_EXTRACTION),
+        route: "/desk/" + frappe.router.slug(PORTAL_DATA_EXTRACTION),
+    });
+}
+
 frappe.ui.form.on("PPAS Data Extraction", {
     refresh(frm) {
+        set_portal_list_breadcrumb(frm);
         render_ppas_column_mapping(frm);
 
         frm.toggle_display(

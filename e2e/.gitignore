@@ -1,0 +1,7 @@
+node_modules/
+# Saved browser login (cookie). Never commit.
+.auth/
+test-results/
+playwright-report/
+# Run evidence holds client TP numbers and PPC names. Never commit.
+evidence/
