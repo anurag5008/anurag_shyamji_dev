@@ -77,13 +77,13 @@ frappe.ui.form.on("Quality Check", {
 });
 
 function is_old_new_bag_row_filled(row) {
-	return frappe.utils.cint(row.old_bags) > 0 || frappe.utils.cint(row.new_bags) > 0;
+	return cint(row.old_bags) > 0 || cint(row.new_bags) > 0;
 }
 
 function is_type_of_pkt_row_filled(row) {
 	return (
-		frappe.utils.cint(row.jute_pkt_no) > 0 ||
-		frappe.utils.cint(row.no_of_plastic_bag) > 0
+		cint(row.jute_pkt_no) > 0 ||
+		cint(row.no_of_plastic_bag) > 0
 	);
 }
 
@@ -185,7 +185,7 @@ function clear_qc_source_mode_fields(frm) {
 }
 
 function sync_qc_decision_from_returns(frm) {
-	const returned = frappe.utils.cint(frm.doc.paddy_returned);
+	const returned = cint(frm.doc.paddy_returned);
 	const decision = returned <= 0 ? "Accepted" : "Partially Accepted";
 	if ((frm.doc.qc_decision || "") !== decision) {
 		frm.set_value("qc_decision", decision);

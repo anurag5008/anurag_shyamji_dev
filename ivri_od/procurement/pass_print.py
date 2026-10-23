@@ -64,43 +64,15 @@ def _join_qr_lines(*parts: str | None) -> str:
 
 
 def qr_content_gate_entry(doc, entry_datetime_display: str, party_name: str | None = None) -> str:
-	"""All main Gate Entry fields as plain text for phone QR scanners."""
-	movement = doc.in_out or "In"
-	lines = [
-		_qr_line("Gate Entry", doc.name),
-		_qr_line("Movement", movement),
+	"""Gate Entry QR text: vehicle, party, driver, mobile and purpose only (short, so it prints and scans easily)."""
+	purpose = doc.out_purpose if (doc.in_out or "In") == "Out" else doc.in_purpose
+	return _join_qr_lines(
 		_qr_line("Vehicle No", doc.vehicle_no),
 		_qr_line("Party Name", party_name),
-		_qr_line("Driver", doc.driver_name),
-		_qr_line("Mobile", doc.mobile_no),
-		_qr_line("Gate In Date & Time", entry_datetime_display),
-	]
-	if movement == "In":
-		lines.extend(
-			[
-				_qr_line("Purpose", doc.in_purpose),
-				_qr_line("Purpose Details", doc.purpose),
-				_qr_line(
-					"Going to Weighment",
-					"Yes" if doc.going_to_weighment else "No",
-				),
-				_qr_line("Inside Mill", "Yes" if doc.inside_mill else "No"),
-			]
-		)
-	else:
-		lines.extend(
-			[
-				_qr_line("Out Purpose", doc.out_purpose),
-				_qr_line("Out Purpose Detail", doc.out_purpose_detail),
-				_qr_line("Gate Entry In", doc.gate_entry_in),
-			]
-		)
-	body = _join_qr_lines(*lines)
-	try:
-		body = f"{body}\n\n{get_url_to_form('Gate Entry', doc.name)}"
-	except Exception:
-		pass
-	return body
+		_qr_line("Driver Name", doc.driver_name),
+		_qr_line("Mobile No", doc.mobile_no),
+		_qr_line("Purpose", purpose),
+	)
 
 
 def qr_content_entry(doc, entry_datetime_display: str) -> str:
@@ -126,55 +98,20 @@ def qr_content_entry(doc, entry_datetime_display: str) -> str:
 
 
 def qr_content_grn_note(doc, receipt_datetime_display: str) -> str:
-	"""Main GRN Note fields as plain text for phone QR scanners."""
-	lines = [
+	"""GRN QR text: only the frequently used details (short, so it prints and scans easily)."""
+	return _join_qr_lines(
 		_qr_line("GRN", (doc.grn_no or doc.name or "").strip() or doc.name),
 		_qr_line("Receipt Date & Time", receipt_datetime_display),
 		_qr_line(
 			"Purchase Type",
 			"Local Paddy Purchase" if doc.is_local_procurement else "Government Paddy Purchase",
 		),
-		_qr_line("Pass Unique Key", doc.pass_unique_key),
-		_qr_line("CMR Season", doc.cmr_season),
-		_qr_line("Chhatni (Kg/Qtl)", doc.chhatni),
 		_qr_line("Transit Pass No", doc.transit_pass_no),
-		_qr_line("TP Quantity (QT)", doc.tp_quantity),
 		_qr_line("PACS", doc.pacs),
-		_qr_line("PPC", doc.ppc),
-		_qr_line("Mill Name", doc.mill_name),
-		_qr_line("RST No", doc.rst_no),
 		_qr_line("Vehicle No", doc.vehicle_no),
-		_qr_line("Driver Name", doc.driver_name),
 		_qr_line("Net Weight", doc.net_weight),
-		_qr_line("Quality Check", doc.quality_check),
-		_qr_line("QC Sample No", doc.qc_sample_no),
-		_qr_line("No of Bags", doc.no_of_bags),
-		_qr_line("Moisture", doc.moisture),
-		_qr_line("Dust", doc.dust),
 		_qr_line("QC Decision", doc.qc_decision),
-		_qr_line("This GRN Received (QT)", doc.received_quantity),
-		_qr_line("Pass Total Received So Far (QT)", doc.tp_cumulative_received),
-		_qr_line("Received (QT) - TP + Chhatni", doc.tp_chhatni_balance),
-		_qr_line("Progressive Deduction Total (QT)", doc.tp_cumulative_deduction),
-		_qr_line("Chhatni % Received", doc.chhatni_received_pct),
-		_qr_line("TP Status", doc.tp_fulfillment_status),
-		_qr_line("Chhatni Status", doc.chhatni_fulfillment_status),
-		_qr_line("Chhatni Note", doc.chhatni_fulfillment_remark),
-	]
-	for row in doc.get("entry_details") or []:
-		entry_line = _join_qr_lines(
-			_qr_line("Entry", row.entry),
-			_qr_line("Qty", row.entry_quantity),
-			_qr_line("Agent", row.agent_name),
-		)
-		if entry_line:
-			lines.append(entry_line)
-	body = _join_qr_lines(*lines)
-	try:
-		body = f"{body}\n\n{get_url_to_form('GRN Note', doc.name)}"
-	except Exception:
-		pass
-	return body
+	)
 
 
 def _qr_encoder_text(data: str) -> str:
@@ -188,7 +125,7 @@ def _qr_encoder_text(data: str) -> str:
 	return text.encode("iso-8859-1", errors="replace").decode("iso-8859-1")
 
 
-def qr_image_html(data: str, size: int = 168) -> str:
+def qr_image_html(data: str, size: int = 168, module_px: int | None = None) -> str:
 	"""PNG embedded as base64 — scans reliably from PDF (SVG often breaks in wkhtmltopdf)."""
 	from pyqrcode import create as qrcreate
 
@@ -196,7 +133,11 @@ def qr_image_html(data: str, size: int = 168) -> str:
 	stream = BytesIO()
 	# High correction when payload is longer (full details)
 	error_level = "H" if len(data) > 200 else "M"
-	qrcreate(data, error=error_level).png(
+	qr = qrcreate(data, error=error_level)
+	if module_px:
+		# whole pixels per module keeps edges sharp on low-quality printers
+		size = (len(qr.code) + 8) * module_px
+	qr.png(
 		stream,
 		scale=8,
 		module_color=[0, 0, 0],

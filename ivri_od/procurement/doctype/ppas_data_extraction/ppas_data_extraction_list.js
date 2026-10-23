@@ -2,16 +2,9 @@
 
 const PPAS_NEW_GROUP = __("Add");
 
-const PPAS_NEW_OPTIONS = [
-	{
-		label: __("New PPAS Data Extraction System"),
-		doctype: "PPAS Data Extraction",
-	},
-	{
-		label: __("PPAS Transit Pass Import (Manual)"),
-		doctype: "PPAS Transit Pass Import",
-	},
-];
+// "New PPAS Data Extraction System" moved to Portal Data Extraction > Add > PPAS.
+// "PPAS Transit Pass Import (Manual)" moved to the PPAS Details page > Manual Entry.
+const PPAS_NEW_OPTIONS = [];
 
 function setup_ppas_extraction_new_menu(page) {
 	page.clear_primary_action();
@@ -28,7 +21,9 @@ function setup_ppas_extraction_new_menu(page) {
 		page.add_inner_button(label, () => frappe.new_doc(doctype), PPAS_NEW_GROUP);
 	});
 
-	page.set_inner_btn_group_as_primary(PPAS_NEW_GROUP);
+	if (PPAS_NEW_OPTIONS.length) {
+		page.set_inner_btn_group_as_primary(PPAS_NEW_GROUP);
+	}
 }
 
 frappe.listview_settings["PPAS Data Extraction"] = {

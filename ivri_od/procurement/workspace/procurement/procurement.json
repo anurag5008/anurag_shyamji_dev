@@ -23,7 +23,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Masters",
-   "link_count": 5,
+   "link_count": 6,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -44,6 +44,16 @@
    "label": "PPC Master",
    "link_count": 0,
    "link_to": "PPC Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Depo Master",
+   "link_count": 0,
+   "link_to": "Depo Master",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -296,7 +306,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Reports",
-   "link_count": 8,
+   "link_count": 9,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -337,6 +347,16 @@
    "label": "TP Mandi Fulfillment",
    "link_count": 0,
    "link_to": "TP Mandi Quantity Fulfillment",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Rice Dispatch",
+   "link_count": 0,
+   "link_to": "Rice Dispatch",
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"

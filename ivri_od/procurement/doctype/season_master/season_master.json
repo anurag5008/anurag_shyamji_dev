@@ -9,16 +9,21 @@
  "field_order": [
   "crop_season",
   "year",
-  "season_name"
+  "season_name",
+  "column_break_dates",
+  "season_code",
+  "start_date",
+  "end_date"
  ],
  "fields": [
   {
    "fieldname": "crop_season",
    "fieldtype": "Select",
    "in_list_view": 1,
-   "label": "Crop Season",
+   "label": "Season Type",
    "options": "\nRabi\nKharif",
-   "reqd": 1
+   "reqd": 1,
+   "read_only_depends_on": "eval:!doc.__islocal"
   },
   {
    "fieldname": "year",
@@ -26,7 +31,9 @@
    "in_list_view": 1,
    "label": "Year",
    "length": 4,
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1,
+   "description": "Taken from Start Date."
   },
   {
    "fieldname": "season_name",
@@ -34,12 +41,37 @@
    "label": "Season Name",
    "read_only": 1,
    "reqd": 0
+  },
+  {
+   "fieldname": "column_break_dates",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Season Type + Year, e.g. Rabi 2026 -> R26. Used in the RST Unique Key.",
+   "fieldname": "season_code",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Season Code",
+   "read_only": 1
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date",
+   "mandatory_depends_on": "eval:doc.__islocal"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-18 09:25:29.859617",
+ "modified": "2026-10-22 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Season Master",

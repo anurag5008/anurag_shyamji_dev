@@ -3,11 +3,6 @@
 
 frappe.ui.form.on("Local Paddy Purchase Order", {
 	refresh(frm) {
-		if (frm.is_new()) {
-			frm.set_intro(__("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."), "red");
-			frm.disable_save();
-			return;
-		}
 		if (!frm.is_new()) {
 			frm.add_custom_button(__("Refresh Quantities"), () => {
 				frappe.call({

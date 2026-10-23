@@ -88,7 +88,6 @@ class GRNNote(Document):
 		self._ensure_grn_no()
 		self._normalize_fields()
 		self._sync_local_procurement_flags()
-		self._validate_not_local_procurement()
 		self._validate_farmer_or_agent_agent()
 		if cint(self.is_local_procurement):
 			self._validate_and_sync_rst()
@@ -104,23 +103,6 @@ class GRNNote(Document):
 			self._sync_chhatni_from_season_mapping()
 		self._sync_tp_fulfillment_status()
 		self._set_purchase_heading()
-
-	def _validate_not_local_procurement(self):
-		before = self.get_doc_before_save()
-		is_existing_local = before and (
-			cint(getattr(before, "is_local_procurement", 0))
-			or bool((getattr(before, "local_purchase_order", None) or "").strip())
-		)
-		is_local = (
-			cint(self.is_local_procurement)
-			or bool((self.local_purchase_order or "").strip())
-			or is_local_procurement_wbm((self.weigh_bridge_measurement or "").strip())
-		)
-		if is_local and not is_existing_local:
-			frappe.throw(
-				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
-				title=_("Local Procurement Disabled"),
-			)
 
 	def _validate_duplicate_grn(self):
 		"""Prevent duplicate GRN Note creation for the same completed procurement transaction."""

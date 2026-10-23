@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-10-22 16:30:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "naming_series",
+  "tp_section",
+  "season",
+  "ppc_name",
+  "tp_no",
+  "column_break_tp",
+  "tp_quantity",
+  "pass_unique_key",
+  "transit_pass_no",
+  "pacs_name",
+  "chhatni_section",
+  "chhatni_kg_per_qtl",
+  "column_break_chhatni",
+  "net_weight",
+  "chhatni_kg",
+  "chhatni_qt",
+  "received_chhatni_pct"
+ ],
+ "fields": [
+  {
+   "default": "CH-.YYYY.-.#####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "CH-.YYYY.-.#####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tp_section",
+   "fieldtype": "Section Break",
+   "label": "Transit Pass"
+  },
+  {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "ppc_name",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "PPC",
+   "options": "PPC Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tp_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP No",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_tp",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "tp_quantity",
+   "fieldtype": "Float",
+   "label": "TP Quantity",
+   "non_negative": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "TP (Pass Unique Key)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "transit_pass_no",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Transit Pass No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "pacs_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "PACS Name",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "chhatni_section",
+   "fieldtype": "Section Break",
+   "label": "Chhatni"
+  },
+  {
+   "description": "Applicable chhatni rate in Kg per Quintal.",
+   "fieldname": "chhatni_kg_per_qtl",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Chhatni (Kg per Qtl)",
+   "non_negative": 1,
+   "precision": "3",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_chhatni",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Total Net Weight of all Weigh Bridge Measurements for this TP (Pass Unique Key).",
+   "fieldname": "net_weight",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Net Weight (QT)",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "description": "Net Weight (QT) × Chhatni (Kg per Qtl).",
+   "fieldname": "chhatni_kg",
+   "fieldtype": "Float",
+   "label": "Chhatni (KG)",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "description": "Chhatni (KG) ÷ 100.",
+   "fieldname": "chhatni_qt",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Chhatni (QT)",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "description": "Chhatni (QT) ÷ TP Quantity × 100.",
+   "fieldname": "received_chhatni_pct",
+   "fieldtype": "Percent",
+   "label": "Received Chhatni %",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-10-22 18:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Chhatni",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "pass_unique_key,pacs_name,transit_pass_no,tp_no,ppc_name,season",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "pass_unique_key",
+ "track_changes": 1
+}

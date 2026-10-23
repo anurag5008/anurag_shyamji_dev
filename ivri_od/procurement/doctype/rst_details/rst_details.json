@@ -14,6 +14,8 @@
   "commodity",
   "tp_no",
   "tp_status",
+  "season_code",
+  "rst_unique_key",
   "column_break_rst",
   "entry_datetime",
   "entry_date",
@@ -28,7 +30,12 @@
   "gross_paddy_weight_qt",
   "deduction_qt",
   "gunny_weight_qt",
-  "net_paddy_weight_qt"
+  "net_paddy_weight_qt",
+  "tp_quantity",
+  "chhatni_kg_per_qtl",
+  "chhatni_kg",
+  "chhatni_qt",
+  "received_chhatni_pct"
  ],
  "fields": [
   {
@@ -115,11 +122,10 @@
    "label": "TP No"
   },
   {
-   "default": "TP Pending Agent",
    "fieldname": "tp_status",
    "fieldtype": "Data",
    "in_list_view": 1,
-   "label": "TP Status",
+   "label": "Status",
    "read_only": 1
   },
   {
@@ -143,7 +149,7 @@
    "read_only": 1
   },
   {
-   "depends_on": "eval:doc.tp_status == 'Local Procurement' || !doc.tp_no",
+   "depends_on": "eval:doc.tp_status == 'Local Procurement' || doc.tp_status == 'Local Paddy Purchase' || !doc.tp_no",
    "fieldname": "local_purchase_order",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -170,11 +176,78 @@
    "fieldtype": "Datetime",
    "in_list_view": 1,
    "label": "Date & Time"
+  },
+  {
+   "description": "Pass Unique Key of the Transit Pass for this TP No and PPC, in the season of the RST Date & Time.",
+   "fieldname": "rst_unique_key",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "RST Unique Key",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "From the Season Master whose Start Date - End Date covers the RST Date & Time.",
+   "fieldname": "season_code",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Season Code",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Quantity of the matched Transit Pass (TP Received only).",
+   "fieldname": "tp_quantity",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "TP Quantity",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "description": "For future RST-based Chhatni entry. The Chhatni DocType is the active workflow.",
+   "fieldname": "chhatni_kg_per_qtl",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Chhatni (Kg per Qtl)",
+   "non_negative": 1,
+   "precision": "3"
+  },
+  {
+   "description": "Net Paddy Weight (QT) × Chhatni (Kg per Qtl).",
+   "fieldname": "chhatni_kg",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Chhatni (KG)",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "description": "Chhatni (KG) ÷ 100.",
+   "fieldname": "chhatni_qt",
+   "fieldtype": "Float",
+   "hidden": 1,
+   "label": "Chhatni (QT)",
+   "no_copy": 1,
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "description": "Chhatni (QT) ÷ TP Quantity × 100.",
+   "fieldname": "received_chhatni_pct",
+   "fieldtype": "Percent",
+   "hidden": 1,
+   "label": "Received Chhatni %",
+   "no_copy": 1,
+   "precision": "2",
+   "read_only": 1
   }
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-29 14:00:00.000000",
+ "modified": "2026-10-22 18:30:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "RST Details",

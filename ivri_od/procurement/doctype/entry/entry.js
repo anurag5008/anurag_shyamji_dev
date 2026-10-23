@@ -59,7 +59,7 @@ function try_resolve_pass_from_ppc_tp(frm) {
 
 function update_total_amount(frm) {
 	const total =
-		frappe.utils.flt(frm.doc.entry_quantity) *
-		frappe.utils.flt(frm.doc.entry_price_per_quintal);
+		flt(frm.doc.entry_quantity) *
+		flt(frm.doc.entry_price_per_quintal);
 	frm.set_value("total_amount", total);
 }

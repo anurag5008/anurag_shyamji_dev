@@ -5,28 +5,33 @@
 	<title>{{ doc.grn_no or doc.name }} — GRN</title>
 	<style>
 		@page { size: A4 portrait; margin: 6mm 8mm; }
+		{% if for_pdf %}/* The PDF engine draws pages smaller than the browser does; zoom brings it to the same size so both print identically */
+		html { zoom: 1.22; }{% endif %}
 		* { box-sizing: border-box; margin: 0; padding: 0; }
 		body {
 			font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, Roboto, "Helvetica Neue", Helvetica, Arial, sans-serif;
-			font-size: 7.8pt;
-			line-height: 1.35;
+			font-size: 8.8pt;
+			line-height: 1.3;
 			color: #0f172a;
 			background: #fff;
 		}
+		/* One-page A4: the frame is a table whose middle row stretches, so the page is filled with no empty gap */
 		.pass {
 			width: 100%;
 			max-width: 194mm;
+			height: 281mm;
 			margin: 0 auto;
+			border-collapse: collapse;
 			border: 1.5px solid #64748b;
-			border-radius: 3px;
 			background: #fff;
-			overflow: hidden;
 		}
+		.pass > tbody > tr > td { padding: 0; vertical-align: top; }
+		.pass .r-body { height: 100%; }
 
 		/* ── Header ── */
 		.top-band {
 			background: #ffffff;
-			border-bottom: 2px solid #1e3a8a;
+			border-bottom: 2px solid #0b4f4a;
 			padding: 8px 12px;
 		}
 		.top-band-table { width: 100%; border-collapse: collapse; }
@@ -34,23 +39,23 @@
 		.top-band-table .logo-cell { width: 1%; padding-right: 14px; }
 		.print-logo {
 			display: block;
-			max-height: 48px !important;
-			max-width: 115px !important;
+			max-height: 52px !important;
+			max-width: 125px !important;
 			height: auto;
 			width: auto;
 		}
 		.top-band .company {
-			font-size: 13pt;
+			font-size: 15pt;
 			font-weight: 800;
 			color: #0f172a;
 			letter-spacing: -0.01em;
 			line-height: 1.2;
 		}
 		.top-band .pass-type {
-			font-size: 8pt;
+			font-size: 9pt;
 			text-transform: uppercase;
 			letter-spacing: 0.1em;
-			color: #1e40af;
+			color: #0b4f4a;
 			font-weight: 700;
 			margin-top: 3px;
 		}
@@ -62,26 +67,26 @@
 			padding: 3px;
 			display: inline-block;
 		}
-		.top-band .qr-mini .qr-image { width: 68px !important; height: 68px !important; display: block; }
+		.top-band .qr-mini .qr-image { width: 84px !important; height: 84px !important; display: block; }
 
 		/* ── Document strip ── */
 		.doc-strip {
 			display: table;
 			width: 100%;
 			background: #f1f5f9;
-			border-bottom: 1px solid #94a3b8;
+			border-bottom: 1.5px solid #0b4f4a;
 			padding: 6px 12px;
 		}
 		.doc-strip .doc-id {
 			display: table-cell;
 			vertical-align: middle;
-			font-size: 11.5pt;
+			font-size: 12.5pt;
 			font-weight: 800;
 			color: #0f172a;
 			letter-spacing: 0.02em;
 		}
 		.doc-strip .doc-id span.lbl {
-			font-size: 7.5pt;
+			font-size: 8pt;
 			font-weight: 700;
 			color: #475569;
 			text-transform: uppercase;
@@ -92,21 +97,21 @@
 			display: table-cell;
 			vertical-align: middle;
 			text-align: right;
-			font-size: 8pt;
+			font-size: 9pt;
 			color: #334155;
 			font-weight: 600;
 		}
 		.badge {
 			display: inline-block;
-			padding: 2.5px 8px;
+			padding: 3px 8px;
 			border-radius: 3px;
-			font-size: 7.2pt;
+			font-size: 8pt;
 			font-weight: 700;
 			text-transform: uppercase;
 			letter-spacing: 0.04em;
-			background: #e2e8f0;
-			color: #0f172a;
-			border: 1px solid #94a3b8;
+			background: #fff;
+			color: #0b4f4a;
+			border: 1.5px solid #0b4f4a;
 			margin-left: 8px;
 		}
 
@@ -118,66 +123,66 @@
 		.body-grid > tbody > tr > td {
 			vertical-align: top;
 			width: 50%;
-			padding: 6px 10px;
+			padding: 8px 10px;
 		}
 		.body-grid > tbody > tr > td:first-child {
 			border-right: 1px solid #cbd5e1;
 		}
 		.section-box {
-			margin-bottom: 7px;
+			margin-bottom: 8px;
+			border: 1px solid #64748b;
+			border-radius: 2px;
 		}
 		.section-box:last-child {
 			margin-bottom: 0;
 		}
 		.section-title {
-			font-size: 7.2pt;
+			font-size: 8.5pt;
 			font-weight: 800;
 			text-transform: uppercase;
 			letter-spacing: 0.08em;
-			color: #0f172a;
+			color: #0b4f4a;
 			background: #f1f5f9;
-			padding: 3.5px 8px;
-			border-left: 3.5px solid #1e40af;
-			border-bottom: 1px solid #cbd5e1;
-			border-top: 1px solid #e2e8f0;
-			border-right: 1px solid #e2e8f0;
-			border-radius: 2px;
-			margin-bottom: 3px;
+			padding: 4px 8px;
+			border-bottom: 2px solid #0b4f4a;
+			margin-bottom: 2px;
 		}
 		.kv {
 			width: 100%;
 			border-collapse: collapse;
 		}
 		.kv td {
-			padding: 3.2px 3px;
+			padding: 3.6px 3px;
 			vertical-align: top;
-			border-bottom: 1px dotted #cbd5e1;
+			border-bottom: 1px dotted #94a3b8;
+			padding-left: 8px;
 		}
 		.kv tr:last-child td { border-bottom: none; }
 		.kv .k {
-			width: 46%;
-			font-size: 7.2pt;
+			width: 42%;
+			font-size: 8.3pt;
 			color: #334155;
 			font-weight: 600;
 			padding-right: 5px;
 		}
 		.kv .v {
-			font-size: 7.8pt;
+			font-size: 9.2pt;
 			font-weight: 600;
 			color: #0f172a;
-		}
-		.kv tr.highlight-row {
-			background: #f0fdf4;
-			border: 1px solid #86efac;
+			word-wrap: break-word;
+			overflow-wrap: anywhere;
+			font-variant-numeric: tabular-nums;
 		}
 		.kv tr.highlight-row td {
-			padding: 4px 3px;
-			border-bottom: none;
+			background: #f0fdf4;
+			padding: 4.5px 3px 4.5px 8px;
+			border-top: 2px solid #0b4f4a;
+			border-bottom: 2px solid #0b4f4a;
 		}
 		.kv .v.highlight-val {
 			font-weight: 800;
-			color: #166534;
-			font-size: 8.5pt;
+			color: #0b4f4a;
+			font-size: 10.5pt;
 		}
 
 		/* ── Entry detail table ── */
@@ -185,21 +190,25 @@
 			width: 100%;
 			border-collapse: collapse;
 			margin-top: 3px;
-			font-size: 7.5pt;
+			font-size: 8.5pt;
 		}
 		.entry-table th {
 			text-align: left;
-			font-size: 6.8pt;
+			font-size: 7.8pt;
 			text-transform: uppercase;
 			color: #1e293b;
-			padding: 3.5px 6px;
+			padding: 4px 6px;
 			border: 1px solid #94a3b8;
+			border-bottom: 2px solid #0b4f4a;
 			background: #f1f5f9;
 			font-weight: 700;
 			letter-spacing: 0.03em;
 		}
+		.entry-table { table-layout: fixed; }
 		.entry-table td {
-			padding: 3.5px 6px;
+			word-wrap: break-word;
+			overflow-wrap: anywhere;
+			padding: 4px 6px;
 			border: 1px solid #cbd5e1;
 			color: #0f172a;
 		}
@@ -216,14 +225,14 @@
 		.signatures-strip {
 			width: 100%;
 			border-collapse: collapse;
-			margin-top: 8px;
+			margin-top: 0;
 			border-top: 1px solid #cbd5e1;
 			background: #fafafa;
 		}
 		.signatures-strip td {
 			vertical-align: bottom;
-			padding: 44px 14px 8px;
-			font-size: 7.2pt;
+			padding: 40px 14px 8px;
+			font-size: 8pt;
 			color: #334155;
 		}
 		.signatures-strip td.sig-cell {
@@ -242,7 +251,7 @@
 		/* ── Footer ── */
 		.footer {
 			padding: 4px 12px;
-			font-size: 6.8pt;
+			font-size: 7.5pt;
 			color: #475569;
 			background: #f8fafc;
 			border-top: 1px solid #cbd5e1;
@@ -268,9 +277,61 @@
 			border-radius: 4px;
 			font-weight: 600;
 		}
+		.entry-wrap { padding: 0 10px 8px; }
+		.entry-wrap .section-box { margin-bottom: 0; }
+		.tier-many .entry-wrap { padding-bottom: 4px; }
+		/* No entry rows: use the freed space by giving every section more room */
+		.tier-roomy { font-size: 9.6pt; }
+		.tier-roomy .top-band { padding: 12px 16px; }
+		.tier-roomy .print-logo { max-height: 62px !important; max-width: 150px !important; }
+		.tier-roomy .top-band .company { font-size: 17pt; }
+		.tier-roomy .top-band .qr-mini .qr-image { width: 100px !important; height: 100px !important; }
+		.tier-roomy .doc-strip { padding: 9px 16px; }
+		.tier-roomy .doc-strip .doc-id { font-size: 14pt; }
+		.tier-roomy .doc-strip .meta { font-size: 10pt; }
+		.tier-roomy .body-grid > tbody > tr > td { padding: 9px 12px; }
+		.tier-roomy .section-box { margin-bottom: 10px; }
+		.tier-roomy .section-title { font-size: 9.5pt; padding: 5px 10px; }
+		.tier-roomy .kv td { padding: 5px 4px 5px 10px; }
+		.tier-roomy .kv .k { font-size: 8.8pt; }
+		.tier-roomy .kv .v { font-size: 10pt; }
+		.tier-roomy .kv tr.highlight-row td { padding: 7px 4px 7px 10px; }
+		.tier-roomy .kv .v.highlight-val { font-size: 12.5pt; }
+		.tier-roomy .signatures-strip td { padding: 40px 18px 10px; }
+		.tier-roomy .footer { padding: 6px 16px; font-size: 8pt; }
+		/* A few entry rows: slightly more generous than the tight layout */
+		.tier-few .kv td { padding: 3.8px 3px 3.8px 8px; }
+		.tier-few .section-box { margin-bottom: 9px; }
+		.tier-few .signatures-strip td { padding: 30px 14px 8px; }
+		/* Many entry rows: tighten spacing so the page still ends on one A4 sheet */
+		.tier-many .kv td { padding: 2.2px 3px 2.2px 8px; }
+		.tier-many .kv tr.highlight-row td { padding: 3px 3px; }
+		.tier-many .section-box { margin-bottom: 4px; }
+		.tier-many .section-title { padding: 2.5px 8px; }
+		.tier-many .body-grid > tbody > tr > td { padding: 5px 10px; }
+		.tier-many .entry-table td, .tier-many .entry-table th { padding: 2.5px 6px; }
+		.tier-many .signatures-strip td { padding: 18px 14px 6px; }
+		.tier-many .top-band { padding: 6px 12px; }
+		/* Very many entry rows: smallest readable type so every row still fits on the page */
+		.tier-xl .kv td { padding: 1.5px 3px 1.5px 8px; }
+		.tier-xl .kv .k { font-size: 7.6pt; }
+		.tier-xl .kv .v { font-size: 8.2pt; }
+		.tier-xl .kv tr.highlight-row td { padding: 2px 3px 2px 8px; }
+		.tier-xl .kv .v.highlight-val { font-size: 9pt; }
+		.tier-xl .section-box { margin-bottom: 3px; }
+		.tier-xl .section-title { font-size: 7.6pt; padding: 2px 8px; }
+		.tier-xl .body-grid > tbody > tr > td { padding: 4px 8px; }
+		.tier-xl .entry-table, .tier-xl .entry-table th { font-size: 7.4pt; }
+		.tier-xl .entry-table td, .tier-xl .entry-table th { padding: 1.5px 5px; }
+		.tier-xl .signatures-strip td { padding: 10px 14px 4px; }
+		.tier-xl .top-band { padding: 4px 12px; }
+		.tier-xl .print-logo { max-height: 40px !important; }
+		.tier-xl .top-band .qr-mini .qr-image { width: 68px !important; height: 68px !important; }
+		.tier-xl .doc-strip { padding: 3px 12px; }
 		@media print {
 			body { padding: 0; background: #fff; }
 			.pass { border: 1.5px solid #64748b; max-width: none; }
+			.r-foot { vertical-align: bottom !important; }
 			.actions { display: none !important; }
 			.top-band, .doc-strip, .section-title, .kv tr.highlight-row,
 			.entry-table th, .signatures-strip, .footer, .badge {
@@ -281,7 +342,9 @@
 	</style>
 </head>
 <body>
-	<div class="pass">
+	{% set entry_count = (doc.entry_details | length) if doc.entry_details else 0 %}
+	<table class="pass {{ "tier-roomy" if entry_count == 0 else ("tier-xl" if entry_count > 8 else ("tier-many" if entry_count > 3 else "tier-few")) }}" cellpadding="0" cellspacing="0"><tbody>
+	<tr><td class="r-head">
 		<!-- ═══ Header: Logo + Company + GRN title + QR ═══ -->
 		<div class="top-band">
 			<table class="top-band-table" cellpadding="0" cellspacing="0">
@@ -313,6 +376,8 @@
 			</div>
 		</div>
 
+	</td></tr>
+	<tr><td class="r-body">
 		<!-- ═══ Two-column body ═══ -->
 		<table class="body-grid" cellpadding="0" cellspacing="0">
 			<tr>
@@ -331,7 +396,6 @@
 							<tr><td class="k">{{ _("PACS") }}</td><td class="v">{{ doc.pacs or "—" }}</td></tr>
 							<tr><td class="k">{{ _("Mill Name") }}</td><td class="v">{{ doc.mill_name or "—" }}</td></tr>
 							<tr><td class="k">{{ _("CMR Season") }}</td><td class="v">{{ doc.cmr_season or "—" }}</td></tr>
-							<tr><td class="k">{{ _("Chhatni (Kg per Quintal)") }}</td><td class="v">{{ doc.chhatni or "—" }}{% if doc.chhatni %} Kg/Qtl{% endif %}</td></tr>
 						</table>
 					</div>
 
@@ -415,17 +479,18 @@
 
 		<!-- ═══ Entry Details table (conditional) ═══ -->
 		{% if doc.entry_details %}
-		<div style="padding: 3px 10px 5px;">
+		<div class="entry-wrap">
+			<div class="section-box">
 			<div class="section-title">{{ _("Entry Details (for this TP)") }}</div>
 			<table class="entry-table">
 				<thead>
 					<tr>
-						<th>{{ _("Entry No") }}</th>
-						<th>{{ _("Agent Name") }}</th>
-						<th>{{ _("PACS Name") }}</th>
-						<th style="text-align: right;">{{ _("Qty (QT)") }}</th>
-						<th style="text-align: right;">{{ _("Rate (₹/Qtl)") }}</th>
-						<th style="text-align: right;">{{ _("Total Amount (₹)") }}</th>
+						<th style="width: 16%;">{{ _("Entry No") }}</th>
+						<th style="width: 20%;">{{ _("Agent Name") }}</th>
+						<th style="width: 28%;">{{ _("PACS Name") }}</th>
+						<th style="width: 10%; text-align: right;">{{ _("Qty (QT)") }}</th>
+						<th style="width: 12%; text-align: right;">{{ _("Rate (₹/Qtl)") }}</th>
+						<th style="width: 14%; text-align: right;">{{ _("Total Amount (₹)") }}</th>
 					</tr>
 				</thead>
 				<tbody>
@@ -454,9 +519,12 @@
 				</tfoot>
 				{% endif %}
 			</table>
+			</div>
 		</div>
 		{% endif %}
 
+	</td></tr>
+	<tr><td class="r-foot">
 		<!-- ═══ Signatures ═══ -->
 		<table class="signatures-strip" cellpadding="0" cellspacing="0">
 			<tr>
@@ -472,7 +540,8 @@
 			<div class="left">{{ _("Document generated on") }} {{ printed_on }}</div>
 			<div class="right">{{ _("Scan QR for verified GRN details") }} · {{ doc.grn_no or doc.name }}</div>
 		</div>
-	</div>
+	</td></tr>
+	</tbody></table>
 
 	{% if not for_pdf %}
 	<div class="actions">

@@ -12,14 +12,10 @@ from frappe.utils import cint, flt
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.ppc_pass_metrics import ppc_display_name
 from ivri_od.procurement.grn_tp_fulfillment import (
-	CHHATNI_NOT_RECEIVED,
-	CHHATNI_RECEIVED,
-	EXTRA_CHHATNI_RECEIVED,
-	evaluate_chhatni_fulfillment,
-	excess_tp_received_quantity,
+	actual_chhatni_status,
+	excess_after_chhatni_qt,
 	grn_received_quantity,
 	pending_tp_quantity,
-	received_chhatni_pct,
 	remaining_tp_quantity,
 	required_chhatni_qt,
 	tp_chhatni_balance_qt,
@@ -195,6 +191,7 @@ def get_data(filters):
 	wbm_by_name = _weigh_bridges_for(grns)
 	bags_by_wbm = _bags_by_wbm(list(wbm_by_name))
 	entries_by_pass = _entries_for(list(grouped))
+	chhatni_by_pass = _chhatni_for(list(grouped))
 	ppc_filter = _ppc_filter_values(filters.get("ppc_name"))
 	season_filter = (filters.get("season") or "").strip()
 	mill_filter = (filters.get("mill_name") or "").strip()
@@ -224,10 +221,14 @@ def get_data(filters):
 		tp_status = tp_fulfillment_status(tp_qty, total_received)
 		tp_complete = tp_status == "TP Completed"
 		pending_qty = pending_tp_quantity(tp_qty, total_received)
-		excess_qty = excess_tp_received_quantity(tp_qty, total_received)
 		required_chhatni = required_chhatni_qt(tp_qty, chhatni_assigned)
-		actual_chhatni_pct = received_chhatni_pct(total_received, tp_qty)
-		chhatni_status = _chhatni_status(docs, tp_qty, total_received, chhatni_assigned, total_deduction)
+		# Actual chhatni from saved Chhatni records of this pass (Pass Unique Key = TP + PPC + season).
+		chhatni = chhatni_by_pass.get(key) or {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0}
+		actual_chhatni_qt = chhatni["chhatni_qt"]
+		excess_qty = excess_after_chhatni_qt(tp_qty, total_received, actual_chhatni_qt)
+		# Received Chhatni % as saved on the Chhatni record (Chhatni QT ÷ TP Quantity × 100).
+		received_pct = chhatni["received_chhatni_pct"]
+		chhatni_status = actual_chhatni_status(tp_qty, received_pct, chhatni_assigned)
 		balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
 		extra = excess_qty
 
@@ -237,10 +238,7 @@ def get_data(filters):
 		mill_label, mill_code = _mill_label(key, sample.mill_name, mill_companies)
 		if mill_filter and mill_filter not in (mill_code, (sample.mill_name or "").strip()):
 			continue
-		if chhatni_status in (CHHATNI_RECEIVED, EXTRA_CHHATNI_RECEIVED, "Over Filled Chhatni Received"):
-			chhatni_received_qty = required_chhatni
-		else:
-			chhatni_received_qty = 0
+		chhatni_received_qty = actual_chhatni_qt
 		gunny_types = []
 		for line in rst_lines:
 			if line["gunny_type"] and line["gunny_type"] not in gunny_types:
@@ -278,7 +276,7 @@ def get_data(filters):
 			"total_bags": sum(line["total_bags"] for line in rst_lines),
 			"chhatni_assigned": chhatni_assigned,
 			"required_chhatni": required_chhatni,
-			"actual_chhatni_pct": actual_chhatni_pct,
+			"actual_chhatni_pct": received_pct,
 			"chhatni_status": chhatni_status,
 			"received_minus_tp_chhatni": balance,
 			"extra_after_tp": extra,
@@ -567,6 +565,30 @@ def _rst_lines(docs, wbm_by_name: dict, bags_by_wbm: dict) -> list[dict]:
 	return lines
 
 
+def _chhatni_for(pass_keys: list[str]) -> dict[str, dict]:
+	"""Actual Chhatni QT and Received Chhatni % per pass from saved Chhatni records (one per pass).
+
+	Records of one pass share its TP Quantity, so their Received % add up like their QT.
+	"""
+	if not pass_keys:
+		return {}
+	rows = frappe.get_all(
+		"Chhatni",
+		filters={"pass_unique_key": ["in", pass_keys]},
+		fields=["name", "pass_unique_key", "chhatni_qt", "received_chhatni_pct"],
+	)
+	totals: dict[str, dict] = defaultdict(lambda: {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0})
+	seen: set[str] = set()
+	for row in rows:
+		if row.name in seen:
+			continue
+		seen.add(row.name)
+		bucket = totals[(row.pass_unique_key or "").strip()]
+		bucket["chhatni_qt"] = flt(bucket["chhatni_qt"] + flt(row.chhatni_qt), 3)
+		bucket["received_chhatni_pct"] = flt(bucket["received_chhatni_pct"] + flt(row.received_chhatni_pct), 2)
+	return totals
+
+
 def _assigned_chhatni(docs) -> float:
 	for doc in docs:
 		if (doc.tp_fulfillment_status or "").strip() == "TP Completed" and flt(doc.chhatni) > 0:
@@ -576,11 +598,6 @@ def _assigned_chhatni(docs) -> float:
 
 def _tp_is_complete(docs, tp_qty: float, total_received: float) -> bool:
 	return flt(tp_qty) > 0 and flt(total_received) >= flt(tp_qty)
-
-
-def _chhatni_status(docs, tp_qty: float, total_received: float, chhatni_assigned: float, total_deduction: float) -> str:
-	status, _remark = evaluate_chhatni_fulfillment(tp_qty, total_received, chhatni_assigned, total_deduction)
-	return status or CHHATNI_NOT_RECEIVED
 
 
 def _tp_no(docs) -> str:

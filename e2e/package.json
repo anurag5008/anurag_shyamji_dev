@@ -1,0 +1,17 @@
+{
+	"name": "ivri-od-e2e",
+	"private": true,
+	"description": "Browser end-to-end tests for the ivri_od Procurement app (Playwright).",
+	"scripts": {
+		"test": "playwright test --project=safe",
+		"test:headless": "E2E_HEADLESS=1 playwright test --project=safe",
+		"test:workflow": "playwright test --project=workflow",
+		"test:windows": "powershell.exe -NoProfile -ExecutionPolicy Bypass -File \"$(wslpath -w run-windows.ps1)\" --project=safe",
+		"report:windows": "powershell.exe -NoProfile -Command \"Start-Process (Join-Path '$(wslpath -w playwright-report)' 'index.html')\"",
+		"login": "rm -f .auth/user.json && playwright test --project=setup",
+		"report": "playwright show-report playwright-report"
+	},
+	"devDependencies": {
+		"@playwright/test": "1.64.0"
+	}
+}

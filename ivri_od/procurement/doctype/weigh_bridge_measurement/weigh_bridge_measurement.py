@@ -22,6 +22,7 @@ from ivri_od.procurement.mill_gate import (
 	get_qc_sl_no,
 	get_quality_check_for_vehicle_open_visit,
 	get_weighment_vehicles_inside_mill,
+	is_gate_in_inside_mill,
 	normalize_vehicle_no,
 )
 
@@ -216,6 +217,7 @@ def is_farmer_or_agent_source(doc) -> bool:
 TP_STATUS_RECEIVED = "TP Received"
 TP_STATUS_NOT_RECEIVED = "TP Not Received"
 TP_STATUS_LOCAL = "Local Procurement"
+TP_STATUS_RICE_DISPATCH = "Rice Dispatch"
 
 
 def compute_wbm_tp_status(doc) -> str:
@@ -228,6 +230,8 @@ def compute_wbm_tp_status(doc) -> str:
 	rst_link = (getattr(doc, "demo_rst_data", None) or "").strip()
 	if rst_link and frappe.db.exists("RST Details", rst_link):
 		rst = frappe.get_doc("RST Details", rst_link)
+		if (rst.tp_status or "") == TP_STATUS_RICE_DISPATCH:
+			return TP_STATUS_RICE_DISPATCH
 		if is_private_procurement_rst(rst):
 			return TP_STATUS_LOCAL
 		if party_found_awaiting_tp(rst):
@@ -263,7 +267,8 @@ class WeighBridgeMeasurement(Document):
 		self._schedule_procurement_rollup_sync()
 
 	def _schedule_procurement_rollup_sync(self):
-		if is_farmer_or_agent_source(self):
+		# Rice Dispatch has no Transit Pass, so it never feeds Transit Pass totals.
+		if is_farmer_or_agent_source(self) or (self.tp_status or "") == TP_STATUS_RICE_DISPATCH:
 			return
 		key = (self.pass_unique_key or "").strip()
 		if not key:
@@ -289,7 +294,7 @@ class WeighBridgeMeasurement(Document):
 
 	def validate(self):
 		ensure_doc_datetime(self, "date", default_now=True)
-		self._validate_not_local_procurement()
+		self._sync_and_validate_weighment()
 		self._sync_weighment_datetime()
 		self._apply_rst_private_procurement_mode()
 		self._sync_rst_no_from_rst_details()
@@ -301,17 +306,7 @@ class WeighBridgeMeasurement(Document):
 		self._normalize_truck_numbers()
 		self._sync_actual_truck()
 
-	def _validate_not_local_procurement(self):
-		before = self.get_doc_before_save()
-		is_existing_local = before and (
-			cint(getattr(before, "is_farmer_or_agent", 0))
-			or bool((getattr(before, "local_purchase_order", None) or "").strip())
-		)
-		if (cint(self.is_farmer_or_agent) or (self.local_purchase_order or "").strip()) and not is_existing_local:
-			frappe.throw(
-				_("Local Paddy Purchase is disabled. Only Government Paddy Purchase is currently supported."),
-				title=_("Local Procurement Disabled"),
-			)
+	def _sync_and_validate_weighment(self):
 		self._sync_gate_entry_link()
 		self._sync_quality_check_link()
 		self._sync_bag_details_from_qc()
@@ -364,6 +359,9 @@ class WeighBridgeMeasurement(Document):
 		if not rst_link or not frappe.db.exists("RST Details", rst_link):
 			return
 		rst = frappe.get_doc("RST Details", rst_link)
+		if (rst.tp_status or "") == TP_STATUS_RICE_DISPATCH:
+			self._apply_rst_rice_dispatch_mode(rst)
+			return
 		if not is_private_procurement_rst(rst):
 			return
 		self.is_farmer_or_agent = 1
@@ -389,6 +387,22 @@ class WeighBridgeMeasurement(Document):
 			agent = get_rst_agent_name(demo_rst_data=rst_link, rst_no=self.rst_no)
 			if agent:
 				self.agent_name = agent
+
+	def _apply_rst_rice_dispatch_mode(self, rst):
+		"""Rice Dispatch: no Transit Pass, no agent. RST TP No is kept here as the Lot No / reference."""
+		self.is_farmer_or_agent = 0
+		self.pass_unique_key = ""
+		self.transit_pass_no = ""
+		self.tp_weight = 0
+		self.truck_no_in_tp = ""
+		self.pacs_name = ""
+		self.vehicle_no = ""
+		self.agent_name = ""
+		self.party_name = (rst.party_name or "").strip()
+		self.lot_no = rst.tp_no or ""
+		rst_vehicle = normalize_vehicle_no(rst.vehicle_no)
+		self.actual_truck_no = rst_vehicle
+		self.same_truck_as_transit_pass = 1 if rst_vehicle else 0
 
 	def _sync_agent_name_from_rst_details(self):
 		if not is_farmer_or_agent_source(self):
@@ -1089,6 +1103,13 @@ def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 	return data
 
 
+def is_rice_dispatch_wbm(wbm_name: str) -> bool:
+	"""Rice Dispatch weighment: never turned into a GRN Note and not part of Transit Pass totals."""
+	if not wbm_name:
+		return False
+	return frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "tp_status") == TP_STATUS_RICE_DISPATCH
+
+
 def is_local_procurement_wbm(wbm_name: str) -> bool:
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		return False
@@ -1101,8 +1122,87 @@ def is_local_procurement_wbm(wbm_name: str) -> bool:
 	return bool(cint(row.is_farmer_or_agent)) and not (row.pass_unique_key or "").strip()
 
 
+def wbm_gate_entry_in(wbm_name: str) -> str:
+	"""Gate In of the visit this weighment belongs to.
+
+	Its Gate Entry link, else (older WBMs saved without one) the same vehicle's latest Gate In
+	before the weighment.
+	"""
+	row = frappe.db.get_value(
+		"Weigh Bridge Measurement",
+		wbm_name,
+		["gate_entry", "actual_truck_no", "truck_no_in_tp", "vehicle_no", "same_truck_as_transit_pass", "creation"],
+		as_dict=True,
+	)
+	if not row:
+		return ""
+	gate_entry = (row.gate_entry or "").strip()
+	if gate_entry:
+		if frappe.db.get_value("Gate Entry", gate_entry, "in_out") == "Out":
+			return (frappe.db.get_value("Gate Entry", gate_entry, "gate_entry_in") or "").strip()
+		return gate_entry
+	for vehicle in _qc_lookup_vehicle_candidates(row):
+		found = frappe.db.sql(
+			"""
+			SELECT name FROM `tabGate Entry`
+			WHERE in_out = 'In' AND UPPER(TRIM(vehicle_no)) = %s AND creation <= %s
+			ORDER BY creation DESC
+			LIMIT 1
+			""",
+			(vehicle, row.creation),
+		)
+		if found:
+			return found[0][0]
+	return ""
+
+
+def wbm_vehicle_has_exited(wbm_name: str) -> bool:
+	"""True when the visit of this weighment has a Gate Exit (vehicle has left the mill)."""
+	gate_in = wbm_gate_entry_in(wbm_name)
+	if not gate_in or frappe.db.get_value("Gate Entry", gate_in, "in_out") != "In":
+		return False
+	return not is_gate_in_inside_mill(gate_in)
+
+
+def create_grn_notes_after_gate_exit(gate_entry_in: str) -> list[str]:
+	"""Create GRN Notes for the weighments of this visit; called when the vehicle exits.
+
+	Returns the GRN Notes created now (existing ones are only synced).
+	"""
+	gate_entry_in = (gate_entry_in or "").strip()
+	gate_in = frappe.db.get_value("Gate Entry", gate_entry_in, ["vehicle_no", "creation"], as_dict=True)
+	if not gate_in:
+		return []
+
+	names = frappe.get_all("Weigh Bridge Measurement", filters={"gate_entry": gate_entry_in}, pluck="name")
+	vehicle = normalize_vehicle_no(gate_in.vehicle_no)
+	if vehicle:
+		# WBMs saved without a gate link: same vehicle, weighed after this Gate In.
+		unlinked = frappe.get_all(
+			"Weigh Bridge Measurement",
+			filters={"gate_entry": ["in", ["", None]], "creation": [">=", gate_in.creation]},
+			fields=["name", "actual_truck_no", "truck_no_in_tp", "vehicle_no", "same_truck_as_transit_pass"],
+		)
+		names += [row.name for row in unlinked if vehicle in _qc_lookup_vehicle_candidates(row)]
+
+	created = []
+	for name in dict.fromkeys(names):
+		if wbm_gate_entry_in(name) != gate_entry_in:
+			continue  # belongs to a later visit of the same vehicle
+		grn_filters = {"weigh_bridge_measurement": name, "docstatus": ["<", 2]}
+		existed = frappe.db.exists("GRN Note", grn_filters)
+		_ensure_grn_note_for_weigh_bridge(name)
+		grn_name = frappe.db.get_value("GRN Note", grn_filters, "name")
+		if grn_name and not existed:
+			created.append(grn_name)
+	return created
+
+
 def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
-	"""Create or update GRN Note when the WBM is eligible (RST-linked or manual entry)."""
+	"""Create or update GRN Note when the WBM is eligible (RST-linked or manual entry).
+
+	A new GRN Note is created only after the vehicle's Gate Exit; an existing one keeps syncing.
+	"""
 	from ivri_od.procurement.doctype.grn_note.grn_note import (
 		build_auto_grn_doc_dict,
 		sync_grn_from_weigh_bridge,
@@ -1111,7 +1211,7 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		return
 
-	if is_local_procurement_wbm(wbm_name):
+	if is_local_procurement_wbm(wbm_name) or is_rice_dispatch_wbm(wbm_name):
 		return
 
 	if frappe.db.exists(
@@ -1119,6 +1219,10 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
 	):
 		sync_grn_from_weigh_bridge(wbm_name)
+		return
+
+	# GRN is generated when the vehicle leaves, not at tare weight: Gate Exit calls this again.
+	if not wbm_vehicle_has_exited(wbm_name):
 		return
 
 	payload = build_auto_grn_doc_dict(wbm_name)
@@ -1153,6 +1257,8 @@ def grn_pending_reasons_for_wbm(wbm_name: str) -> list[str]:
 		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
 	):
 		return []
+	if is_rice_dispatch_wbm(wbm_name):
+		return [_("Rice Dispatch is not linked to a GRN Note.")]
 
 	wbm = frappe.db.get_value(
 		"Weigh Bridge Measurement",
@@ -1172,6 +1278,8 @@ def grn_pending_reasons_for_wbm(wbm_name: str) -> list[str]:
 			reasons.append(_("Select Pass Unique Key."))
 		if not (wbm.rst_no or "").strip():
 			reasons.append(_("Enter RST No."))
+		if not wbm_vehicle_has_exited(wbm_name):
+			reasons.append(_("Vehicle has not exited yet. The GRN is created after Gate Exit."))
 	return reasons
 
 
