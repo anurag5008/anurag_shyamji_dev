@@ -29,6 +29,7 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("view_dc_from_dcro", "view_dc_from_dcro.json"),
 	("dc_transit_challan_from_dcro", "dc_transit_challan_from_dcro.json"),
 	("dc_track", "dc_track.json"),
+	("dc_details", "dc_details.json"),
 	("tec_report_from_wings", "tec_report_from_wings.json"),
 	("stack_status_from_wings", "stack_status_from_wings.json"),
 	("booking_delivery_status_from_wings", "booking_delivery_status_from_wings.json"),

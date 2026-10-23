@@ -101,6 +101,30 @@
    "type": "Link"
   },
   {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "settings",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Rice Delivery Setup",
+   "show_arrow": 0,
+   "type": "Link",
+   "link_to": "Rice Delivery Setup",
+   "link_type": "DocType"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "package",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Rice Lot Quantity",
+   "show_arrow": 0,
+   "type": "Link",
+   "link_to": "Rice Lot Quantity",
+   "link_type": "DocType"
+  },
+  {
    "child": 0,
    "collapsible": 0,
    "icon": "",
@@ -295,6 +319,30 @@
    "type": "Link"
   },
   {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "layout-grid",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Rice Delivered Summary",
+   "show_arrow": 0,
+   "type": "Link",
+   "link_type": "URL",
+   "url": "/app/rice-delivered-summary"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "layout-grid",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "DC Details",
+   "show_arrow": 0,
+   "type": "Link",
+   "link_type": "URL",
+   "url": "/app/query-report/DC%20Details"
+  },
+  {
    "child": 0,
    "collapsible": 0,
    "icon": "",
@@ -313,6 +361,28 @@
    "label": "WINGS Details",
    "link_type": "URL",
    "url": "/app/wings-details",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 0,
+   "icon": "",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Verification",
+   "show_arrow": 0,
+   "type": "Section Break"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "clipboard-check",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Miller Verification Report",
+   "link_to": "Miller Verification Report",
+   "link_type": "DocType",
    "show_arrow": 0,
    "type": "Link"
   },

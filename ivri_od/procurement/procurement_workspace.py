@@ -59,6 +59,14 @@ DCRO_REPORTS: list[tuple[str, str, str]] = [
 # SCMS Lot Search). Built from DCRO and SCMS together, so it sits on the Procurement page.
 DC_TRACK_REPORT = "DC Track"
 
+# Rice due and delivered per mill for a season (DC Details): its own page under Procurement.
+RICE_WORKSPACE = "Rice Delivered Summary"
+RICE_WORKSPACE_SLUG = "rice-delivered-summary"
+DC_DETAILS_REPORT = "DC Details"
+RICE_REPORTS: list[tuple[str, str, str]] = [
+	(DC_DETAILS_REPORT, "layout-grid", "Green"),
+]
+
 # FCI depot data: one page lists every report built from WINGS (fciarms.in) portal data.
 WINGS_WORKSPACE = "WINGS Details"
 WINGS_WORKSPACE_SLUG = "wings-details"
@@ -103,6 +111,14 @@ WORKSPACE_SHORTCUTS = [
 	{"label": "RST Details", "type": "DocType", "link_to": "RST Details", "icon": "clipboard-list", "color": "Grey"},
 	{"label": "GRN Note", "type": "DocType", "link_to": "GRN Note", "icon": "file-check", "color": "Orange"},
 	{"label": DC_TRACK_REPORT, "type": "Report", "link_to": DC_TRACK_REPORT, "icon": "check-square", "color": "Purple"},
+	{"label": DC_DETAILS_REPORT, "type": "Report", "link_to": DC_DETAILS_REPORT, "icon": "layout-grid", "color": "Green"},
+	{
+		"label": "Miller Verification",
+		"type": "DocType",
+		"link_to": "Miller Verification Report",
+		"icon": "clipboard-check",
+		"color": "Orange",
+	},
 	{
 		"label": "Module Overview",
 		"type": "Report",
@@ -165,6 +181,8 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("District Master", "DocType"),
 			("Agent Master", "DocType"),
 			("Season Master", "DocType"),
+			("Rice Delivery Setup", "DocType"),
+			("Rice Lot Quantity", "DocType"),
 		],
 	),
 	(
@@ -214,6 +232,12 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
+		"Verification",
+		[
+			("Miller Verification Report", "DocType"),
+		],
+	),
+	(
 		"Reports",
 		[
 			("Procurement Module Overview", "Report"),
@@ -224,6 +248,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Vehicle Gate Movement Summary", "Report"),
 			("Entry Report", "Report"),
 			(DC_TRACK_REPORT, "Report"),
+			(DC_DETAILS_REPORT, "Report"),
 		],
 	),
 ]
@@ -253,6 +278,7 @@ QUERY_REPORTS = {
 	*(name for name, _icon, _color in RRC_REPORTS),
 	*(name for name, _icon, _color in DCRO_REPORTS),
 	*(name for name, _icon, _color in WINGS_REPORTS),
+	*(name for name, _icon, _color in RICE_REPORTS),
 }
 
 
@@ -334,6 +360,7 @@ def sync_procurement_desk_ui():
 	apply_rrc_workspace()
 	apply_dcro_workspace()
 	apply_wings_workspace()
+	apply_rice_workspace()
 	_import_procurement_sidebar()
 	_cleanup_hidden_workspace_links()
 	frappe.clear_cache()
@@ -515,6 +542,21 @@ def apply_wings_workspace():
 		WINGS_MANUAL_BLOCK,
 		"wings",
 		"WINGS",
+	)
+
+
+def apply_rice_workspace():
+	"""Page "Rice Delivered Summary": DC Details (rice due and lots delivered per mill)."""
+	_apply_portal_workspace(
+		RICE_WORKSPACE,
+		"layout-grid",
+		"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. "
+		"Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.",
+		RICE_REPORTS,
+		"Rice delivery reports",
+		None,
+		None,
+		None,
 	)
 
 

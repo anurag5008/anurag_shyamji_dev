@@ -1,0 +1,93 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "field:rice_type",
+ "creation": "2026-10-22 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "rice_type",
+  "cmr_percentage",
+  "column_break_1",
+  "driage_percentage"
+ ],
+ "fields": [
+  {
+   "fieldname": "rice_type",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Rice Type",
+   "options": "\nBoiled\nRaw",
+   "reqd": 1,
+   "unique": 1,
+   "bold": 1,
+   "description": "Mills are matched by the Type in Mill Master (BOILED / RAW)."
+  },
+  {
+   "fieldname": "cmr_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Rice Percentage for FCI (CMR %)",
+   "reqd": 1,
+   "non_negative": 1,
+   "description": "Rice due from 100 Qtl paddy after driage. CMR Due = Paddy After Driage x this % / 100."
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.rice_type=='Raw'",
+   "mandatory_depends_on": "eval:doc.rice_type=='Raw'",
+   "fieldname": "driage_percentage",
+   "fieldtype": "Percent",
+   "in_list_view": 1,
+   "label": "Driage Percentage",
+   "non_negative": 1,
+   "description": "Raw mills only. Driage = Paddy Received x this % / 100."
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-10-22 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Rice Delivery Setup",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "quick_entry": 0,
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
