@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"92a081f1f2\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"31900898fa\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"86cffb6a0d\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"5b9a1daaed\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"820aa91fc5\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"fe50c74135\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Manual PPAS Import\", \"col\": 3}}, {\"id\": \"8693282c52\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"13ff350455\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"e94148bdfb\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"3b9e3559a9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"cacc17de65\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Track\", \"col\": 3}}, {\"id\": \"f94db05b4c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"cbb01b484d\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"aa84492b8a\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"2903383121\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"093ff96a7f\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"5d3d830ca2\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"ff7ac755de\", \"type\": \"card\", \"data\": {\"card_name\": \"Govt portals\", \"col\": 4}}, {\"id\": \"51b2384b32\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Government Portals Reports\", \"col\": 4}}, {\"id\": \"58ba03c0b9\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"f7ab386516\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"98beda6d12\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"606fe54efc\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"597ded813a\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Procurement desk</b></span>\", \"col\": 12}}, {\"id\": \"dd5d9b0052\", \"type\": \"paragraph\", \"data\": {\"text\": \"Typical flow: <b>Masters</b> \\u2192 <b>Season / targets</b> \\u2192 <b>PPAS</b> \\u2192 <b>Gate</b> \\u2192 <b>Weigh &amp; QC</b> \\u2192 <b>Entry / RST / GRN</b>.\", \"col\": 12}}, {\"id\": \"e08ceb6dd0\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Quick shortcuts</b></span>\", \"col\": 12}}, {\"id\": \"56b3c5d990\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"04a358a06e\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 3}}, {\"id\": \"240f0380d9\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Manual PPAS Import\", \"col\": 3}}, {\"id\": \"75768c5898\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"ba49a3adf7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"9046dbf8e7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"9ac3b10c3b\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"3ec11aa821\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Track\", \"col\": 3}}, {\"id\": \"2ec1bfa2d4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Details\", \"col\": 3}}, {\"id\": \"21e24f4da6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Miller Verification\", \"col\": 3}}, {\"id\": \"67d487fe5c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"3732cc04f7\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"fb641e2955\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>All modules</b></span>\", \"col\": 12}}, {\"id\": \"03a077f24c\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 4}}, {\"id\": \"b401a9b14a\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 4}}, {\"id\": \"e39f79ca35\", \"type\": \"card\", \"data\": {\"card_name\": \"PPAS\", \"col\": 4}}, {\"id\": \"5f1d65ca63\", \"type\": \"card\", \"data\": {\"card_name\": \"Govt portals\", \"col\": 4}}, {\"id\": \"820602a159\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Government Portals Reports\", \"col\": 4}}, {\"id\": \"2cb9293eeb\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate\", \"col\": 4}}, {\"id\": \"96b9f5c617\", \"type\": \"card\", \"data\": {\"card_name\": \"Weigh & quality\", \"col\": 4}}, {\"id\": \"2f427de986\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 4}}, {\"id\": \"68e02810bf\", \"type\": \"card\", \"data\": {\"card_name\": \"Verification\", \"col\": 4}}, {\"id\": \"c0d07d37db\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}]",
  "creation": "2026-10-01 12:04:12.928182",
  "custom_blocks": [
   {
@@ -23,7 +23,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Masters",
-   "link_count": 5,
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -74,6 +74,26 @@
    "label": "Season Master",
    "link_count": 0,
    "link_to": "Season Master",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rice Delivery Setup",
+   "link_count": 0,
+   "link_to": "Rice Delivery Setup",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Rice Lot Quantity",
+   "link_count": 0,
+   "link_to": "Rice Lot Quantity",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -295,8 +315,27 @@
   {
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Verification",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Miller Verification Report",
+   "link_count": 0,
+   "link_to": "Miller Verification Report",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Reports",
-   "link_count": 8,
+   "link_count": 9,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -380,9 +419,19 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Details",
+   "link_count": 0,
+   "link_to": "DC Details",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
   }
  ],
- "modified": "2026-10-21 11:53:39.510722",
+ "modified": "2026-10-22 17:28:00.350388",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",
@@ -464,6 +513,25 @@
    "link_to": "DC Track",
    "report_ref_doctype": "Portal Record",
    "type": "Report",
+   "url": ""
+  },
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "icon": "layout-grid",
+   "label": "DC Details",
+   "link_to": "DC Details",
+   "report_ref_doctype": "Portal Record",
+   "type": "Report",
+   "url": ""
+  },
+  {
+   "color": "Orange",
+   "doc_view": "List",
+   "icon": "clipboard-check",
+   "label": "Miller Verification",
+   "link_to": "Miller Verification Report",
+   "type": "DocType",
    "url": ""
   },
   {

@@ -174,6 +174,7 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertEqual(pick_receipt_link(links, "", "AC Note Doc")["ref"], "b")
         self.assertEqual(document_steps("Details > Print, AC Note Doc"), [("Details", "Print"), ("AC Note Doc", "")])
         self.assertEqual(document_labels("Details > Print, AC Note Doc"), ["Details", "AC Note Doc"])
+        self.assertEqual(document_steps("Details > printIcon, AC Note Doc"), [("Details", "printIcon"), ("AC Note Doc", "")])
         self.assertEqual(document_steps("Print"), [("Print", "")])
         # SCMS Transit Challan: the agent picks the eye icon, then Print.
         self.assertEqual(document_steps("> Print"), [("", "Print")])
@@ -195,6 +196,31 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertTrue(page_matches_row(tokens, own))
         self.assertFalse(page_matches_row(tokens, other))
         self.assertTrue(page_matches_row([], other))
+
+    def test_lot_search_acceptance_note_shows_depot_split(self):
+        # SCMS Lot Search row; its Acceptance Note (Miller copy) shows the depot as
+        # "Depot Code DG051601" and "Name of the RRC RMC,Kantabanji".
+        row = {
+            "Sl#": "22", "KMS Year": "2025-2026", "Receipt Date": "20/08/2026", "Depot": "DG051601-RMC,Kantabanji",
+            "Variety": "Paraboiled Normal", "DC No.": "DCR051065", "Lot No.": "13", "No.of Bag": "580",
+            "Qty(In Qtl.)": "289.84000", "Challan Status": "Accepted", "Print": "",
+        }
+        tokens = row_tokens(row)
+        self.assertEqual(sorted(tokens), sorted(["dg051601-rmc,kantabanji", "dcr051065"]))
+        own = "1. Acceptance Note No. DG051601 / 0210 / 2025-2026 3. Name of the RRC RMC,Kantabanji 4. Depot Code DG051601 9. DC No. DCR051065 10. Lot Number 13"
+        other = "3. Name of the RRC RMC,Kantabanji 4. Depot Code DG051601 9. DC No. DCR050784 10. Lot Number 14"
+        self.assertTrue(page_matches_row(tokens, own))
+        self.assertFalse(page_matches_row(tokens, other))
+
+    def test_lot_search_acceptance_note_without_rmc_word(self):
+        # The real Miller copy shows "Name of the RRC Malmunda": no "RMC" on the page.
+        tokens = row_tokens({"Depot": "DW051105-RMC,Malmunda", "DC No.": "DCR050483", "Lot No.": "1"})
+        own = "1. Acceptance Note No. DW051105 / 0142 / 2025-2026 3. Name of the RRC Malmunda 4. Depot Code DW051105 9. DC No. DCR050483 10. Lot Number 1"
+        other = "3. Name of the RRC Malmunda 4. Depot Code DW051105 9. DC No. DCR051276 10. Lot Number 4"
+        self.assertTrue(page_matches_row(tokens, own))
+        self.assertFalse(page_matches_row(tokens, other))
+        # The depot code itself must be on the page; the names alone are not enough.
+        self.assertFalse(page_matches_row(tokens, "Name of the RRC Malmunda DC No. DCR050483"))
 
     def test_wings_tec_report(self):
         # The "Delivered" column holds a button whose label is the quantity.

@@ -145,7 +145,10 @@ doctype_js = {"Report": "public/js/procurement_report_redirect.js"}
 # Hook on document methods and events
 
 # Portal sites and their sections (SCMS, DCRO, WINGS) used by Portal Data Extraction.
-fixtures = [{"dt": "Portal Site"}]
+fixtures = [
+	{"dt": "Portal Site"},
+	{"dt": "Print Format", "filters": [["name", "in", ["Annexure-1 Verification Report"]]]},
+]
 
 doc_events = {
 	"DocType": {
