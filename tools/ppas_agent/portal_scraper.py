@@ -44,6 +44,17 @@ POLL_SECONDS = 1.5
 PAGE_WAIT_SECONDS = 30
 RESULT_WAIT_SECONDS = 45
 RECEIPT_WAIT_SECONDS = 25
+# List pages (in the page address, lower case) whose row links (e.g. Details) are opened in a
+# new tab, like Ctrl+click: the list stays as it is (no Back), so the row's next button
+# (AC Note Doc) is still there. DCRO DC Transit Challan: its list is loaded by AJAX and
+# does not come back after Back.
+NEW_TAB_DOCUMENT_PAGES = ("dctransitchalanview",)
+# Sites whose documents are saved with Chrome's print setting Margins: None (the SCMS
+# Acceptance Note of Lot Search and the Transit Pass of Transit Challan RRC).
+NO_MARGIN_SITES = ("scms",)
+# List pages (in the page address, lower case) whose row documents are printed with no
+# margins although the rest of the site keeps them: DCRO DC Transit Challan (its Details).
+NO_MARGIN_PAGES = ("dctransitchalanview",)
 DETAIL_WAIT_SECONDS = 15
 MAX_PAGES = 300
 MAX_RECEIPT_BYTES = 10 * 1024 * 1024
@@ -551,10 +562,13 @@ JS_PAGE_TEXT = "return (document.body && (document.body.innerText || document.bo
 
 # Clicks the visible button whose label, title, tooltip or id contains
 # arguments[0] (letters and digits, lower case), e.g. the "Print" icon of the
-# DCRO Transit Challan page. An exact label or tooltip ("Print") wins over a
-# partial one ("Print Report").
+# DCRO Transit Challan page. An element whose id is exactly arguments[1] wins
+# (SCMS Acceptance Note: id="printer"), then an exact label or tooltip ("Print"),
+# then a partial one ("Print Report").
 JS_CLICK_PRINT = r"""
 var key = arguments[0];
+var byId = arguments[1] ? document.getElementById(arguments[1]) : null;
+if (byId && byId.getClientRects().length && !byId.disabled) { byId.click(); return true; }
 function k(s) { return (s || '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
 var els = document.querySelectorAll('a, button, input[type=button], input[type=submit], input[type=image], [onclick]');
 var exact = null, part = null;
@@ -570,6 +584,27 @@ var target = exact || part;
 if (!target) { return false; }
 target.click();
 return true;
+"""
+
+# Before a row's button is clicked on a NEW_TAB_DOCUMENT_PAGES list: the result table's real
+# links (an address, not a script) open in a new tab, like Ctrl+click. Buttons that run a
+# script are left as they are.
+JS_LINKS_IN_NEW_TAB = r"""
+var links = document.querySelectorAll('table[data-pde-grid="1"] a[href]');
+for (var i = 0; i < links.length; i++) {
+    var href = (links[i].getAttribute('href') || '').trim();
+    if (href && href.charAt(0) !== '#' && href.toLowerCase().indexOf('javascript:') !== 0) {
+        links[i].setAttribute('target', '_blank');
+    }
+}
+"""
+
+# Before the Print button of a no-margin document is clicked: the page asks for no margins,
+# which Chrome's Save as PDF follows (its Margins setting stays "Default").
+JS_NO_PAGE_MARGINS = r"""
+var style = document.createElement('style');
+style.textContent = '@page { margin: 0 !important; }';
+(document.head || document.documentElement).appendChild(style);
 """
 
 # Before a detail button is clicked by hand: note every table's text (visible
@@ -991,8 +1026,22 @@ def page_matches_row(tokens, page_text):
     if not tokens:
         return True
     text = re.sub(r"\s+", "", page_text or "").lower()
-    found = sum(1 for t in tokens if t in text)
+    found = sum(1 for t in tokens if t in text or _parts_on_page(t, text))
     return found * 2 > len(tokens)
+
+
+def _parts_on_page(token, text):
+    """A value the page shows split up, e.g. the SCMS Lot Search depot
+    "DW051105-RMC,Malmunda" shown as Depot Code "DW051105" and RRC "Malmunda"
+    (the "RMC" word is left out). Every part with a digit (the code) must be on
+    the page, and at least half of all parts. Only when every part has 3 or more
+    characters: "BLN/52/OSCSC/76" must match whole."""
+    parts = [p for p in re.split(r"[^a-z0-9]+", token) if p]
+    if len(parts) < 2 or any(len(p) < 3 for p in parts):
+        return False
+    codes = [p for p in parts if re.search(r"\d", p)]
+    found = sum(1 for p in parts if p in text)
+    return bool(codes) and all(p in text for p in codes) and found * 2 >= len(parts)
 
 
 # Files kept from a row's document button, by their first bytes.
@@ -1301,6 +1350,12 @@ class PortalSession:
     def __init__(self, config, base_folder):
         self.token = secrets.token_urlsafe(24)
         self.site = config.get("site") or ""
+        self.no_margins = self.site.strip().lower() in NO_MARGIN_SITES
+        # Set for each table read: its documents are printed with no margins (NO_MARGIN_PAGES).
+        self._page_no_margins = False
+        self._new_tab_documents = False  # set for each table read (NEW_TAB_DOCUMENT_PAGES)
+        self._progress = (None, [], 0)  # (columns, rows, pages) of the read in progress
+        self._chrome_closed = False  # Chrome closed during the read in progress
         self.login_url = config["login_url"]
         self.download_receipts = bool(config.get("download_receipts"))
         self.detail_links = config.get("detail_links") or []
@@ -1367,8 +1422,12 @@ class PortalSession:
             "recentDestinations": [{"id": "Save as PDF", "origin": "local", "account": ""}],
             "selectedDestinationId": "Save as PDF",
             "isCssBackgroundEnabled": True,
+            # No date / page address printed at the top and bottom of the page.
+            "isHeaderFooterEnabled": False,
             "version": 2,
         }
+        if self.no_margins:
+            print_to_pdf["marginsType"] = 1  # Margins: None
         options.add_experimental_option(
             "prefs",
             {
@@ -1762,14 +1821,30 @@ class PortalSession:
         except Exception:
             page = {}
         table_match = table_match_for(self.grid_matches, self.driver.current_url, page)
+        self._page_no_margins = any(p in (self.driver.current_url or "").lower() for p in NO_MARGIN_PAGES)
+        self._new_tab_documents = any(p in (self.driver.current_url or "").lower() for p in NEW_TAB_DOCUMENT_PAGES)
         section_receipts, receipt_text = receipt_config_for(self.receipt_links, self.driver.current_url, table_match)
         known = known_rows_for(self.known_rows, self.driver.current_url, table_match)
 
         self._session_lost = False
+        self._chrome_closed = False
         self.driver.execute_script(JS_SET_BUSY, True)
+        self._progress = (None, [], 0)
+        broke_off = ""
         try:
             columns, rows, pages = self._read_all_pages(
                 signature, detail_text, self.download_receipts or section_receipts, receipt_text, section_receipts, known
+            )
+        except Exception as e:
+            # Chrome closed or crashed, or the portal stopped answering, part way through:
+            # the rows read so far (and their saved documents) are kept and sent to the ERP.
+            columns, rows, pages = self._progress
+            if not rows:
+                raise
+            broke_off = (
+                " Chrome was closed part way: the rows read till then are kept."
+                if not self._browser_alive()
+                else f" The read stopped part way ({str(e)[:120]}): the rows read till then are kept."
             )
         finally:
             try:
@@ -1777,6 +1852,8 @@ class PortalSession:
             except Exception:
                 pass
 
+        if self._chrome_closed and not broke_off:
+            broke_off = " Chrome was closed part way: the rows read till then are kept."
         if not rows:
             if self._skipped_known:
                 return f"No new rows: all {self._skipped_known} row(s) read are already in the ERP."
@@ -1812,7 +1889,7 @@ class PortalSession:
             if self._skipped_known
             else ""
         )
-        return f"Extracted {len(rows)} new/changed rows from {pages} page(s), {receipts} receipt(s){detail_note}.{known_note}{stop_note}{lost_note}"
+        return f"Extracted {len(rows)} new/changed rows from {pages} page(s), {receipts} receipt(s){detail_note}.{known_note}{stop_note}{lost_note}{broke_off}"
 
     def _read_all_pages(
         self, signature, detail_text="", receipts=False, receipt_text="", receipt_required=False, known=None
@@ -1825,6 +1902,7 @@ class PortalSession:
         rows = []
         seen = {signature}
         pages = 0
+        self._progress = (columns, rows, pages)  # rows grows in place; columns / pages updated below
         position = 0
         order_newest = None
         self._stopped_at_limit = False
@@ -1842,6 +1920,7 @@ class PortalSession:
             headers, data = grid_to_table(grid["rows"])
             if columns is None:
                 columns = headers
+            self._progress = (columns, rows, pages)
             page_cells = rows_to_cells(columns, data)
 
             for raw in data:
@@ -1862,6 +1941,12 @@ class PortalSession:
                         self._stopped_at_known = True
                         break
                     continue
+                if self._chrome_closed:
+                    # Chrome is gone: keep the row as read, nothing more can be opened.
+                    if receipts:
+                        row["receipt_error"] = "not saved: Chrome was closed"
+                    rows.append(row)
+                    continue
                 if detail_text:
                     self._set(
                         "extracting",
@@ -1874,8 +1959,9 @@ class PortalSession:
                     # Several documents per row (e.g. DCRO DC Transit Challan: Details > Print, AC Note Doc).
                     row["documents"] = []
                     for n, (label, print_text) in enumerate(document_steps(receipt_text), start=1):
-                        if self._session_lost:
-                            row["documents"].append({"label": label, "error": "not saved: the portal ended the login"})
+                        if self._session_lost or self._chrome_closed:
+                            reason = "Chrome was closed" if self._chrome_closed else "the portal ended the login"
+                            row["documents"].append({"label": label, "error": f"not saved: {reason}"})
                             continue
                         self._set(
                             "extracting",
@@ -1926,13 +2012,16 @@ class PortalSession:
 
     # ---------------- row details (e.g. DC Monitoring -> View -> lots) ----------------
 
-    def _click_row_link(self, link, tokens=None):
+    def _click_row_link(self, link, tokens=None, new_tab=False):
         """Click a row's button (see JS_CLICK_ROW_LINK). The grid is marked again
         first, in case a postback, UpdatePanel or Back replaced it; a DataTable
-        shows all rows again so a row past the first page can be found."""
+        shows all rows again so a row past the first page can be found. With
+        ``new_tab``, the table's real links open in a new tab (like Ctrl+click)."""
         self._find_grid()
         self.driver.execute_script(JS_SHOW_ALL_DATATABLE)
         self.driver.execute_script(JS_READ_GRID)
+        if new_tab:
+            self.driver.execute_script(JS_LINKS_IN_NEW_TAB)
         label = re.sub(r"\s+", "", link.get("label") or "").lower()
         result = self.driver.execute_script(
             JS_CLICK_ROW_LINK, link["ref"], tokens or [], link.get("col"), label
@@ -2114,7 +2203,11 @@ class PortalSession:
             self._session_lost = True
             row["receipt_error"] = str(e)[:200]
         except Exception as e:
-            row["receipt_error"] = str(e)[:200]
+            if not self._browser_alive():
+                self._chrome_closed = True
+                row["receipt_error"] = "not saved: Chrome was closed"
+            else:
+                row["receipt_error"] = str(e)[:200]
         finally:
             self._restore_main_window()
             self._take_page_table(row)
@@ -2186,7 +2279,7 @@ class PortalSession:
         handles = set(driver.window_handles)
         before = set(os.listdir(self.download_dir))
 
-        if not self._click_row_link(link, tokens):
+        if not self._click_row_link(link, tokens, new_tab=self._new_tab_documents):
             raise Exception("the button of this row was not found on the page (the list changed)")
 
         end = time.time() + RECEIPT_WAIT_SECONDS
@@ -2246,13 +2339,16 @@ class PortalSession:
         return self._click_print(print_text, label, before)
 
     def _click_print(self, print_text, label, before):
-        """Click the page's own Print button and catch its PDF: saved by Chrome
-        (kiosk printing, see start), or a print window / page printed here."""
+        """Click the page's own Print button and catch its PDF: Chrome's own
+        Print > Save as PDF (kiosk printing, see start), as a user does by hand,
+        or a print window / page printed here."""
         driver = self.driver
         here = driver.current_window_handle
         url = driver.current_url
         handles = set(driver.window_handles)
-        if not driver.execute_script(JS_CLICK_PRINT, _key(print_text)):
+        if self._page_no_margins:
+            driver.execute_script(JS_NO_PAGE_MARGINS)
+        if not driver.execute_script(JS_CLICK_PRINT, _key(print_text), print_text.strip().lstrip("#")):
             self._save_debug_reply(label, driver.page_source)
             raise Exception(f"no '{print_text}' button on the page that opened (page saved in Portal_Debug)")
 
@@ -2347,7 +2443,10 @@ class PortalSession:
             raise PortalLoggedOut("the portal ended the login (it showed its login page)")
 
     def _print_current_page(self):
-        pdf = self.driver.execute_cdp_cmd("Page.printToPDF", {"printBackground": True})
+        options = {"printBackground": True}
+        if self.no_margins or self._page_no_margins:
+            options.update(marginTop=0, marginBottom=0, marginLeft=0, marginRight=0)
+        pdf = self.driver.execute_cdp_cmd("Page.printToPDF", options)
         return base64.b64decode(pdf["data"])
 
     def _save_debug_reply(self, label, html):

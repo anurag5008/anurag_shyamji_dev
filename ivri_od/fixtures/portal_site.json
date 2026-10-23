@@ -47,7 +47,7 @@
     "extract_on_click": "gvDCDetails_filter",
     "extract_only_on_click": 1,
     "download_receipt": 1,
-    "receipt_link_text": "Details > Print, AC Note Doc",
+    "receipt_link_text": "Details > printIcon, AC Note Doc",
     "key_columns": "",
     "enabled": 1,
     "read_new_only": 1
@@ -111,7 +111,7 @@
     "detail_link_text": "",
     "detail_table_id": "",
     "download_receipt": 1,
-    "receipt_link_text": "Miller",
+    "receipt_link_text": "Miller > printer",
     "enabled": 1,
     "read_new_only": 1
    },

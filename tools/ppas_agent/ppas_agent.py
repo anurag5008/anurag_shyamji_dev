@@ -104,7 +104,7 @@ def health():
         # 17: Mill ID read from the site's "Mill ID XPath" first (WINGS dashboard header).
         # 18: /portal/notify (message in Chrome after a save); Mill ID only from the XPath on the landing dashboard.
         # 19: only new or changed rows (known_rows fingerprints); row_sig and position sent per row.
-        "portal_version": 19
+        "portal_version": 20
     })
 
 

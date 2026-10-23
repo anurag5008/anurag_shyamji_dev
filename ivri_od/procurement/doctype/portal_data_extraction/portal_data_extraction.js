@@ -274,13 +274,8 @@ async function poll_agent(frm, name) {
 		show_portal_message(frm, status.message, colors[status.state] || "blue");
 	}
 
-	if (status.state === "closed") {
-		stop_polling(name);
-		delete portal_sessions[name];
-		frm.refresh();
-		return;
-	}
 	// One Search can give several results (one per table, e.g. WINGS e_tec): save each, in order.
+	// Also when Chrome was closed part way: the rows read till then come as a result first.
 	session.imported = session.imported || [];
 	const ids = status.result_ids || (status.result_id ? [status.result_id] : []);
 	const fresh = ids.filter((id) => !session.imported.includes(id));
@@ -288,6 +283,9 @@ async function poll_agent(frm, name) {
 		session.imported.push(result_id);
 		session.last_result_id = result_id;
 		const saved = await import_result(frm, session, { ...status, result_id });
+		if (status.state === "closed") {
+			continue; // no Chrome to tell
+		}
 		// Tell the user in the portal's Chrome too; the session stays open for the next page.
 		await notify_chrome(
 			session,
@@ -296,6 +294,15 @@ async function poll_agent(frm, name) {
 				: __("Not saved in ERP; see the Portal Data Extraction form."),
 			saved ? (saved.failed ? "orange" : "green") : "red"
 		);
+	}
+	if (status.state === "closed") {
+		// Chrome was closed: everything it read is saved above; end the agent session.
+		await finish_close(
+			frm,
+			fresh.length ? __("Chrome was closed. The rows read till then are saved.") : status.message,
+			fresh.length ? "orange" : "red"
+		);
+		return;
 	}
 	// Close Session waits until the read is stopped and its rows are saved.
 	if (session.closing && status.state !== "extracting" && ids.every((id) => session.imported.includes(id))) {
