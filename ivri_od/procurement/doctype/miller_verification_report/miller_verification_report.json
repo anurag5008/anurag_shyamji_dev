@@ -1,0 +1,522 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "autoname": "naming_series:",
+ "creation": "2026-10-22 18:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "is_submittable": 1,
+ "field_order": [
+  "miller_details_section",
+  "naming_series",
+  "miller_name",
+  "address",
+  "miller_code",
+  "season",
+  "miller_cb1",
+  "milling_capacity",
+  "milling_capacity_uom",
+  "kms",
+  "variety",
+  "miller_cb2",
+  "last_verification_date",
+  "present_verification_date",
+  "electricity_section",
+  "contract_load",
+  "contract_load_unit",
+  "electricity_cb1",
+  "meter_reading_last",
+  "meter_reading_present",
+  "electricity_cb2",
+  "meter_multiplier",
+  "total_units_consumed",
+  "agency_section",
+  "agencies",
+  "annexure_entry",
+  "totals_section",
+  "total_paddy_received_week",
+  "total_prog_paddy_received",
+  "total_paddy_milled_week",
+  "total_prog_paddy_milled",
+  "total_book_balance_paddy",
+  "total_verified_balance_paddy",
+  "total_paddy_difference",
+  "total_rice_received_week",
+  "total_prog_rice_received",
+  "totals_cb1",
+  "total_frk_qty",
+  "total_prog_cmr_due",
+  "total_rice_delivered_week_fci",
+  "total_rice_delivered_week_rrc",
+  "total_prog_dc_fci",
+  "total_prog_dc_rrc",
+  "total_prog_dc_total",
+  "total_prog_delivered_fci",
+  "total_prog_delivered_rrc",
+  "totals_cb2",
+  "total_prog_delivered_total",
+  "total_undelivered_fci",
+  "total_undelivered_rrc",
+  "total_undelivered_total",
+  "total_book_balance_rice",
+  "total_verified_balance_rice",
+  "total_rice_difference",
+  "certification_section",
+  "total_cmr_delivered_m_reporting",
+  "certified_no_diversion",
+  "certification_cb",
+  "miller_representative",
+  "authorised_officer",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "miller_details_section",
+   "fieldtype": "Section Break",
+   "label": "Miller Details"
+  },
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "MVR-.YYYY.-.#####",
+   "default": "MVR-.YYYY.-.#####",
+   "reqd": 1,
+   "hidden": 1,
+   "print_hide": 1
+  },
+  {
+   "fieldname": "miller_name",
+   "fieldtype": "Data",
+   "label": "1a. Miller Name",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "fetch_from": "miller_code.company",
+   "read_only": 1
+  },
+  {
+   "fieldname": "address",
+   "fieldtype": "Small Text",
+   "label": "1b. Address"
+  },
+  {
+   "fieldname": "miller_code",
+   "fieldtype": "Link",
+   "label": "1c. Miller Code",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "options": "Mill Master"
+  },
+  {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "label": "Season",
+   "options": "Season Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "miller_cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "milling_capacity",
+   "fieldtype": "Float",
+   "label": "1d. Milling Capacity"
+  },
+  {
+   "fieldname": "milling_capacity_uom",
+   "fieldtype": "Link",
+   "label": "Milling Capacity UOM",
+   "options": "UOM",
+   "default": "Tonne",
+   "description": "Tonne is printed as M.T."
+  },
+  {
+   "fieldname": "kms",
+   "fieldtype": "Data",
+   "label": "2a. KMS",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "description": "Kharif Marketing Season, e.g. 2025-26"
+  },
+  {
+   "fieldname": "variety",
+   "fieldtype": "Select",
+   "label": "2b. Variety",
+   "options": "\nPar-Boiled\nRaw",
+   "reqd": 1
+  },
+  {
+   "fieldname": "miller_cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "last_verification_date",
+   "fieldtype": "Date",
+   "label": "3a. Last Verification Date"
+  },
+  {
+   "fieldname": "present_verification_date",
+   "fieldtype": "Date",
+   "label": "3b. Present Verification Date",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "electricity_section",
+   "fieldtype": "Section Break",
+   "label": "Electricity"
+  },
+  {
+   "fieldname": "contract_load",
+   "fieldtype": "Float",
+   "label": "4a. Electricity Contract Load"
+  },
+  {
+   "fieldname": "contract_load_unit",
+   "fieldtype": "Select",
+   "label": "Contract Load Unit",
+   "options": "KVA\nKW",
+   "default": "KVA"
+  },
+  {
+   "fieldname": "electricity_cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "meter_reading_last",
+   "fieldtype": "Float",
+   "label": "4b. Meter reading at last verification",
+   "precision": "3"
+  },
+  {
+   "fieldname": "meter_reading_present",
+   "fieldtype": "Float",
+   "label": "4c. Present meter reading",
+   "precision": "3"
+  },
+  {
+   "fieldname": "electricity_cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "meter_multiplier",
+   "fieldtype": "Float",
+   "label": "Meter Multiplier (MF)",
+   "default": "1",
+   "description": "Multiplying factor of the meter"
+  },
+  {
+   "fieldname": "total_units_consumed",
+   "fieldtype": "Float",
+   "label": "4d. Total Units consumed",
+   "read_only": 1,
+   "precision": "3"
+  },
+  {
+   "fieldname": "agency_section",
+   "fieldtype": "Section Break",
+   "label": "Annexure-1"
+  },
+  {
+   "fieldname": "agencies",
+   "fieldtype": "Table",
+   "label": "Agencies",
+   "options": "Miller Verification Agency",
+   "reqd": 0,
+   "hidden": 1
+  },
+  {
+   "fieldname": "annexure_entry",
+   "fieldtype": "HTML"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "total_paddy_received_week",
+   "fieldtype": "Float",
+   "label": "Total I. Paddy Procured/Received during the week",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_paddy_received",
+   "fieldtype": "Float",
+   "label": "Total II. Prog. Paddy Procured/Received till verification date",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_paddy_milled_week",
+   "fieldtype": "Float",
+   "label": "Total III. Paddy Milled during the week",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_paddy_milled",
+   "fieldtype": "Float",
+   "label": "Total IV. Prog. Paddy Milled till verification date",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_book_balance_paddy",
+   "fieldtype": "Float",
+   "label": "Total V. Book balance of Paddy Stock",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_verified_balance_paddy",
+   "fieldtype": "Float",
+   "label": "Total VI. Verified balance of Paddy",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_paddy_difference",
+   "fieldtype": "Float",
+   "label": "Total Paddy Difference",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_rice_received_week",
+   "fieldtype": "Float",
+   "label": "Total VII. Rice received from milling till date",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_rice_received",
+   "fieldtype": "Float",
+   "label": "Total VIII. Prog. Rice received from milling till date",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals_cb1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_frk_qty",
+   "fieldtype": "Float",
+   "label": "Total FRK Quantity",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_cmr_due",
+   "fieldtype": "Float",
+   "label": "Total Prog. CMR Due",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_rice_delivered_week_fci",
+   "fieldtype": "Float",
+   "label": "Total IX. FCI",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_rice_delivered_week_rrc",
+   "fieldtype": "Float",
+   "label": "Total IX. RRC",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_dc_fci",
+   "fieldtype": "Float",
+   "label": "Total X. FCI",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_dc_rrc",
+   "fieldtype": "Float",
+   "label": "Total X. RRC",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_dc_total",
+   "fieldtype": "Float",
+   "label": "Total X. Total",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_delivered_fci",
+   "fieldtype": "Float",
+   "label": "Total XI. FCI",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_delivered_rrc",
+   "fieldtype": "Float",
+   "label": "Total XI. RRC",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals_cb2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_prog_delivered_total",
+   "fieldtype": "Float",
+   "label": "Total XI. Total",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_undelivered_fci",
+   "fieldtype": "Float",
+   "label": "Total XII. FCI",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_undelivered_rrc",
+   "fieldtype": "Float",
+   "label": "Total XII. RRC",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_undelivered_total",
+   "fieldtype": "Float",
+   "label": "Total XII. Total",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_book_balance_rice",
+   "fieldtype": "Float",
+   "label": "Total XIII. Book balance of Rice Stock",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_verified_balance_rice",
+   "fieldtype": "Float",
+   "label": "Total XIV. Verified balance of Rice",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_rice_difference",
+   "fieldtype": "Float",
+   "label": "Total Rice Difference",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "certification_section",
+   "fieldtype": "Section Break",
+   "label": "Certification"
+  },
+  {
+   "fieldname": "total_cmr_delivered_m_reporting",
+   "fieldtype": "Float",
+   "label": "Total quantity of CMR delivered as per M-reporting by the Miller (Qtls)",
+   "precision": "3"
+  },
+  {
+   "fieldname": "certified_no_diversion",
+   "fieldtype": "Check",
+   "label": "No misappropriation/diversion; paddy/rice stored safely",
+   "reqd": 1
+  },
+  {
+   "fieldname": "certification_cb",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "miller_representative",
+   "fieldtype": "Data",
+   "label": "Miller Representative"
+  },
+  {
+   "fieldname": "authorised_officer",
+   "fieldtype": "Link",
+   "label": "Authorised Officer",
+   "options": "User"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Miller Verification Report",
+   "no_copy": 1,
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "links": [],
+ "modified": "2026-10-23 18:30:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Miller Verification Report",
+ "naming_rule": "By \"Naming Series\" field",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Desk User",
+   "share": 1,
+   "write": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "search_fields": "miller_name,miller_code,kms",
+ "show_title_field_in_link": 1,
+ "title_field": "miller_name",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "default_print_format": "Annexure-1 Verification Report"
+}

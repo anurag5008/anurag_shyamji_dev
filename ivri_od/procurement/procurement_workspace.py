@@ -60,6 +60,14 @@ DCRO_REPORTS: list[tuple[str, str, str]] = [
 # SCMS Lot Search). Built from DCRO and SCMS together, so it sits on the Procurement page.
 DC_TRACK_REPORT = "DC Track"
 
+# Rice due and delivered per mill for a season (DC Details): its own page under Procurement.
+RICE_WORKSPACE = "Rice Delivered Summary"
+RICE_WORKSPACE_SLUG = "rice-delivered-summary"
+DC_DETAILS_REPORT = "DC Details"
+RICE_REPORTS: list[tuple[str, str, str]] = [
+	(DC_DETAILS_REPORT, "layout-grid", "Green"),
+]
+
 # FCI depot data: one page lists every report built from WINGS (fciarms.in) portal data.
 WINGS_WORKSPACE = "WINGS Details"
 WINGS_WORKSPACE_SLUG = "wings-details"
@@ -148,6 +156,22 @@ WORKSPACE_SHORTCUTS = [
 	{"label": "Gate Exit", "type": "DocType", "link_to": "Gate Exit", "icon": "log-out", "color": "Blue"},
 	{"label": "GRN Note", "type": "DocType", "link_to": "GRN Note", "icon": "file-check", "color": "Orange"},
 	{"label": "Mandi Book", "type": "Report", "link_to": "Mandi Book", "icon": "book-open", "color": "Purple"},
+	{"label": DC_TRACK_REPORT, "type": "Report", "link_to": DC_TRACK_REPORT, "icon": "check-square", "color": "Purple"},
+	{"label": DC_DETAILS_REPORT, "type": "Report", "link_to": DC_DETAILS_REPORT, "icon": "layout-grid", "color": "Green"},
+	{
+		"label": "Miller Verification",
+		"type": "DocType",
+		"link_to": "Miller Verification Report",
+		"icon": "clipboard-check",
+		"color": "Orange",
+	},
+	{
+		"label": "Module Overview",
+		"type": "Report",
+		"link_to": "Procurement Module Overview",
+		"icon": "layout-grid",
+		"color": "Purple",
+	},
 ]
 
 # Box "Government Portals Reports" among the module cards of the Procurement page:
@@ -237,6 +261,9 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Depo Master", "DocType"),
 			("District Master", "DocType"),
 			("Agent Master", "DocType"),
+			("Season Master", "DocType"),
+			("Rice Delivery Setup", "DocType"),
+			("Rice Lot Quantity", "DocType"),
 		],
 	),
 	(
@@ -278,7 +305,13 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Summary reports",
+		"Verification",
+		[
+			("Miller Verification Report", "DocType"),
+		],
+	),
+	(
+		"Reports",
 		[
 			("Procurement Module Overview", "Report"),
 			("Abstract Report", "Report"),
@@ -294,6 +327,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Entry Report", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
 			(DC_TRACK_REPORT, "Report"),
+			(DC_DETAILS_REPORT, "Report"),
 		],
 	),
 ]
@@ -324,6 +358,7 @@ QUERY_REPORTS = {
 	*(name for name, _icon, _color in RRC_REPORTS),
 	*(name for name, _icon, _color in DCRO_REPORTS),
 	*(name for name, _icon, _color in WINGS_REPORTS),
+	*(name for name, _icon, _color in RICE_REPORTS),
 }
 
 
@@ -431,6 +466,7 @@ def sync_procurement_desk_ui():
 	apply_dcro_workspace()
 	apply_wings_workspace()
 	apply_ppas_workspace()
+	apply_rice_workspace()
 	_import_procurement_sidebar()
 	_cleanup_hidden_workspace_links()
 	frappe.clear_cache()
@@ -654,6 +690,26 @@ def _apply_portal_workspace(
 	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers.
 	``show_card=False`` keeps only the shortcuts, for a page whose card would repeat a single shortcut."""
 	reports = [r for r in report_list if frappe.db.exists(link_type, r[0])]
+def apply_rice_workspace():
+	"""Page "Rice Delivered Summary": DC Details (rice due and lots delivered per mill)."""
+	_apply_portal_workspace(
+		RICE_WORKSPACE,
+		"layout-grid",
+		"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. "
+		"Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.",
+		RICE_REPORTS,
+		"Rice delivery reports",
+		None,
+		None,
+		None,
+	)
+
+
+def _apply_portal_workspace(title, icon, intro, report_list, card, block, group, portal):
+	"""A page of portal reports with a Manual Entry button (none when ``block`` is
+	None). A child page of Procurement (not an app of its own), opened from its
+	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers."""
+	reports = [r for r in report_list if frappe.db.exists("Report", r[0])]
 	if block:
 		_ensure_manual_entry_block(block, group, portal, block_html, block_script)
 	if frappe.db.exists("Workspace", title):

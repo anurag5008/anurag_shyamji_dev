@@ -93,6 +93,32 @@ reading stops at the first known row. "Read Full Table" on Portal Data Extractio
 sends no known rows (every row read). Sessions stay open after a save; the ERP
 shows the result in Chrome with `/portal/notify`.
 
+Version 20: a document page may show a row value split up. SCMS Lot Search
+shows the Depot "DG051601-RMC,Kantabanji" on the Acceptance Note as Depot Code
+"DG051601" and RRC "RMC,Kantabanji"; the page now counts as this row's when every
+part is on it (parts of 3+ characters only). Lot Search Receipt Link Text:
+`Miller > printer` (the row's Miller copy, then the page's Print button, id "printer"; an element whose id is exactly the text after ">" is clicked first, "#printer" also works). Clicking it runs Chrome's own Print > Save as PDF
+(no date/address header and footer), the same file a user saves by hand;
+Chrome's Save button is not clicked, kiosk printing saves it.
+SCMS documents (Lot Search Acceptance Note, Transit Challan RRC Transit Pass) are saved
+with Margins: None (`NO_MARGIN_SITES` in portal_scraper.py). DCRO DC Transit Challan Details
+are printed with no margins too (`NO_MARGIN_PAGES`: the page asks for it before Print is
+clicked); View DC and the other DCRO pages keep Chrome's default margins.
+DCRO DC Transit Challan (`NEW_TAB_DOCUMENT_PAGES`): a row's real links (Details) open in a
+new tab, like Ctrl+click; the document is saved there and the tab closed. The list is never
+left (it is loaded by AJAX and comes back empty after Back), so the row's AC Note Doc button
+is still there. Buttons that run a script are clicked as before.
+
+Session closed part way: when Chrome is closed (or crashes, or the portal stops answering)
+during a read, the rows read till then are kept as a result (rows left on the open page are
+kept without their documents, "not saved: Chrome was closed"). The ERP form saves every
+waiting result before it ends a closed session. Rows are lost only if the agent program
+itself is stopped during a read.
+DCRO DC Transit Challan: `Details > printIcon, AC Note Doc` (Details, then the print
+icon id="printIcon" in the page header; Chrome's own Save button is not needed).
+The real Miller copy shows only "Name of the RRC Malmunda" (no "RMC" word), so a
+split value matches when its code part (DW051105) and at least half of its parts are on the page.
+
 Rows the agent cannot read can be entered by hand: RRC Detail from SCMS →
 Manual Entry (procurement/portal_manual.py). A row read from the portal always
 replaces a manual row with the same key.

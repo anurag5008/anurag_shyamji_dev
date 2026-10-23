@@ -5,7 +5,7 @@ Run: python -m unittest test_portal_scraper  (from this folder)
 
 import unittest
 
-from portal_scraper import waits_for_own_trigger, only_clicks_for, click_starts_read, page_columns, lots_from_column, grid_matches_for, grid_to_table, looks_like_login, receipt_config_for, split_total_rows, table_match_for, click_triggers_for, oldest_first, date_column, detail_link, known_rows_for, newest_first, row_signature, mill_label_keys, open_read_for, document_labels, document_steps, file_extension, page_matches_row, row_tokens, pick_receipt_link, rows_to_cells, unique_headers
+from portal_scraper import trigger_hint, waits_for_own_trigger, only_clicks_for, click_starts_read, page_columns, lots_from_column, grid_matches_for, grid_to_table, looks_like_login, receipt_config_for, split_total_rows, table_match_for, click_triggers_for, oldest_first, date_column, detail_link, known_rows_for, newest_first, row_signature, mill_label_keys, open_read_for, document_labels, document_steps, file_extension, page_matches_row, row_tokens, pick_receipt_link, rows_to_cells, unique_headers
 
 
 class TestPortalScraperHelpers(unittest.TestCase):
@@ -110,6 +110,36 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertFalse(click_starts_read("1700|g|/DeliveryCertificate/ViewDC", url, True))
         self.assertTrue(click_starts_read("1700|t|/DeliveryCertificate/ViewDC", url, True))
 
+    def test_waiting_message_names_the_page_trigger(self):
+        config = [
+            {"page_match": "ViewDC", "triggers": "Show", "only": 1},
+            {"page_match": "DCTransitChalanView", "triggers": "gvDCDetails_filter", "only": 1},
+            {"page_match": "MillerRoPDS", "triggers": "Save, dvmillerhistory", "only": 0},
+        ]
+        base = "https://portal.pdsodisha.gov.in/"
+        self.assertEqual(
+            trigger_hint(config, base + "DeliveryCertificate/ViewDC"),
+            'click "Show" (pressing Enter in a box does not start the read)',
+        )
+        self.assertEqual(
+            trigger_hint(config, base + "BillingSystem/ACNoteBill/DCTransitChalanView"),
+            "type a value in the table's Search box and press Enter",
+        )
+        self.assertEqual(
+            trigger_hint(config, base + "DeliveryCertificate/MillerRoPDS/Add"),
+            'click "Save" or click "dvmillerhistory" (pressing Enter in a box does not start the read)',
+        )
+        self.assertEqual(trigger_hint(config, base + "Home/Dashboard"), "click Search")
+
+    def test_view_dc_search_box_enter_also_reads(self):
+        # View DC: Show, or a value typed in the DataTables Search box (tabledata_filter) + Enter.
+        config = [{"page_match": "ViewDC", "triggers": "Show, tabledata_filter", "only": 1}]
+        url = "https://portal.pdsodisha.gov.in/DeliveryCertificate/ViewDC"
+        self.assertEqual(click_triggers_for(config, url), ["show", "tabledatafilter"])
+        self.assertEqual(
+            trigger_hint(config, url), "click \"Show\" or type a value in the table's Search box and press Enter"
+        )
+
     def test_click_triggers_for_page(self):
         config = [{"page_match": "MillerRoPDS", "triggers": "dvmillerhistory, Save"}]
         url = "https://portal.pdsodisha.gov.in/DeliveryCertificate/MillerRoPDS/Add"
@@ -144,6 +174,7 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertEqual(pick_receipt_link(links, "", "AC Note Doc")["ref"], "b")
         self.assertEqual(document_steps("Details > Print, AC Note Doc"), [("Details", "Print"), ("AC Note Doc", "")])
         self.assertEqual(document_labels("Details > Print, AC Note Doc"), ["Details", "AC Note Doc"])
+        self.assertEqual(document_steps("Details > printIcon, AC Note Doc"), [("Details", "printIcon"), ("AC Note Doc", "")])
         self.assertEqual(document_steps("Print"), [("Print", "")])
         # SCMS Transit Challan: the agent picks the eye icon, then Print.
         self.assertEqual(document_steps("> Print"), [("", "Print")])
@@ -165,6 +196,31 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertTrue(page_matches_row(tokens, own))
         self.assertFalse(page_matches_row(tokens, other))
         self.assertTrue(page_matches_row([], other))
+
+    def test_lot_search_acceptance_note_shows_depot_split(self):
+        # SCMS Lot Search row; its Acceptance Note (Miller copy) shows the depot as
+        # "Depot Code DG051601" and "Name of the RRC RMC,Kantabanji".
+        row = {
+            "Sl#": "22", "KMS Year": "2025-2026", "Receipt Date": "20/08/2026", "Depot": "DG051601-RMC,Kantabanji",
+            "Variety": "Paraboiled Normal", "DC No.": "DCR051065", "Lot No.": "13", "No.of Bag": "580",
+            "Qty(In Qtl.)": "289.84000", "Challan Status": "Accepted", "Print": "",
+        }
+        tokens = row_tokens(row)
+        self.assertEqual(sorted(tokens), sorted(["dg051601-rmc,kantabanji", "dcr051065"]))
+        own = "1. Acceptance Note No. DG051601 / 0210 / 2025-2026 3. Name of the RRC RMC,Kantabanji 4. Depot Code DG051601 9. DC No. DCR051065 10. Lot Number 13"
+        other = "3. Name of the RRC RMC,Kantabanji 4. Depot Code DG051601 9. DC No. DCR050784 10. Lot Number 14"
+        self.assertTrue(page_matches_row(tokens, own))
+        self.assertFalse(page_matches_row(tokens, other))
+
+    def test_lot_search_acceptance_note_without_rmc_word(self):
+        # The real Miller copy shows "Name of the RRC Malmunda": no "RMC" on the page.
+        tokens = row_tokens({"Depot": "DW051105-RMC,Malmunda", "DC No.": "DCR050483", "Lot No.": "1"})
+        own = "1. Acceptance Note No. DW051105 / 0142 / 2025-2026 3. Name of the RRC Malmunda 4. Depot Code DW051105 9. DC No. DCR050483 10. Lot Number 1"
+        other = "3. Name of the RRC Malmunda 4. Depot Code DW051105 9. DC No. DCR051276 10. Lot Number 4"
+        self.assertTrue(page_matches_row(tokens, own))
+        self.assertFalse(page_matches_row(tokens, other))
+        # The depot code itself must be on the page; the names alone are not enough.
+        self.assertFalse(page_matches_row(tokens, "Name of the RRC Malmunda DC No. DCR050483"))
 
     def test_wings_tec_report(self):
         # The "Delivered" column holds a button whose label is the quantity.

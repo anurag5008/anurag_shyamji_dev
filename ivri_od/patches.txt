@@ -112,6 +112,7 @@ ivri_od.patches.v1_0.recalc_chhatni_threshold_0_3
 ivri_od.patches.v1_0.recalc_chhatni_shortfall_threshold_only
 ivri_od.patches.v1_0.recalc_grn_received_plus_deduction
 ivri_od.patches.v1_0.recalc_tp_fulfillment_final_net_weight
+ivri_od.patches.v1_0.migrate_target_allocation_agents
 ivri_od.patches.v1_0.remove_scms_site_detail_report
 ivri_od.patches.v1_0.rename_scms_reports
 ivri_od.patches.v1_0.rekey_gunny_stock_records
@@ -131,3 +132,4 @@ ivri_od.patches.v1_0.weigh_bridge_list_view_actual_truck_no
 ivri_od.patches.v1_0.weigh_bridge_list_view_final_columns
 ivri_od.patches.v1_0.weigh_bridge_list_view_quality_columns
 ivri_od.patches.v1_0.rename_rice_dispatch_summary_report
+ivri_od.patches.v1_0.dcro_view_dc_search_box
