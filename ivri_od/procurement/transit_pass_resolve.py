@@ -23,6 +23,31 @@ def matches_name_or_code(search_value: str | None, stored_value: str | None) -> 
 	return False
 
 
+def normalize_ppc_text(text: str | None) -> str:
+	"""Case, extra spaces and brackets ignored: "Agalpur ( S1 )", "AGALPUR S1" and "agalpur(s1" are one text."""
+	return " ".join(re.sub(r"[()\[\]{}]", " ", text or "").split()).casefold()
+
+
+def ppc_master_candidates(ppc_text: str | None) -> list[str]:
+	"""Every PPC Master the text can mean: its name, code, or name plus code, in any case, spacing or brackets.
+
+	Two PPC Masters may share a PPC Name, so name-only text can return more than one.
+	"""
+	key = normalize_ppc_text(ppc_text)
+	if not key:
+		return []
+	found = []
+	for row in frappe.get_all(
+		"PPC Master", fields=["name", "code", "ppc_name"], limit_page_length=0
+	):
+		name = normalize_ppc_text(row.get("ppc_name"))
+		code = normalize_ppc_text(row.get("code") or row.get("name"))
+		forms = {name, code, normalize_ppc_text(row.get("name")), f"{name} {code}"}
+		if key in forms:
+			found.append(row.name)
+	return found
+
+
 def resolve_mill_master_name(
 	pass_unique_key: str | None = None, miller: str | None = None
 ) -> str:
@@ -91,16 +116,8 @@ def resolve_ppc_master_name(ppc_text: str | None) -> str | None:
 		if found:
 			return found
 
-	rows = frappe.get_all(
-		"PPC Master",
-		fields=["name", "code", "ppc_name"],
-		limit_page_length=5000,
-	)
-	for row in rows:
-		for fieldname in ("name", "code", "ppc_name"):
-			if matches_name_or_code(ppc_text, row.get(fieldname)):
-				return row.name
-	return None
+	candidates = ppc_master_candidates(ppc_text)
+	return candidates[0] if candidates else None
 
 
 def resolve_agent_master_name(agent_text: str | None) -> str | None:
@@ -266,6 +283,11 @@ def _transit_pass_ppc_matches_master(ppc_on_pass: str | None, ppc_master: str) -
 
 	selected_link = resolve_ppc_master_name(ppc_master)
 	pass_link = resolve_ppc_master_name(ppc_on_pass)
+
+	# Name-only text can mean several PPC Masters: the pass may be any of them.
+	candidates = ppc_master_candidates(ppc_master)
+	if candidates and pass_link:
+		return pass_link in candidates
 
 	if selected_link and pass_link:
 		return selected_link == pass_link

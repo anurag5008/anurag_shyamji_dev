@@ -70,7 +70,6 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		allow_typed_pass_unique_key(frm);
 		setup_farmer_vehicle_autocomplete(frm);
 		setup_actual_truck_autocomplete(frm);
-		setup_truck_buttons(frm);
 		compact_wbm_form_layout(frm);
 		sync_total_bags_from_bag_table(frm);
 		frm.refresh_field("bag_weight_details");
@@ -84,7 +83,6 @@ frappe.ui.form.on("Weigh Bridge Measurement", {
 		allow_typed_pass_unique_key(frm);
 		setup_farmer_vehicle_autocomplete(frm, true);
 		setup_actual_truck_autocomplete(frm, true);
-		setup_truck_buttons(frm);
 		setup_bag_details_grid(frm);
 		setup_refresh_bags_from_qc_button(frm);
 		compact_wbm_form_layout(frm);
@@ -283,17 +281,12 @@ function check_and_apply_vehicle_mismatch(frm, tp_vehicle_no = null) {
 }
 
 function toggle_wbm_source_mode_ui(frm) {
-	frm.set_df_property(
-		"actual_truck_no",
-		"read_only",
-		Boolean(frm.doc.is_farmer_or_agent && frm.doc.demo_rst_data)
-	);
+	// Every field is read only: the truck comes from RST Details, so no truck buttons either.
+	frm.set_df_property("actual_truck_no", "read_only", 1);
+	frm.remove_custom_button(__("Same as TP"), __("Truck"));
+	frm.remove_custom_button(__("Different Truck"), __("Truck"));
 	if (frm.doc.is_farmer_or_agent) {
-		frm.remove_custom_button(__("Same as TP"), __("Truck"));
-		frm.remove_custom_button(__("Different Truck"), __("Truck"));
 		copy_rst_vehicle_to_actual_truck(frm);
-	} else {
-		setup_truck_buttons(frm);
 	}
 }
 

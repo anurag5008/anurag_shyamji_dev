@@ -13,8 +13,7 @@ from ivri_od.procurement.doctype.season_master.season_master import resolve_seas
 from ivri_od.procurement.ppc_pass_metrics import ppc_display_name
 from ivri_od.procurement.grn_tp_fulfillment import (
 	actual_chhatni_status,
-	excess_after_chhatni_qt,
-	grn_received_quantity,
+	excess_tp_received_quantity,
 	pending_tp_quantity,
 	remaining_tp_quantity,
 	required_chhatni_qt,
@@ -83,30 +82,19 @@ def get_columns():
 			"width": 180,
 		},
 		{
+			"label": _("Chhatni (QT)"),
+			"fieldname": "chhatni_received_qty",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 125,
+		},
+		{
 			"label": _("Total Qty Received"),
 			"fieldname": "total_received",
 			"fieldtype": "Float",
 			"precision": 3,
 			"width": 150,
 		},
-		{
-			"label": _("Pending Qty (QTL)"),
-			"fieldname": "pending_qty",
-			"fieldtype": "Float",
-			"precision": 3,
-			"width": 140,
-		},
-		{
-			"label": _("Excess Received Qty (QTL)"),
-			"fieldname": "excess_received_qty",
-			"fieldtype": "Float",
-			"precision": 3,
-			"width": 170,
-		},
-		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 130},
-		{"label": _("Jute Bags"), "fieldname": "jute_pkt", "fieldtype": "Int", "width": 95},
-		{"label": _("Plastic Bags"), "fieldname": "plastic_pkt", "fieldtype": "Int", "width": 95},
-		{"label": _("Total Bags"), "fieldname": "total_bags", "fieldtype": "Int", "width": 95},
 		{
 			"label": _("Assigned Chhatni %"),
 			"fieldname": "chhatni_assigned",
@@ -127,6 +115,24 @@ def get_columns():
 			"fieldtype": "Data",
 			"width": 185,
 		},
+		{
+			"label": _("Pending Qty (QTL)"),
+			"fieldname": "pending_qty",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 140,
+		},
+		{
+			"label": _("Excess Received Qty (QTL)"),
+			"fieldname": "excess_received_qty",
+			"fieldtype": "Float",
+			"precision": 3,
+			"width": 170,
+		},
+		{"label": _("TP Status"), "fieldname": "tp_status", "fieldtype": "Data", "width": 130},
+		{"label": _("Jute Bags"), "fieldname": "jute_pkt", "fieldtype": "Int", "width": 95},
+		{"label": _("Plastic Bags"), "fieldname": "plastic_pkt", "fieldtype": "Int", "width": 95},
+		{"label": _("Total Bags"), "fieldname": "total_bags", "fieldtype": "Int", "width": 95},
 		{"label": _("Entry"), "fieldname": "entry", "fieldtype": "Link", "options": "Entry", "width": 125},
 		{"label": _("Agent Name"), "fieldname": "agent_name", "fieldtype": "Data", "width": 150},
 		{"label": _("Entry Qty"), "fieldname": "entry_quantity", "fieldtype": "Float", "precision": 3, "width": 110},
@@ -214,7 +220,18 @@ def get_data(filters):
 			continue
 
 		tp_qty = max((flt(doc.tp_quantity) for doc in docs), default=0)
-		total_received = flt(sum(grn_received_quantity(doc) for doc in docs), 3)
+
+		rst_lines = _rst_lines(docs, wbm_by_name, bags_by_wbm)
+		total_gross_weight = flt(sum(line["gross_weight"] for line in rst_lines), 3)
+		total_gunny_weight = flt(sum(line["gunny_weight"] for line in rst_lines), 3)
+		total_deduction_received = flt(sum(line["deduction"] for line in rst_lines), 3)
+		# Actual chhatni from saved Chhatni records of this pass (Pass Unique Key = TP + PPC + season).
+		chhatni = chhatni_by_pass.get(key) or {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0}
+		actual_chhatni_qt = chhatni["chhatni_qt"]
+		# Total Qty Received = Total Gross Wt - Total Gunny Wt - Total Deduction Received - Chhatni (QT).
+		total_received = flt(
+			max(total_gross_weight - total_gunny_weight - total_deduction_received - actual_chhatni_qt, 0.0), 3
+		)
 
 		chhatni_assigned = _assigned_chhatni(docs)
 		total_deduction = flt(sum(flt(doc.deduction) for doc in docs), 3)
@@ -222,17 +239,14 @@ def get_data(filters):
 		tp_complete = tp_status == "TP Completed"
 		pending_qty = pending_tp_quantity(tp_qty, total_received)
 		required_chhatni = required_chhatni_qt(tp_qty, chhatni_assigned)
-		# Actual chhatni from saved Chhatni records of this pass (Pass Unique Key = TP + PPC + season).
-		chhatni = chhatni_by_pass.get(key) or {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0}
-		actual_chhatni_qt = chhatni["chhatni_qt"]
-		excess_qty = excess_after_chhatni_qt(tp_qty, total_received, actual_chhatni_qt)
+		# Total Qty Received is already after Chhatni, so excess is what is left above TP Qty.
+		excess_qty = excess_tp_received_quantity(tp_qty, total_received)
 		# Received Chhatni % as saved on the Chhatni record (Chhatni QT ÷ TP Quantity × 100).
 		received_pct = chhatni["received_chhatni_pct"]
 		chhatni_status = actual_chhatni_status(tp_qty, received_pct, chhatni_assigned)
 		balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
 		extra = excess_qty
 
-		rst_lines = _rst_lines(docs, wbm_by_name, bags_by_wbm)
 		entry_lines = entries_by_pass.get(key, [])
 		sample = docs[-1]
 		mill_label, mill_code = _mill_label(key, sample.mill_name, mill_companies)
@@ -243,10 +257,6 @@ def get_data(filters):
 		for line in rst_lines:
 			if line["gunny_type"] and line["gunny_type"] not in gunny_types:
 				gunny_types.append(line["gunny_type"])
-
-		total_gross_weight = flt(sum(line["gross_weight"] for line in rst_lines), 3)
-		total_gunny_weight = flt(sum(line["gunny_weight"] for line in rst_lines), 3)
-		total_deduction_received = flt(sum(line["deduction"] for line in rst_lines), 3)
 
 		tp_summary = {
 			"season": season_name,

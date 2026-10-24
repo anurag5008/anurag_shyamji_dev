@@ -45,6 +45,7 @@
   "gate_out_time",
   "weighment_section",
   "rst_no",
+  "commodity",
   "is_farmer_or_agent",
   "agent_name",
   "local_purchase_order",
@@ -424,6 +425,12 @@
    "label": "Load Weight (QT)",
    "non_negative": 1,
    "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "commodity",
+   "fieldtype": "Data",
+   "label": "Commodity",
    "read_only": 1
   },
   {

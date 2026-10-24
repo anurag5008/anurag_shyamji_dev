@@ -18,6 +18,7 @@ class Chhatni(Document):
 		self._normalize_fields()
 		self._validate_one_chhatni_per_pass()
 		self._set_net_weight_and_chhatni()
+		self._validate_net_weight_above_tp_quantity()
 
 	def _normalize_fields(self):
 		if self.pacs_name:
@@ -50,6 +51,17 @@ class Chhatni(Document):
 				),
 				title=_("Net Weight Not Found"),
 				indicator="orange",
+			)
+
+
+	def _validate_net_weight_above_tp_quantity(self):
+		# Chhatni only exists when the pass weighed more than the Transit Pass says: Net Weight > TP Quantity.
+		if flt(self.net_weight, 3) <= flt(self.tp_quantity, 3):
+			frappe.throw(
+				_("Net Weight (QT) {0} must be greater than TP Quantity {1}. Chhatni cannot be saved.").format(
+					frappe.bold(flt(self.net_weight, 3)), frappe.bold(flt(self.tp_quantity, 3))
+				),
+				title=_("Net Weight Not Above TP Quantity"),
 			)
 
 

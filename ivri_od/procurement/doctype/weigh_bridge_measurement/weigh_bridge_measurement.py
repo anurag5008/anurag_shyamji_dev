@@ -86,7 +86,7 @@ def persist_wbm_quality_and_net_after_qc_sync(wbm_name: str) -> None:
 	frappe.db.set_value(
 		"Weigh Bridge Measurement",
 		wbm_name,
-		{"quality_test": doc.quality_test, "net_weight": doc.net_weight},
+		{"quality_test": doc.quality_test, "net_weight": doc.net_weight, "deduction": doc.deduction},
 		update_modified=True,
 	)
 
@@ -216,6 +216,7 @@ def is_farmer_or_agent_source(doc) -> bool:
 
 TP_STATUS_RECEIVED = "TP Received"
 TP_STATUS_NOT_RECEIVED = "TP Not Received"
+TP_STATUS_PPC_MISMATCH = "PPC Mismatch"
 TP_STATUS_LOCAL = "Local Procurement"
 TP_STATUS_RICE_DISPATCH = "Rice Dispatch"
 
@@ -238,7 +239,9 @@ def compute_wbm_tp_status(doc) -> str:
 			return TP_STATUS_NOT_RECEIVED
 		if (getattr(doc, "pass_unique_key", None) or "").strip():
 			return TP_STATUS_RECEIVED
-		if (rst.tp_no or "").strip():
+		if (rst.tp_status or "") == TP_STATUS_PPC_MISMATCH:
+			return TP_STATUS_PPC_MISMATCH
+		if (rst.tp_no or "").strip() and (rst.tp_status or "") != "Invalid TP No":
 			return TP_STATUS_RECEIVED
 		return TP_STATUS_NOT_RECEIVED
 
@@ -265,6 +268,16 @@ class WeighBridgeMeasurement(Document):
 		# Recheck when RST adds a TP key or tare/QC values make this WBM eligible.
 		_ensure_grn_note_for_weigh_bridge(self.name)
 		self._schedule_procurement_rollup_sync()
+		self._refresh_pass_left_after_correction()
+
+	def _refresh_pass_left_after_correction(self):
+		"""TP No / PPC corrected: the pass this weighment left must drop it from its totals."""
+		before = self.get_doc_before_save()
+		old_key = ((before.pass_unique_key if before else "") or "").strip()
+		if not old_key or old_key == (self.pass_unique_key or "").strip():
+			return
+		frappe.db.after_commit(lambda k=old_key: _sync_procurement_rollups_for_pass(k))
+		frappe.db.after_commit(lambda k=old_key: refresh_tp_fulfillment_for_pass(k))
 
 	def _schedule_procurement_rollup_sync(self):
 		# Rice Dispatch has no Transit Pass, so it never feeds Transit Pass totals.
@@ -549,10 +562,16 @@ class WeighBridgeMeasurement(Document):
 				return qc
 		return None
 
+	def _vehicle_corrected(self) -> bool:
+		before = self.get_doc_before_save()
+		return bool(before) and _qc_lookup_vehicle_candidates(before) != _qc_lookup_vehicle_candidates(self)
+
 	def _sync_gate_entry_link(self):
 		gate_entry = ""
+		# A corrected Vehicle No must not keep the Quality Check / visit of the wrong vehicle.
+		quality_check = None if self._vehicle_corrected() else self.quality_check
 		for vehicle in _qc_lookup_vehicle_candidates(self):
-			gate_entry = resolve_gate_entry_for_wbm_vehicle(vehicle, self.quality_check)
+			gate_entry = resolve_gate_entry_for_wbm_vehicle(vehicle, quality_check)
 			if gate_entry:
 				break
 		self.gate_entry = gate_entry or ""
@@ -733,7 +752,29 @@ class WeighBridgeMeasurement(Document):
 			return manual
 		return table_qt
 
+	def _sync_deduction(self):
+		"""Deduction (QT): RST Details value if entered, else Quality Check Dust (Kg) converted to quintal.
+
+		RST-linked weighments always follow this rule, so a correction in RST Details or Quality Check
+		replaces the old value. A manual weighment only gets the Quality Check dust while Deduction is empty.
+		"""
+		rst_link = (self.get("demo_rst_data") or "").strip()
+		rst_deduction = 0.0
+		if rst_link and frappe.db.exists("RST Details", rst_link):
+			rst_deduction = flt(frappe.db.get_value("RST Details", rst_link, "deduction_qt"))
+		if rst_deduction > 0:
+			self.deduction = rst_deduction
+			return
+
+		if not rst_link and flt(self.deduction) > 0:
+			return
+		qc_name = (self.get("quality_check") or "").strip()
+		dust_kg = flt(frappe.db.get_value("Quality Check", qc_name, "dust")) if qc_name else 0.0
+		# 100 kg = 1 quintal
+		self.deduction = flt(dust_kg / 100, 3) if dust_kg > 0 else 0
+
 	def _update_weights(self):
+		self._sync_deduction()
 		self._sync_total_bags_from_qc_table()
 		load_weight = flt(self.load_weight)
 		tare_weight = flt(self.tare_weight)
@@ -1027,6 +1068,31 @@ def sync_weigh_bridge_quality_for_vehicle(
 		_ensure_grn_note_for_weigh_bridge(name)
 
 
+def unlink_quality_check_from_weigh_bridge(quality_check: str, keep_gate_entry: str = "") -> list[str]:
+	"""A Quality Check was moved to another vehicle visit: weighments of the old visit go back to Pending QC.
+
+	Their GRN Notes are synced too, so the wrong Quality Check values leave the final GRN.
+	"""
+	quality_check = (quality_check or "").strip()
+	if not quality_check:
+		return []
+	names = frappe.get_all(
+		"Weigh Bridge Measurement",
+		filters={"quality_check": quality_check, "gate_entry": ["!=", (keep_gate_entry or "").strip()]},
+		pluck="name",
+	)
+	for name in names:
+		frappe.db.set_value(
+			"Weigh Bridge Measurement",
+			name,
+			{"quality_check": "", "quality_test": PENDING_QC, "slno_of_qc": 0},
+			update_modified=True,
+		)
+		persist_wbm_quality_and_net_after_qc_sync(name)
+		_ensure_grn_note_for_weigh_bridge(name)
+	return names
+
+
 @frappe.whitelist()
 def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 	"""Write Quality Check link and Quality Test to DB so list view matches QC."""
@@ -1211,14 +1277,18 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	if not wbm_name or not frappe.db.exists("Weigh Bridge Measurement", wbm_name):
 		return
 
-	if is_local_procurement_wbm(wbm_name) or is_rice_dispatch_wbm(wbm_name):
+	if is_rice_dispatch_wbm(wbm_name):
 		return
 
+	# An existing GRN keeps syncing, local paddy purchase included, so a later correction reaches it.
 	if frappe.db.exists(
 		"GRN Note",
 		{"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]},
 	):
 		sync_grn_from_weigh_bridge(wbm_name)
+		return
+
+	if is_local_procurement_wbm(wbm_name):
 		return
 
 	# GRN is generated when the vehicle leaves, not at tare weight: Gate Exit calls this again.

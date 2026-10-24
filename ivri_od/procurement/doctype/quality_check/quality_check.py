@@ -11,6 +11,7 @@ from ivri_od.procurement.mill_gate import GATE_ENTRY_INSIDE_MILL, get_open_gate_
 from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
 	PENDING_QC,
 	sync_weigh_bridge_quality_for_vehicle,
+	unlink_quality_check_from_weigh_bridge,
 )
 
 
@@ -61,14 +62,24 @@ class QualityCheck(Document):
 		self._validate_type_of_pkt()
 
 	def on_update(self):
+		before = self.get_doc_before_save()
+		if before and (before.gate_entry or "").strip() != (self.gate_entry or "").strip():
+			# Vehicle corrected: weighments of the old visit must lose this Quality Check first.
+			unlink_quality_check_from_weigh_bridge(self.name, self.gate_entry)
 		_sync_weigh_bridge_quality_from_qc(self)
-		_sync_party_name_to_gate_entry(self)
 
 	def _validate_gate_entry(self):
 		gate_entry = (self.gate_entry or "").strip()
 		self.gate_entry = gate_entry
 		vehicle = (self.vehicle_no or "").strip().upper()
 		self.vehicle_no = vehicle
+
+		# Editing a saved Quality Check later: the same vehicle keeps its visit, even after Gate Exit.
+		# A corrected Vehicle No is matched to that vehicle's open Gate In again.
+		before = self.get_doc_before_save()
+		visit_unchanged = bool(before) and (before.vehicle_no or "").strip().upper() == vehicle
+		if before and not visit_unchanged and gate_entry == (before.gate_entry or "").strip():
+			gate_entry = self.gate_entry = ""
 
 		if not vehicle:
 			frappe.throw(_("Select Vehicle No (from gate in records)."))
@@ -94,7 +105,7 @@ class QualityCheck(Document):
 		if ge.in_out != "In":
 			frappe.throw(_("Quality Check is allowed only for Gate Entry marked In."))
 
-		if not is_gate_in_inside_mill(gate_entry):
+		if not visit_unchanged and not is_gate_in_inside_mill(gate_entry):
 			frappe.throw(
 				_("This vehicle visit is already closed (Gate Out recorded). Start a new Gate In for a new Quality Check."),
 				title=_("Visit Closed"),
@@ -229,22 +240,6 @@ def qc_party_name(doc) -> str:
 	if is_farmer_or_agent_qc(doc):
 		return (doc.farmer_name or "").strip()
 	return (doc.staff_name or "").strip()
-
-
-def _sync_party_name_to_gate_entry(doc):
-	gate_entry = (doc.gate_entry or "").strip()
-	party_name = qc_party_name(doc)
-	if not gate_entry or not party_name:
-		return
-	if not frappe.db.exists("Gate Entry", gate_entry):
-		return
-	frappe.db.set_value(
-		"Gate Entry",
-		gate_entry,
-		"party_name",
-		party_name,
-		update_modified=False,
-	)
 
 
 def _sync_weigh_bridge_quality_from_qc(doc):
