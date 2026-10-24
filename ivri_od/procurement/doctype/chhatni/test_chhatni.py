@@ -164,13 +164,37 @@ class TestChhatniLogicNoDB(unittest.TestCase):
 		self.assertEqual(self.db.sql.call_args.args[1], self.ROW["pass_unique_key"])
 		self.msgprint.assert_not_called()
 
-	def test_zero_or_missing_net_weight_saves_zeros_and_informs(self):
+	def test_zero_or_missing_net_weight_is_informed_and_not_saved(self):
 		for net in (0, None, -5):
 			self.msgprint.reset_mock()
 			self.db.sql.return_value = [[net]]
-			doc = self._validated()
-			self.assertEqual((doc.net_weight, doc.chhatni_kg, doc.chhatni_qt, doc.received_chhatni_pct), (0, 0, 0, 0))
+			with self.assertRaises(frappe.ValidationError) as ctx:
+				self._validated()
+			self.assertIn("must be greater than TP Quantity", str(ctx.exception))
 			self.assertEqual(self.msgprint.call_args.kwargs["title"], "Net Weight Not Found")
+
+	def test_net_weight_must_be_strictly_above_tp_quantity(self):
+		# TP Quantity is 250 (ROW). 280 > 250 saves (see the example test); equal or lower is refused.
+		for net in (250.0, 249.999, 100.0, 0.0):
+			self.db.sql.return_value = [[net]]
+			with self.assertRaises(frappe.ValidationError) as ctx:
+				self._validated()
+			message = str(ctx.exception)
+			self.assertIn("must be greater than TP Quantity", message)
+			self.assertIn("250.0", message)
+		for net in (250.001, 280.0, 1000.0):
+			self.db.sql.return_value = [[net]]
+			self.assertEqual(self._validated().net_weight, net)
+
+	def test_refusal_happens_on_every_save_so_an_edit_cannot_bypass_it(self):
+		self.db.sql.return_value = [[300.0]]
+		doc = self._validated(name="CH-2026-00001")
+		self.assertEqual(doc.net_weight, 300.0)
+		self.db.sql.return_value = [[240.0]]  # a weighbridge correction later brings it below TP Quantity
+		with patch(f"{ENTRY_MODULE}.get_transit_pass_for_ppc_and_tp_no", return_value=self.ROW), self.assertRaises(
+			frappe.ValidationError
+		):
+			doc.validate()
 
 	def test_second_chhatni_for_same_pass_is_blocked(self):
 		self.db.get_value.return_value = "CH-2026-00001"

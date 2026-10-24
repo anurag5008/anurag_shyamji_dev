@@ -17,15 +17,26 @@ frappe.ui.form.on("Gate Exit", {
 
 function setup_inside_mill_vehicle_autocomplete(frm) {
 	const field = frm.fields_dict.vehicle_no;
-	if (!field || field.gate_exit_autocomplete_ready) return;
-	field.gate_exit_autocomplete_ready = true;
-	const load = (txt = "") => frappe.call({
+	if (!field) return;
+	if (!field.gate_exit_autocomplete_ready) {
+		field.gate_exit_autocomplete_ready = true;
+		field.$input?.on("focus.gate_exit", () => load_inside_mill_vehicles(frm));
+	}
+	if (frm.is_new()) load_inside_mill_vehicles(frm);
+}
+
+// Fill the Vehicle No list with vehicles inside the mill.
+function load_inside_mill_vehicles(frm) {
+	const field = frm.fields_dict.vehicle_no;
+	frappe.call({
 		method: "ivri_od.procurement.doctype.gate_exit.gate_exit.get_inside_mill_vehicle_autocomplete",
-		args: { txt, limit: 25 },
-		callback(r) { field.set_data?.(r.message || []); },
+		args: { txt: "", limit: 500 },
+		callback(r) {
+			const vehicles = r.message || [];
+			frm.inside_mill_vehicles = vehicles.map((v) => v.value);
+			field.set_data?.(vehicles);
+		},
 	});
-	field.$input?.on("focus.gate_exit", () => load(field.get_value() || ""));
-	field.$input?.on("input.gate_exit", frappe.utils.debounce(() => load(field.$input.val() || ""), 300));
 }
 
 function resolve_gate_exit(frm) {
@@ -36,6 +47,14 @@ function resolve_gate_exit(frm) {
 		return;
 	}
 	if (frm.doc.vehicle_no !== vehicle) frm.set_value("vehicle_no", vehicle);
+	if (frm.is_new() && frm.inside_mill_vehicles && !frm.inside_mill_vehicles.includes(vehicle)) {
+		frappe.show_alert({
+			message: __("Vehicle {0} is not inside the mill. Select from the list.", [vehicle]),
+			indicator: "orange",
+		});
+		frm.set_value("vehicle_no", "");
+		return;
+	}
 	frappe.call({
 		method: "ivri_od.procurement.doctype.gate_exit.gate_exit.resolve_gate_exit_for_vehicle",
 		args: { vehicle_no: vehicle },

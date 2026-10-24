@@ -31,6 +31,7 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 app_include_js = [
 	"/assets/ivri_od/js/disable_quick_entry.js",
+	"/assets/ivri_od/js/sidebar_logo.js",
 	"portal_detail_table.bundle.js",
 ]
 # app_include_css = "/assets/ivri_od/css/ivri_od.css"

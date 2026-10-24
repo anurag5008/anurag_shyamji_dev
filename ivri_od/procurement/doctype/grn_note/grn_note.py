@@ -303,19 +303,21 @@ class GRNNote(Document):
 		)
 		if not rst:
 			return
-		if not (self.party_name or "").strip() and (rst.party_name or "").strip():
+		# A correction in RST Details must replace the old value, so a sync overwrites instead of filling blanks.
+		force = getattr(self.flags, "syncing_from_wbm", False)
+		if (rst.party_name or "").strip() and (force or not (self.party_name or "").strip()):
 			self.party_name = (rst.party_name or "").strip()
-		if not (self.local_purchase_order or "").strip() and (rst.local_purchase_order or "").strip():
+		if force or (not (self.local_purchase_order or "").strip() and (rst.local_purchase_order or "").strip()):
 			self.local_purchase_order = (rst.local_purchase_order or "").strip()
-		if not (self.get("purchase_order") or "").strip():
+		if force or not (self.get("purchase_order") or "").strip():
 			self.set("purchase_order", (getattr(rst, "purchase_order", None) or self.local_purchase_order or "").strip())
-		if not (self.ppc_name or "").strip():
+		if (rst.party_name or "").strip() and (force or not (self.ppc_name or "").strip()):
 			self.ppc_name = (rst.party_name or "").strip()
 		self.agent_name = ""
 		self.is_farmer_or_agent = 1
-		if not (self.paddy_variety or "").strip() and (rst.commodity or "").strip():
+		if (rst.commodity or "").strip() and (force or not (self.paddy_variety or "").strip()):
 			self.paddy_variety = rst.commodity.strip()
-		if not self.receipt_datetime and rst.entry_date:
+		if rst.entry_date and (force or not self.receipt_datetime):
 			self.receipt_date = rst.entry_date
 			self.receipt_time = rst.entry_time or nowtime()
 			ensure_doc_datetime(
@@ -352,14 +354,27 @@ class GRNNote(Document):
 			child.total_amount = flt(row.get("total_amount"))
 
 	def _sync_from_transit_pass(self):
-		tp = frappe.db.get_value(
-			"PPAS Transit Pass",
-			{"pass_unique_key": self.pass_unique_key},
-			_TP_SYNC_FIELDS,
-			as_dict=True,
+		key = (self.pass_unique_key or "").strip()
+		tp = (
+			frappe.db.get_value(
+				"PPAS Transit Pass", {"pass_unique_key": key}, _TP_SYNC_FIELDS, as_dict=True
+			)
+			if key
+			else None
 		)
 		if not tp:
-			self.mill_name = ""
+			# No Transit Pass any more (RST no longer matches one): nothing from a pass may stay on the GRN.
+			for fieldname in ("mill_name", "cmr_season", "transit_pass_no", "pacs", "ppc"):
+				self.set(fieldname, "")
+			self.transit_pass_date = None
+			self.transit_pass_datetime = None
+			for fieldname in (
+				"tp_quantity", "tp_cumulative_received", "tp_cumulative_deduction",
+				"chhatni_received_pct", "tp_chhatni_balance",
+			):
+				self.set(fieldname, 0)
+			for fieldname in ("tp_fulfillment_status", "chhatni_fulfillment_status", "chhatni_fulfillment_remark"):
+				self.set(fieldname, "")
 			return
 
 		self.cmr_season = (tp.season or "").strip()
@@ -434,6 +449,7 @@ class GRNNote(Document):
 				"agent_name",
 				"party_name",
 				"local_purchase_order",
+				"commodity",
 			],
 			as_dict=True,
 		)
@@ -459,6 +475,7 @@ class GRNNote(Document):
 					)
 				)
 
+		self.commodity = (wbm.commodity or "").strip()
 		self.gross_vehicle_weight = flt(wbm.load_weight)
 		self.gross_weight = flt(wbm.gross_weight)
 		self.tare_weight = flt(wbm.tare_weight)
@@ -526,12 +543,19 @@ class GRNNote(Document):
 				"driver_name",
 				"gate_entry",
 				"qc_datetime",
+				"is_farmer_or_agent",
+				"farmer_name",
 			],
 			as_dict=True,
 		)
 		if not qc:
 			return
 
+		if not cint(self.is_local_procurement):
+			# Government paddy: the party is the Quality Check farmer / staff (local paddy keeps the RST party).
+			self.party_name = (
+				(qc.farmer_name if cint(qc.is_farmer_or_agent) else qc.staff_name) or ""
+			).strip()
 		self.moisture = flt(qc.moisture)
 		self.dust = flt(qc.dust)
 		self.unloader_name = (qc.staff_name or "").strip()
@@ -551,11 +575,27 @@ class GRNNote(Document):
 
 		if not (self.gate_entry or "").strip() and (qc.gate_entry or "").strip():
 			self.gate_entry = qc.gate_entry.strip()
-		if not (self.driver_name or "").strip() and (qc.driver_name or "").strip():
+		if (qc.driver_name or "").strip() and (
+			getattr(self.flags, "syncing_from_wbm", False) or not (self.driver_name or "").strip()
+		):
 			self.driver_name = qc.driver_name.strip()
 
 		self._apply_qc_bag_details(qc_name)
 		self._apply_qc_old_new_bags(qc_name)
+
+	def _clear_quality_check_values(self):
+		"""The Weigh Bridge no longer has a Quality Check (it was moved to another vehicle): drop its values."""
+		for fieldname in (
+			"moisture", "dust", "paddy_received_in_pkt", "paddy_returned",
+		):
+			self.set(fieldname, 0)
+		for fieldname in (
+			"unloader_name", "unloading_point", "paddy_type", "paddy_quality", "qc_decision", "driver_name",
+		):
+			self.set(fieldname, "")
+		self.qc_datetime = None
+		self.old_new_bags = []
+		self.qc_bag_details = []
 
 	def _apply_qc_old_new_bags(self, qc_name: str):
 		self.old_new_bags = []
@@ -639,8 +679,7 @@ class GRNNote(Document):
 				self.driver_name = (gate_in_row.driver_name or "").strip()
 			if not (self.vehicle_no or "").strip():
 				self.vehicle_no = normalize_vehicle_no(gate_in_row.vehicle_no)
-			if (gate_in_row.party_name or "").strip():
-				self.party_name = gate_in_row.party_name.strip()
+			# Gate Entry Party Name is only stored there: it never feeds the GRN.
 			self.mobile_no = (gate_in_row.mobile_no or "").strip()
 
 		exit_row = _latest_gate_exit(gate_in, self.vehicle_no or (gate_in_row.vehicle_no if gate_in_row else ""))
@@ -743,6 +782,11 @@ def sync_grn_from_weigh_bridge(wbm_name: str) -> str | None:
 	frappe.local.syncing_grn_from_wbm = wbm_name
 	try:
 		grn = frappe.get_doc("GRN Note", grn_name)
+		# Corrections overwrite what the GRN holds (fields otherwise only fill when blank).
+		grn.flags.syncing_from_wbm = True
+		old_pass_key = (grn.pass_unique_key or "").strip()
+		# Gate Entry / Quality Check give it back below; a wrong driver must not survive.
+		grn.driver_name = ""
 		wbm = frappe.db.get_value(
 			"Weigh Bridge Measurement",
 			wbm_name,
@@ -774,8 +818,9 @@ def sync_grn_from_weigh_bridge(wbm_name: str) -> str | None:
 			if (wbm.commodity or "").strip() and not (grn.paddy_variety or "").strip():
 				grn.paddy_variety = wbm.commodity.strip()
 		else:
+			# An empty key is a real change too: the RST no longer matches any Transit Pass.
 			wbm_pass = (wbm.pass_unique_key or "").strip()
-			if wbm_pass and wbm_pass != (grn.pass_unique_key or "").strip():
+			if wbm_pass != (grn.pass_unique_key or "").strip():
 				grn.pass_unique_key = wbm_pass
 
 		grn.flags.syncing_from_wbm = True
@@ -785,6 +830,8 @@ def sync_grn_from_weigh_bridge(wbm_name: str) -> str | None:
 		qc_name = (grn.quality_check or "").strip()
 		if qc_name:
 			grn._apply_quality_check(qc_name)
+		else:
+			grn._clear_quality_check_values()
 		grn._sync_ppc_name_from_quality_check()
 
 		grn._apply_gate_entry((grn.gate_entry or "").strip())
@@ -795,6 +842,12 @@ def sync_grn_from_weigh_bridge(wbm_name: str) -> str | None:
 
 		grn.flags.ignore_validate = True
 		grn.save(ignore_permissions=True)
+
+		new_pass_key = (grn.pass_unique_key or "").strip()
+		if old_pass_key and old_pass_key != new_pass_key:
+			# TP No / PPC corrected: the pass the GRN left must drop it from its totals.
+			refresh_tp_fulfillment_for_pass(old_pass_key)
+			_sync_procurement_rollups_for_pass(old_pass_key)
 
 		if not cint(grn.is_local_procurement) and (grn.pass_unique_key or "").strip():
 			pass_key = (grn.pass_unique_key or "").strip()
@@ -1089,6 +1142,7 @@ def _grn_details_from_rst(
 		"tare_weight": doc.tare_weight,
 		"net_weight": doc.net_weight,
 		"deduction": doc.deduction,
+		"commodity": doc.commodity,
 		"gunny_type": doc.gunny_type,
 		"gunny_weight": doc.gunny_weight,
 		"gate_entry": doc.gate_entry,

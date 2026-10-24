@@ -4,7 +4,7 @@
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import cint, format_datetime, get_datetime, now_datetime
+from frappe.utils import format_datetime, get_datetime, now_datetime
 
 from ivri_od.procurement.datetime_fields import ensure_doc_datetime
 from ivri_od.procurement.mill_gate import (
@@ -263,7 +263,7 @@ def get_inside_mill_vehicle_autocomplete(txt="", limit=25):
 
 
 def party_name_for_gate_entry(gate_entry_name: str, doc=None) -> str:
-	"""Party name on Gate Entry, else from the latest linked Quality Check."""
+	"""Party name stored on the Gate Entry itself. It is never taken from the Quality Check."""
 	name = (gate_entry_name or "").strip()
 	if not name:
 		return ""
@@ -277,19 +277,7 @@ def party_name_for_gate_entry(gate_entry_name: str, doc=None) -> str:
 		if (stored or "").strip():
 			return stored.strip()
 
-	qc_rows = frappe.get_all(
-		"Quality Check",
-		filters={"gate_entry": name},
-		fields=["is_farmer_or_agent", "farmer_name", "staff_name"],
-		order_by="modified desc",
-		limit=1,
-	)
-	if not qc_rows:
-		return ""
-	qc = qc_rows[0]
-	if cint(qc.is_farmer_or_agent):
-		return (qc.farmer_name or "").strip()
-	return (qc.staff_name or "").strip()
+	return ""
 
 
 def _render_gate_entry_pass_html(doc, for_pdf: bool = False) -> str:

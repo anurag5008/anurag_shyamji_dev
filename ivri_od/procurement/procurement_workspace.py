@@ -305,9 +305,13 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Verification",
+		"Registers",
 		[
-			("Miller Verification Report", "DocType"),
+			("Mandi Book", "Report"),
+			("Entry Report", "Report"),
+			("Vehicle Gate Movement Summary", "Report"),
+			(DC_TRACK_REPORT, "Report"),
+			(DC_DETAILS_REPORT, "Report"),
 		],
 	),
 	(
@@ -321,13 +325,9 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Registers",
+		"Verification",
 		[
-			("Mandi Book", "Report"),
-			("Entry Report", "Report"),
-			("Vehicle Gate Movement Summary", "Report"),
-			(DC_TRACK_REPORT, "Report"),
-			(DC_DETAILS_REPORT, "Report"),
+			("Miller Verification Report", "DocType"),
 		],
 	),
 ]
@@ -671,6 +671,21 @@ def apply_ppas_workspace():
 	)
 
 
+def apply_rice_workspace():
+	"""Page "Rice Delivered Summary": DC Details (rice due and lots delivered per mill)."""
+	_apply_portal_workspace(
+		RICE_WORKSPACE,
+		"layout-grid",
+		"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. "
+		"Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.",
+		RICE_REPORTS,
+		"Rice delivery reports",
+		None,
+		None,
+		None,
+	)
+
+
 def _apply_portal_workspace(
 	title,
 	icon,
@@ -690,26 +705,6 @@ def _apply_portal_workspace(
 	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers.
 	``show_card=False`` keeps only the shortcuts, for a page whose card would repeat a single shortcut."""
 	reports = [r for r in report_list if frappe.db.exists(link_type, r[0])]
-def apply_rice_workspace():
-	"""Page "Rice Delivered Summary": DC Details (rice due and lots delivered per mill)."""
-	_apply_portal_workspace(
-		RICE_WORKSPACE,
-		"layout-grid",
-		"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. "
-		"Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.",
-		RICE_REPORTS,
-		"Rice delivery reports",
-		None,
-		None,
-		None,
-	)
-
-
-def _apply_portal_workspace(title, icon, intro, report_list, card, block, group, portal):
-	"""A page of portal reports with a Manual Entry button (none when ``block`` is
-	None). A child page of Procurement (not an app of its own), opened from its
-	Procurement shortcut. Not "hidden": Frappe shows hidden pages only to Workspace Managers."""
-	reports = [r for r in report_list if frappe.db.exists("Report", r[0])]
 	if block:
 		_ensure_manual_entry_block(block, group, portal, block_html, block_script)
 	if frappe.db.exists("Workspace", title):

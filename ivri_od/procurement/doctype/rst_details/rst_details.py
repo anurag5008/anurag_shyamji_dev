@@ -18,10 +18,11 @@ from ivri_od.procurement.grn_tp_fulfillment import chhatni_from_rate
 from ivri_od.procurement.mill_gate import normalize_vehicle_no
 from ivri_od.procurement.transit_pass_resolve import (
 	_transit_pass_matches_season,
-	_transit_pass_ppc_matches_master,
 	find_transit_passes_by_tp_and_ppc,
 	get_agent_for_ppc_text,
 	mill_id_from_transit_pass,
+	normalize_ppc_text,
+	ppc_master_candidates,
 	resolve_ppc_master_name,
 )
 
@@ -77,6 +78,9 @@ class RSTDetails(Document):
 			frappe.throw(details["validation_message"], title=_("Transit Pass"))
 
 		self.tp_status = details.get("tp_status") or ""
+		# TP Received: keep the PPC Master identity, whatever way the PPC was typed.
+		if details.get("party_name"):
+			self.party_name = details["party_name"]
 		# PPC Mismatch and Invalid TP No are saved; only inform the user.
 		if details.get("notification"):
 			title = _("Invalid TP No") if self.tp_status == "Invalid TP No" else _("PPC Mismatch")
@@ -157,10 +161,26 @@ class RSTDetails(Document):
 		private = False if rice_dispatch else is_private_procurement_rst(self)
 		awaiting_tp = False if rice_dispatch else party_found_awaiting_tp(self)
 		transit_pass = None
+		unresolved = False
 		if not private and not awaiting_tp and not rice_dispatch:
 			transit_pass = try_get_matching_transit_pass(self)
 			if not transit_pass:
-				return
+				has_weighment = bool((self.weigh_bridge_measurement or "").strip())
+				# PPC Mismatch is kept in the Weigh Bridge list with its status; Invalid TP No creates nothing.
+				if not has_weighment and self.tp_status != "PPC Mismatch":
+					return
+				# The Weigh Bridge and GRN follow the RST: they must not keep an old pass.
+				unresolved = True
+				if has_weighment:
+					frappe.msgprint(
+						_(
+							"TP No and Party Name match no Transit Pass. The Weigh Bridge and GRN Note no longer show "
+							"a Transit Pass. Correct TP No or Party Name and save again to link it."
+						),
+						title=_("Transit Pass Removed"),
+						indicator="orange",
+						alert=True,
+					)
 
 		values = {
 			"demo_rst_data": self.name,
@@ -205,10 +225,10 @@ class RSTDetails(Document):
 					"purchase_order": (self.local_purchase_order or "").strip(),
 				}
 			)
-		elif awaiting_tp:
-			# Party is a known PPC and TP No is still empty. Create the weigh bridge
+		elif awaiting_tp or unresolved:
+			# No usable Transit Pass (TP No empty, or it no longer matches). Create the weigh bridge
 			# without a mill number or transit pass. RST vehicle goes to Actual Truck No.
-			# Mill is fetched when TP No is updated.
+			# Mill is fetched when TP No is updated. Whatever an earlier pass had put on it is cleared.
 			rst_vehicle = (self.vehicle_no or "").strip().upper()
 			values.update(
 				{
@@ -217,9 +237,16 @@ class RSTDetails(Document):
 					"same_truck_as_transit_pass": 1 if rst_vehicle else 0,
 					"actual_truck_no": rst_vehicle,
 					"pass_unique_key": "",
+					"transit_pass_no": "",
+					"pacs_name": "",
+					"tp_weight": 0,
+					"truck_no_in_tp": "",
 					"vehicle_no": "",
 				}
 			)
+			if unresolved:
+				# Shown in the Weigh Bridge list, so the user sees which party was typed.
+				values["party_name"] = (self.party_name or "").strip()
 		else:
 			tp_vehicle_no = ""
 			if transit_pass.pass_unique_key:
@@ -276,7 +303,7 @@ class RSTDetails(Document):
 			wbm = frappe.get_doc("Weigh Bridge Measurement", wbm_name)
 			for fieldname, value in values.items():
 				wbm.set(fieldname, value)
-			if awaiting_tp:
+			if awaiting_tp or unresolved:
 				wbm.flags.ignore_mandatory = True
 			wbm.save(ignore_permissions=True)
 		else:
@@ -291,27 +318,35 @@ class RSTDetails(Document):
 _PARTY_NAME_WITH_CODE = re.compile(r"^(.+?)\s*\(([^)]+)\)\s*$")
 
 
-def _party_name_part_matches_ppc(party_name: str, ppc_on_pass: str | None) -> bool:
-	"""When Party Name is typed as NAME(CODE), NAME must also belong to the Transit Pass PPC.
+def _ppc_text_forms(ppc_text: str | None) -> set[str]:
+	"""Texts that mean this PPC: the whole text, its name part and its code part."""
+	ppc_text = (ppc_text or "").strip()
+	forms = {normalize_ppc_text(ppc_text)}
+	parts = _PARTY_NAME_WITH_CODE.match(ppc_text)
+	if parts:
+		forms.update(normalize_ppc_text(part) for part in parts.groups())
+	forms.discard("")
+	return forms
 
-	The shared PPC matching resolves NAME(CODE) by its code alone, so "WRONG(S1)" would match "AGALPUR(S1)".
+
+def party_ppc_match_state(party_name: str | None, ppc_on_pass: str | None, candidates=None) -> str:
+	"""Compare Party Name with the PPC on a Transit Pass: "match", "ambiguous" or "mismatch".
+
+	Party Name may be the PPC name, the code, or name plus code, in any case, spacing or brackets.
+	PPC Master decides first. "ambiguous": the text fits several PPC Masters and one of them is the pass PPC.
+	`candidates` is ppc_master_candidates(party_name), passed in when many passes are compared.
 	"""
-	parts = _PARTY_NAME_WITH_CODE.match((party_name or "").strip())
-	if not parts:
-		return True
-	typed_name = parts.group(1).strip().casefold()
-	names = {(ppc_on_pass or "").partition("(")[0].strip().casefold()}
-	master = resolve_ppc_master_name(ppc_on_pass)
-	if master:
-		names.add((frappe.db.get_value("PPC Master", master, "ppc_name") or "").strip().casefold())
-	return typed_name in names
-
-
-def rst_party_matches_transit_pass_ppc(ppc_on_pass: str | None, party_name: str | None) -> bool:
-	"""Single PPC check for RST: the Weigh Bridge PPC Master matching plus the NAME(CODE) name check."""
-	return _transit_pass_ppc_matches_master(ppc_on_pass, party_name) and _party_name_part_matches_ppc(
-		party_name, ppc_on_pass
-	)
+	if not normalize_ppc_text(party_name) or not (ppc_on_pass or "").strip():
+		return "mismatch"
+	if candidates is None:
+		candidates = ppc_master_candidates(party_name)
+	pass_master = resolve_ppc_master_name(ppc_on_pass)
+	if pass_master and candidates:
+		if pass_master not in candidates:
+			return "mismatch"
+		return "match" if len(candidates) == 1 else "ambiguous"
+	# Not in PPC Master (or spelled differently there): the pass text itself must say it.
+	return "match" if normalize_ppc_text(party_name) in _ppc_text_forms(ppc_on_pass) else "mismatch"
 
 
 def ppc_name_and_code(ppc_text: str | None) -> tuple[str, str]:
@@ -326,30 +361,21 @@ def ppc_name_and_code(ppc_text: str | None) -> tuple[str, str]:
 	return "", ""
 
 
-def party_matches_ppc_name_and_code(party_name: str | None, ppc_on_pass: str | None) -> bool:
-	"""TP Received rule: Party Name is NAME(CODE) and both equal the Transit Pass PPC (PPC Master).
-
-	Name only or code only is not enough. Spaces and letter case are ignored.
-	"""
-	parts = _PARTY_NAME_WITH_CODE.match(" ".join((party_name or "").split()))
-	if not parts:
-		return False
-	name, code = ppc_name_and_code(ppc_on_pass)
-	if not name or not code:
-		return False
-	return (
-		" ".join(parts.group(1).split()).casefold() == name.casefold()
-		and parts.group(2).strip().casefold() == code.casefold()
-	)
+def classify_rst_transit_passes(tp_no: str | None, party_name: str | None) -> tuple[list[dict], bool]:
+	"""(passes of this TP No that Party Name identifies as their PPC, True when the name fits several PPCs)."""
+	candidates = ppc_master_candidates(party_name)
+	matching, ambiguous = [], False
+	for row in find_transit_passes_by_tp_and_ppc(tp_no, party_name):
+		state = party_ppc_match_state(party_name, row.get("ppc"), candidates)
+		if state == "match":
+			matching.append(row)
+		ambiguous = ambiguous or state == "ambiguous"
+	return matching, ambiguous
 
 
 def find_rst_transit_passes(tp_no: str | None, party_name: str | None) -> list[dict]:
-	"""Transit Pass rows for this TP No whose PPC matches Party Name by both PPC name and code."""
-	return [
-		row
-		for row in find_transit_passes_by_tp_and_ppc(tp_no, party_name)
-		if party_matches_ppc_name_and_code(party_name, row.get("ppc"))
-	]
+	"""Transit Pass rows for this TP No whose PPC Party Name identifies (see party_ppc_match_state)."""
+	return classify_rst_transit_passes(tp_no, party_name)[0]
 
 
 def rst_unique_key_for_pass(row: dict, tp_no: str, season_code: str) -> str:
@@ -379,7 +405,7 @@ def _party_ppc_candidates(party_name: str) -> list[str]:
 def party_matches_any_transit_pass_ppc(party_name: str | None) -> bool:
 	"""True when Party Name is the PPC of any Transit Pass.
 
-	Narrows the Transit Pass PPCs with one query, then confirms each with rst_party_matches_transit_pass_ppc,
+	Narrows the Transit Pass PPCs with one query, then confirms each with party_ppc_match_state,
 	so name or code alone cannot pick the wrong PPC.
 	"""
 	party_name = (party_name or "").strip()
@@ -410,7 +436,8 @@ def party_matches_any_transit_pass_ppc(party_name: str | None) -> bool:
 		values,
 		as_dict=True,
 	)
-	found = any(rst_party_matches_transit_pass_ppc(row.get("ppc"), party_name) for row in rows)
+	candidates = ppc_master_candidates(party_name)
+	found = any(party_ppc_match_state(party_name, row.get("ppc"), candidates) != "mismatch" for row in rows)
 	cache[key] = found
 	return found
 
@@ -467,9 +494,11 @@ def rice_dispatch_unique_key(depo: dict, season_code: str, lot_no: str | None) -
 
 def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_datetime=None) -> dict:
 	"""Implement the 5 RST TP & Party Name rules:
-	1. TP No. exists in Transit Pass and Party Name matches its PPC by both name and code -> status TP Received.
+	1. TP No. exists in Transit Pass and Party Name identifies its PPC (name, code or name plus code; case, spaces
+	   and brackets ignored) -> status TP Received, and Party Name is saved as the PPC Master NAME(CODE).
+	   A name that fits several PPCs is never guessed: validation_message asks for NAME(CODE).
 	2. TP No. is empty but Party Name matches any Transit Pass PPC -> status TP No Not Received.
-	3. TP No. exists but Party Name does not match its PPC name and code -> status PPC Mismatch (notification).
+	3. TP No. exists but Party Name is not its PPC -> status PPC Mismatch (notification).
 	4. TP No. is empty and Party Name matches no Transit Pass PPC -> status Local Paddy Purchase.
 	5. TP No. is entered but not found in Transit Pass -> status Invalid TP No (notification).
 	   Checked before rule 3, so an unknown TP No is never reported as a PPC mismatch.
@@ -499,6 +528,7 @@ def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_dateti
 		"rst_unique_key": "",
 		"key_message": "",
 		"tp_quantity": 0.0,
+		"party_name": "",
 	}
 
 	season = get_season_for_date(rst_datetime) if rst_datetime else None
@@ -534,7 +564,7 @@ def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_dateti
 		return result
 
 	# TP No is entered
-	matching = find_rst_transit_passes(tp_no, party_name)
+	matching, ambiguous = classify_rst_transit_passes(tp_no, party_name)
 	if len(matching) > 1 and season:
 		# The same TP No and PPC can exist in two seasons; the RST Date & Time decides.
 		matching = [row for row in matching if _transit_pass_matches_season(row, season)] or matching
@@ -549,7 +579,10 @@ def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_dateti
 		result["tp_status"] = "TP Received"
 		row = matching[0]
 		result["mill_name"] = mill_id_from_transit_pass(row)
-		result["agent_name"] = get_agent_for_ppc_text(party_name, row.get("ppc")) or ""
+		result["agent_name"] = get_agent_for_ppc_text(row.get("ppc"), party_name) or ""
+		name, code = ppc_name_and_code(row.get("ppc"))
+		if name and code:
+			result["party_name"] = f"{name}({code})"
 		result["tp_quantity"] = flt(row.get("quantity"), 3)
 		if season and _transit_pass_matches_season(row, season):
 			result["rst_unique_key"] = rst_unique_key_for_pass(row, tp_no, result["season_code"])
@@ -558,6 +591,11 @@ def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_dateti
 				"Transit Pass {0} is not in season {1} of the RST Date & Time, so the RST Unique Key is empty. "
 				"Check the RST Date & Time or the Season Master dates."
 			).format(row.get("pass_unique_key"), result["season_code"])
+	elif ambiguous:
+		# The text fits several PPC Masters: never guess one.
+		result["validation_message"] = _(
+			"Party Name fits more than one PPC. Type the PPC name with its code, like NAME(CODE)."
+		)
 	elif not transit_pass_no_exists(tp_no):
 		# Rule 5: TP No. is entered but not found in Transit Pass -> status Invalid TP No
 		result["tp_status"] = "Invalid TP No"

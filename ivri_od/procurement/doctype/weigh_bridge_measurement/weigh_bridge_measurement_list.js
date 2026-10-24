@@ -32,6 +32,12 @@ frappe.listview_settings["Weigh Bridge Measurement"] = {
 				["Weigh Bridge Measurement", "tp_status", "=", "TP Not Received"],
 			]);
 		});
+		listview.page.add_inner_button(__("PPC Mismatch"), () => {
+			listview.filter_area.clear();
+			listview.filter_area.add([
+				["Weigh Bridge Measurement", "tp_status", "=", "PPC Mismatch"],
+			]);
+		});
 		listview.page.add_inner_button(__("TP Received"), () => {
 			listview.filter_area.clear();
 			listview.filter_area.add([

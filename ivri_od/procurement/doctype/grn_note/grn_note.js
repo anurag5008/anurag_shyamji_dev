@@ -382,6 +382,7 @@ const RST_FETCH_FIELDS = [
 	"is_local_procurement",
 	"local_procurement_note",
 	"weigh_bridge_measurement",
+	"commodity",
 	"gross_vehicle_weight",
 	"gross_weight",
 	"tare_weight",

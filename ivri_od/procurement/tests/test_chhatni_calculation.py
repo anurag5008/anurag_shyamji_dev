@@ -108,6 +108,20 @@ class TestMandiBookChhatni(_NoSiteMixin, unittest.TestCase):
 			tp_fulfillment_status="",
 		)
 
+	# Weigh Bridge lines of a pass: by default gross = the GRN net weight, no gunny, no deduction.
+	gunny_per_line = 0.0
+	deduction_per_line = 0.0
+
+	def _lines(self, docs, *args):
+		return [
+			{
+				"gross_weight": float(doc.net_weight or 0), "gunny_weight": self.gunny_per_line,
+				"deduction": self.deduction_per_line, "gunny_type": "", "jute_pkt": 0, "plastic_pkt": 0,
+				"no_of_bags": 0, "total_bags": 0,
+			}
+			for doc in docs
+		]
+
 	def _run(self, grns, chhatni_rows):
 		def get_all(doctype, **kwargs):
 			return {"GRN Note": grns, "Chhatni": chhatni_rows}[doctype]
@@ -119,7 +133,7 @@ class TestMandiBookChhatni(_NoSiteMixin, unittest.TestCase):
 			patch(f"{MANDI_BOOK}._entries_for", return_value={}),
 			patch(f"{MANDI_BOOK}._mill_companies", return_value={}),
 			patch(f"{MANDI_BOOK}._mill_label", return_value=("Mill", "M051007")),
-			patch(f"{MANDI_BOOK}._rst_lines", return_value=[]),
+			patch(f"{MANDI_BOOK}._rst_lines", side_effect=self._lines),
 			patch(f"{MANDI_BOOK}.ppc_display_name", side_effect=lambda value: value),
 		]
 		for patcher in patches:
@@ -141,11 +155,47 @@ class TestMandiBookChhatni(_NoSiteMixin, unittest.TestCase):
 			[self._chhatni("CH-1", self.KEY_A, 11.2, 4.48)],
 		)
 		row = rows[self.KEY_A]
-		self.assertEqual(row["total_received"], 280.0)
+		self.assertEqual(row["total_received"], 268.8)  # 280 gross - 11.2 Chhatni
 		self.assertEqual(row["excess_received_qty"], 18.8)
 		self.assertEqual(row["actual_chhatni_pct"], 4.48)
 		self.assertEqual(row["chhatni_status"], EXTRA_CHHATNI_RECEIVED)
 		self.assertEqual(row["chhatni_received_qty"], 11.2)
+
+	def test_total_qty_received_is_gross_less_gunny_deduction_and_chhatni(self):
+		self.gunny_per_line, self.deduction_per_line = 2.5, 1.5
+		_, rows = self._run(
+			[self._grn(self.KEY_A, 140), self._grn(self.KEY_A, 140)], [self._chhatni("CH-1", self.KEY_A, 11.2, 4.48)]
+		)
+		row = rows[self.KEY_A]
+		self.assertEqual(
+			(row["total_gross_weight"], row["total_gunny_weight"], row["total_deduction_received"], row["chhatni_received_qty"]),
+			(280.0, 5.0, 3.0, 11.2),
+		)
+		self.assertEqual(row["total_received"], 260.8)  # 280 - 5 - 3 - 11.2
+
+	def test_status_pending_and_excess_follow_the_new_total(self):
+		# TP 250: 260.8 received -> completed, nothing pending, 10.8 excess.
+		self.gunny_per_line, self.deduction_per_line = 2.5, 1.5
+		_, rows = self._run(
+			[self._grn(self.KEY_A, 140), self._grn(self.KEY_A, 140)], [self._chhatni("CH-1", self.KEY_A, 11.2, 4.48)]
+		)
+		row = rows[self.KEY_A]
+		self.assertEqual((row["tp_status"], row["pending_qty"], row["excess_received_qty"]), ("TP Completed", 0.0, 10.8))
+		# A bigger Chhatni pushes the same weighments below TP Qty: 280 - 5 - 3 - 30 = 242.
+		_, rows = self._run(
+			[self._grn(self.KEY_A, 140), self._grn(self.KEY_A, 140)], [self._chhatni("CH-1", self.KEY_A, 30.0, 12.0)]
+		)
+		row = rows[self.KEY_A]
+		self.assertEqual(
+			(row["total_received"], row["tp_status"], row["pending_qty"], row["excess_received_qty"]),
+			(242.0, "In Progress", 8.0, 0.0),
+		)
+
+	def test_total_qty_received_never_goes_negative(self):
+		self.deduction_per_line = 50.0
+		_, rows = self._run([self._grn(self.KEY_A, 40)], [self._chhatni("CH-1", self.KEY_A, 5.0, 2.0)])
+		row = rows[self.KEY_A]
+		self.assertEqual((row["total_received"], row["tp_status"], row["pending_qty"]), (0.0, "Pending", 250.0))
 
 	def test_received_pct_is_saved_value_not_the_rate(self):
 		"""Bug: the column showed Chhatni (Kg per Qtl) (4) instead of the record's Received Chhatni %."""
@@ -199,10 +249,69 @@ class TestMandiBookChhatni(_NoSiteMixin, unittest.TestCase):
 		fieldnames = [column["fieldname"] for column in get_columns()]
 		for fieldname in ("total_received", "excess_received_qty", "chhatni_assigned", "actual_chhatni_pct", "chhatni_status"):
 			self.assertIn(fieldname, fieldnames)
-		self.assertEqual(len(fieldnames), 35)  # same as before this change
+		self.assertEqual(len(fieldnames), 36)  # the 35 existing columns plus Chhatni (QT)
+		self.assertEqual(len(set(fieldnames)), 36)
 		_, rows = self._run([self._grn(self.KEY_A, 280), self._grn(self.KEY_B, 260, tp_no="142")], [])
 		with patch(f"{MANDI_BOOK}._rst_lines", return_value=[]):
 			from ivri_od.procurement.report.mandi_book.mandi_book import execute
 
 			_, filtered = execute({"transit_pass_no": "142"})
 		self.assertEqual([row["pass_unique_key"] for row in filtered], [self.KEY_B])
+
+
+class TestMandiBookChhatniColumnOrder(unittest.TestCase):
+	"""Chhatni (QT) column and the exact column order. No site, no database."""
+
+	def setUp(self):
+		frappe.local.lang = "en"
+
+	def test_columns_before_total_deduction_received_are_unchanged(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import get_columns
+
+		fieldnames = [column["fieldname"] for column in get_columns()]
+		self.assertEqual(
+			fieldnames[: fieldnames.index("total_deduction_received") + 1],
+			[
+				"season", "ppc_name", "mill_name", "transit_pass_no", "pass_unique_key", "tp_quantity",
+				"total_gross_weight", "summary_gunny_type", "total_gunny_weight", "total_deduction_received",
+			],
+		)
+
+	def test_requested_order_after_total_deduction_received(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import get_columns
+
+		columns = get_columns()
+		fieldnames = [column["fieldname"] for column in columns]
+		start = fieldnames.index("total_deduction_received") + 1
+		self.assertEqual(
+			fieldnames[start : start + 11],
+			[
+				"chhatni_received_qty", "total_received", "chhatni_assigned", "actual_chhatni_pct", "chhatni_status",
+				"pending_qty", "excess_received_qty", "tp_status", "jute_pkt", "plastic_pkt", "total_bags",
+			],
+		)
+		labels = {column["fieldname"]: column["label"] for column in columns}
+		self.assertEqual(labels["chhatni_received_qty"], "Chhatni (QT)")
+		# every other column follows the sequence, in its old order
+		self.assertEqual(
+			fieldnames[start + 11 :],
+			[
+				"entry", "agent_name", "entry_quantity", "entry_price_per_quintal", "total_amount", "grn_no", "rst_no",
+				"vehicle_no", "load_weight", "tare_weight", "gross_weight", "gunny_type", "gunny_weight", "deduction",
+				"net_weight",
+			],
+		)
+
+	def test_chhatni_qt_column_reuses_the_existing_value(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import get_columns
+
+		column = next(c for c in get_columns() if c["fieldname"] == "chhatni_received_qty")
+		self.assertEqual((column["fieldtype"], column["precision"]), ("Float", 3))
+
+	def test_javascript_treats_the_new_column_as_a_summary_column(self):
+		import pathlib
+
+		import ivri_od.procurement.report.mandi_book as report
+
+		js = (pathlib.Path(report.__file__).parent / "mandi_book.js").read_text()
+		self.assertEqual(js.count('"chhatni_received_qty"'), 2)  # both summaryFieldnames sets

@@ -37,6 +37,9 @@ class TestRSTDetailsTPLogicNoDB(unittest.TestCase):
 		patcher = patch(f"{MODULE}.resolve_ppc_master_name", return_value=None)
 		patcher.start()
 		self.addCleanup(patcher.stop)
+		patcher = patch(f"{MODULE}.ppc_master_candidates", return_value=[])
+		patcher.start()
+		self.addCleanup(patcher.stop)
 		# Depo Master lookups need a database: no depo matches unless a test says so.
 		patcher = patch(f"{MODULE}.party_matches_depo_master", return_value=False)
 		patcher.start()
@@ -91,15 +94,16 @@ class TestRSTDetailsTPLogicNoDB(unittest.TestCase):
 		self.assertEqual(wrong["notification"], "Enter Correct PPC Name.")
 		self.assertEqual(right["tp_status"], "TP Received")
 
-	def test_name_part_checked_against_ppc_master_name(self):
-		from ivri_od.procurement.doctype.rst_details.rst_details import _party_name_part_matches_ppc
+	def test_pass_text_spelled_differently_from_master_still_matches(self):
+		from ivri_od.procurement.doctype.rst_details.rst_details import party_ppc_match_state as state
 
-		self.db.get_value.return_value = "AGALPUR"
-		with patch(f"{MODULE}.resolve_ppc_master_name", return_value="S1"):
-			self.assertTrue(_party_name_part_matches_ppc("Agalpur(S1)", "AGALPUR SCS(S1)"))
-			self.assertFalse(_party_name_part_matches_ppc("Other(S1)", "AGALPUR SCS(S1)"))
-		# Name only or code only is left to the shared PPC Master matching.
-		self.assertTrue(_party_name_part_matches_ppc("S1", "AGALPUR(S1)"))
+		# Master says AGALPUR, the pass says AGALPUR SCS: the user may type either, never another name.
+		with patch(f"{MODULE}.resolve_ppc_master_name", return_value="S1"), patch(
+			f"{MODULE}.ppc_master_candidates", return_value=[]
+		):
+			self.assertEqual(state("Agalpur SCS(S1)", "AGALPUR SCS(S1)"), "match")
+			self.assertEqual(state("S1", "AGALPUR SCS(S1)"), "match")
+			self.assertEqual(state("Other(S1)", "AGALPUR SCS(S1)"), "mismatch")
 
 	def test_invalid_tp_no_takes_priority_over_ppc_mismatch(self):
 		with patch(f"{MODULE}.find_transit_passes_by_tp_and_ppc", return_value=[]), patch(
@@ -149,7 +153,7 @@ class TestRSTDetailsTPLogicNoDB(unittest.TestCase):
 
 		self.db.sql.return_value = [{"ppc": "SAME NAME(S2)"}]
 		with patch(f"{MODULE}.resolve_ppc_master_name", return_value=None), patch(
-			f"{MODULE}._transit_pass_ppc_matches_master", return_value=False
+			f"{MODULE}.party_ppc_match_state", return_value="mismatch"
 		) as match:
 			self.assertFalse(party_matches_any_transit_pass_ppc("Same Name"))
 			self.assertFalse(party_matches_any_transit_pass_ppc("same name"))
@@ -160,7 +164,7 @@ class TestRSTDetailsTPLogicNoDB(unittest.TestCase):
 		from ivri_od.procurement.doctype.rst_details.rst_details import party_matches_any_transit_pass_ppc
 
 		self.db.sql.return_value = [{"ppc": "AGALPUR(S1)"}]
-		with patch(f"{MODULE}._transit_pass_ppc_matches_master", return_value=True):
+		if True:
 			self.assertFalse(party_matches_any_transit_pass_ppc("ZZ WRONG(S1)"))
 			self.assertTrue(party_matches_any_transit_pass_ppc("AGALPUR(S1)"))
 
@@ -178,6 +182,7 @@ class TestRSTUniqueKeyNoDB(unittest.TestCase):
 			patch.object(frappe, "msgprint", self.msgprint, create=True),
 			patch.object(frappe, "db", MagicMock(), create=True),
 			patch(f"{MODULE}.resolve_ppc_master_name", return_value=None),
+			patch(f"{MODULE}.ppc_master_candidates", return_value=[]),
 			patch(f"{MODULE}.party_matches_depo_master", return_value=False),
 			patch(f"{MODULE}.get_agent_for_ppc_text", return_value=""),
 			patch(f"{MODULE}.transit_pass_no_exists", return_value=True),
@@ -320,6 +325,7 @@ class TestRSTChhatniNoDB(unittest.TestCase):
 			patch.object(frappe, "db", db, create=True),
 			patch.object(frappe, "msgprint", MagicMock(), create=True),
 			patch(f"{MODULE}.resolve_ppc_master_name", return_value=None),
+			patch(f"{MODULE}.ppc_master_candidates", return_value=[]),
 			patch(f"{MODULE}.party_matches_depo_master", return_value=False),
 			patch(f"{MODULE}.get_agent_for_ppc_text", return_value=""),
 			patch(f"{MODULE}.get_season_for_date", return_value=None),
@@ -342,7 +348,7 @@ class TestRSTChhatniNoDB(unittest.TestCase):
 
 
 class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
-	"""TP Received needs both PPC name and code: no site, no database."""
+	"""Party Name may be PPC name, code or name plus code, in any form: no site, no database."""
 
 	ROW = {
 		"pass_unique_key": "M051007-AGALPUR(S1050118)-K25-TP28",
@@ -353,6 +359,20 @@ class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
 		"season": "Kharif(2025)",
 	}
 
+	MASTER = [
+		frappe._dict(name="S1050118", code="S1050118", ppc_name="AGALPUR"),
+		frappe._dict(name="S1050119", code="S1050119", ppc_name="BADAJEONA"),
+		# Same PPC Name under two codes: name-only text is ambiguous.
+		frappe._dict(name="MY200511", code="MY200511", ppc_name="TWIN"),
+		frappe._dict(name="MY200512", code="MY200512", ppc_name="Twin"),
+	]
+
+	@staticmethod
+	def _resolve_master(text):
+		from ivri_od.procurement.transit_pass_resolve import ppc_master_candidates
+
+		return (ppc_master_candidates(text) or [None])[0]
+
 	def setUp(self):
 		frappe.local.lang = "en"
 		self.db = MagicMock()
@@ -361,7 +381,8 @@ class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
 			patch.object(frappe, "db", self.db, create=True),
 			patch.object(frappe, "msgprint", MagicMock(), create=True),
 			patch.object(frappe, "get_system_settings", MagicMock(return_value=None), create=True),
-			patch(f"{MODULE}.resolve_ppc_master_name", return_value="S1050118"),
+			patch.object(frappe, "get_all", MagicMock(side_effect=lambda *a, **k: self.MASTER), create=True),
+			patch(f"{MODULE}.resolve_ppc_master_name", side_effect=self._resolve_master),
 			patch(f"{MODULE}.party_matches_depo_master", return_value=False),
 			patch(f"{MODULE}.get_agent_for_ppc_text", return_value=""),
 		]
@@ -369,22 +390,38 @@ class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
 			patcher.start()
 			self.addCleanup(patcher.stop)
 
-	def test_name_and_code_both_required(self):
-		from ivri_od.procurement.doctype.rst_details.rst_details import party_matches_ppc_name_and_code as match
+	def test_valid_ways_to_type_the_ppc_all_match(self):
+		from ivri_od.procurement.doctype.rst_details.rst_details import party_ppc_match_state as state
 
-		self.assertTrue(match("AGALPUR(S1050118)", "AGALPUR(S1050118)"))
-		self.assertTrue(match("  agalpur  ( s1050118 ) ", "AGALPUR(S1050118)"))  # spaces and case ignored
-		for party in ("AGALPUR", "S1050118", "WRONG(S1050118)", "AGALPUR(S1050999)", "", None):
-			self.assertFalse(match(party, "AGALPUR(S1050118)"), party)
+		for party in (
+			"AGALPUR(S1050118)", "agalpur(s1050118)", "  Agalpur  ( S1050118 ) ",
+			"AGALPUR S1050118", "AGALPUR(S1050118", "AGALPUR S1050118)", "AGALPUR", "agalpur", "S1050118", "s1050118",
+		):
+			self.assertEqual(state(party, "AGALPUR(S1050118)"), "match", party)
+		# The pass text may be spelled differently; PPC Master still decides.
+		self.assertEqual(state("AGALPUR(S1050118)", "Agalpur (s1050118)"), "match")
 
-	def test_ppc_master_is_authoritative(self):
-		from ivri_od.procurement.doctype.rst_details.rst_details import party_matches_ppc_name_and_code as match
+	def test_wrong_ppc_is_rejected(self):
+		from ivri_od.procurement.doctype.rst_details.rst_details import party_ppc_match_state as state
 
-		# Pass text spelled differently, but it resolves to PPC Master AGALPUR (S1050118).
-		self.assertTrue(match("AGALPUR(S1050118)", "Agalpur (s1050118)"))
-		with patch(f"{MODULE}.resolve_ppc_master_name", return_value=None):
-			self.assertTrue(match("BADAJEONA(MY200511)", "BADAJEONA(MY200511)"))  # no master: pass text
-			self.assertFalse(match("BADAJEONA(MY200511)", "BADAJEONA"))  # pass PPC has no code
+		for party in ("WRONG(S1050118)", "AGALPUR(S1050999)", "BADAJEONA", "S1050119", "AGALPURS", "", None):
+			self.assertEqual(state(party, "AGALPUR(S1050118)"), "mismatch", party)
+		self.assertEqual(state("AGALPUR", ""), "mismatch")
+
+	def test_no_master_uses_pass_text(self):
+		from ivri_od.procurement.doctype.rst_details.rst_details import party_ppc_match_state as state
+
+		self.assertEqual(state("NEWPPC(NP1)", "NEWPPC(NP1)"), "match")
+		self.assertEqual(state("newppc np1", "NEWPPC(NP1)"), "match")
+		self.assertEqual(state("NEWPPC(NP2)", "NEWPPC(NP1)"), "mismatch")
+		self.assertEqual(state("NEWPPC(NP1)", "NEWPPC"), "mismatch")  # pass has no code to confirm it
+
+	def test_name_that_fits_two_ppcs_is_ambiguous_but_name_with_code_is_not(self):
+		from ivri_od.procurement.doctype.rst_details.rst_details import party_ppc_match_state as state
+
+		self.assertEqual(state("twin", "TWIN(MY200511)"), "ambiguous")
+		self.assertEqual(state("TWIN(MY200511)", "TWIN(MY200511)"), "match")
+		self.assertEqual(state("TWIN MY200512", "TWIN(MY200511)"), "mismatch")
 
 	def _resolve(self, party, rows, tp_exists=True, tp_no="28"):
 		with patch(f"{MODULE}.find_transit_passes_by_tp_and_ppc", return_value=rows), patch(
@@ -392,12 +429,23 @@ class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
 		):
 			return resolve_rst_tp_details(tp_no, party)
 
-	def test_tp_received_only_with_name_and_code(self):
-		self.assertEqual(self._resolve("AGALPUR(S1050118)", [self.ROW])["tp_status"], "TP Received")
-		for party in ("AGALPUR", "S1050118", "AGALPUR(S1050999)"):
+	def test_tp_received_for_every_valid_input_with_canonical_party_name(self):
+		for party in ("AGALPUR(S1050118)", "agalpur s1050118", "AGALPUR", "S1050118"):
 			res = self._resolve(party, [self.ROW])
-			self.assertEqual((res["tp_status"], res["mill_name"]), ("PPC Mismatch", ""), party)
+			self.assertEqual(res["tp_status"], "TP Received", party)
+			self.assertEqual(res["party_name"], "AGALPUR(S1050118)", party)
+		for party in ("WRONG(S1050118)", "AGALPUR(S1050999)", "BADAJEONA"):
+			res = self._resolve(party, [self.ROW])
+			self.assertEqual((res["tp_status"], res["mill_name"], res["party_name"]), ("PPC Mismatch", "", ""), party)
 			self.assertEqual(res["notification"], "Enter Correct PPC Name.")
+
+	def test_ambiguous_name_asks_for_clarification(self):
+		row = dict(self.ROW, ppc="TWIN(MY200511)", pass_unique_key="M051007-TWIN(MY200511)-K25-TP28")
+		res = self._resolve("twin", [row])
+		self.assertEqual((res["tp_status"], res["mill_name"]), ("", ""))
+		self.assertIn("more than one PPC", res["validation_message"])
+		self.assertEqual(self._resolve("TWIN(MY200511)", [row])["tp_status"], "TP Received")
+
 
 	def test_invalid_tp_keeps_priority(self):
 		for party in ("AGALPUR", "AGALPUR(S1050118)", "WRONG"):
@@ -406,7 +454,7 @@ class TestRSTPPCNameAndCodeNoDB(unittest.TestCase):
 	def test_mismatch_is_saved_not_blocked(self):
 		doc = RSTDetails.__new__(RSTDetails)
 		doc.meta = MagicMock()  # meta is a cached_property, so this skips the database
-		doc.tp_no, doc.party_name, doc.entry_datetime, doc.entry_date = "28", "AGALPUR", None, None
+		doc.tp_no, doc.party_name, doc.entry_datetime, doc.entry_date = "28", "BADAJEONA", None, None
 		with patch(f"{MODULE}.find_transit_passes_by_tp_and_ppc", return_value=[self.ROW]), patch(
 			f"{MODULE}.transit_pass_no_exists", return_value=True
 		):
@@ -486,6 +534,7 @@ class TestRSTRiceDispatchNoDB(unittest.TestCase):
 			self.addCleanup(patcher.stop)
 		for target, kwargs in (
 			("resolve_ppc_master_name", {"return_value": None}),
+			("ppc_master_candidates", {"return_value": []}),
 			("get_agent_for_ppc_text", {"return_value": ""}),
 			("transit_pass_no_exists", {"return_value": False}),
 			("find_transit_passes_by_tp_and_ppc", {"return_value": []}),
@@ -902,14 +951,21 @@ class TestRSTRegressionSyncNoDB(unittest.TestCase):
 		self.assertEqual(values["pass_unique_key"], "M051007-AGALPUR(S1)-K25-TP1")
 		self.assertNotIn("lot_no", values)
 
-	def test_invalid_tp_no_and_ppc_mismatch_still_create_nothing(self):
-		for status in ("Invalid TP No", "PPC Mismatch"):
-			self.get_doc.reset_mock()
-			with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=False), patch(
-				f"{MODULE}.try_get_matching_transit_pass", return_value=None
-			):
-				self._rst(status, "9", "Whoever")._sync_weigh_bridge_measurement()
-			self.get_doc.assert_not_called()
+	def test_invalid_tp_no_still_creates_nothing(self):
+		with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=False), patch(
+			f"{MODULE}.try_get_matching_transit_pass", return_value=None
+		):
+			self._rst("Invalid TP No", "9", "Whoever")._sync_weigh_bridge_measurement()
+		self.get_doc.assert_not_called()
+
+	def test_ppc_mismatch_creates_a_weigh_bridge_without_pass(self):
+		"""PPC Mismatch records must also be listed in Weigh Bridge Measurement."""
+		with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=False), patch(
+			f"{MODULE}.try_get_matching_transit_pass", return_value=None
+		):
+			self._rst("PPC Mismatch", "9", "Whoever")._sync_weigh_bridge_measurement()
+		values = self.get_doc.call_args.args[0]
+		self.assertEqual((values["pass_unique_key"], values["party_name"], values["is_farmer_or_agent"]), ("", "Whoever", 0))
 
 
 class TestRSTDetailsTPLogic(FrappeTestCase):
