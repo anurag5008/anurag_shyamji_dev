@@ -1,0 +1,98 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.paddy-stock-account {
+		color: #000;
+		font-size: 12px;
+	}
+	.paddy-stock-account .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 14px;
+		margin-bottom: 4px;
+	}
+	.paddy-stock-account table.statement {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 10px;
+	}
+	.paddy-stock-account table.statement th,
+	.paddy-stock-account table.statement td {
+		border: 1px solid #000;
+		padding: 4px 6px;
+	}
+	.paddy-stock-account table.statement th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.paddy-stock-account table.statement td.qty {
+		text-align: right;
+	}
+	.paddy-stock-account table.statement td.month {
+		background-color: #e6e6e6;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+	.paddy-stock-account table.statement tr.total-row td {
+		font-weight: bold;
+	}
+	.paddy-stock-account table.signatures {
+		width: 100%;
+		margin-top: 90px;
+		page-break-inside: avoid;
+	}
+	.paddy-stock-account table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{% var qty_fields = ["ob", "pacs", "wshgs", "other_rect", "total_paddy", "issue_for_milling", "driage", "total", "cb"]; %}
+
+<div class="paddy-stock-account">
+	<div class="heading">{%= frappe.utils.escape_html((filters.company || "").toUpperCase()) %}</div>
+	<div class="heading">
+		STOCK ACCOUNT OF PADDY FOR KMS {%= frappe.utils.escape_html(filters.kms_season || "") %}
+		({%= frappe.utils.escape_html((filters.paddy_account || "").toUpperCase()) %} A/C)
+	</div>
+
+	<table class="statement">
+		<thead>
+			<tr>
+				<th rowspan="2">Month</th>
+				<th rowspan="2">OB</th>
+				<th colspan="3">RECEIPTS</th>
+				<th rowspan="2">Total Paddy</th>
+				<th rowspan="2">Issue for Milling</th>
+				<th rowspan="2">Driage</th>
+				<th rowspan="2">Total</th>
+				<th rowspan="2">CB</th>
+			</tr>
+			<tr>
+				<th>PACs</th>
+				<th>WSHGs</th>
+				<th>Other Rect</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.bold ? "total-row" : "" %}">
+				<td class="month">{%= frappe.utils.escape_html(row.month || "") %}</td>
+				{% for (var j = 0; j < qty_fields.length; j++) { %}
+				<td class="qty">{%= format_number(row[qty_fields[j]] || 0, null, 2) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

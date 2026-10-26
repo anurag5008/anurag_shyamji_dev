@@ -149,6 +149,30 @@ doctype_js = {"Report": "public/js/procurement_report_redirect.js"}
 fixtures = [
 	{"dt": "Portal Site"},
 	{"dt": "Print Format", "filters": [["name", "in", ["Annexure-1 Verification Report"]]]},
+	# Stock Account for Paddy: paddy tags on receipts/stock entries and the Driage entry type.
+	{
+		"dt": "Custom Field",
+		"filters": [
+			[
+				"name",
+				"in",
+				[
+					"Purchase Receipt-paddy_details_section",
+					"Purchase Receipt-kms_season",
+					"Purchase Receipt-paddy_account",
+					"Purchase Receipt-paddy_details_cb",
+					"Purchase Receipt-paddy_source",
+					"Stock Entry-paddy_details_section",
+					"Stock Entry-kms_season",
+					"Stock Entry-paddy_account",
+					"Stock Entry-paddy_details_cb",
+					"Stock Entry-paddy_source",
+					"Stock Entry Type-paddy_movement",
+				],
+			]
+		],
+	},
+	{"dt": "Stock Entry Type", "filters": [["name", "in", ["Driage"]]]},
 ]
 
 doc_events = {
