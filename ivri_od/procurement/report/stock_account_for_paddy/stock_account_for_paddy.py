@@ -1,11 +1,10 @@
 # Copyright (c) 2026, Profezzo and contributors
 """Stock Account for Paddy: monthly OB, receipts, milling issue, driage and CB for Civil Supplies.
 
-PACs: government GRN Notes of the mill, KMS Year (Kharif and Rabi of one Season Master year,
-shown as "25-26" for year 2025) and PPC district.
-Each transit pass counts
-its TP quantity once fulfilled, else what was received (effective_tp_quantity_for_pass),
-spread over the months of its GRNs in receipt order.
+PACs: government GRN Notes of the mill and KMS Year (Kharif and Rabi of one Season Master year,
+shown as "25-26" for year 2025) whose PPC is assigned to the District in PPC Master.
+Each transit pass counts its TP quantity once fulfilled, else what was received
+(effective_tp_quantity_for_pass), spread over the months of its GRNs in receipt order.
 Issue for Milling: paddy released for milling in the DCRO "Paddy Release" rows of the mill.
 WSHGs, Other Rect and Driage have no source yet and stay 0."""
 

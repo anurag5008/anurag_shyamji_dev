@@ -12,9 +12,11 @@ Report filters: Mill Name M999901, KMS Year 25-26, District DEMO DISTRICT, Nov-2
 Expected: PACs 220 / 200 / 240 (Kharif and Rabi), Issue for Milling 0 / 0 / 0, CB 220 / 420 / 660.
 
 create_tp_demo_data weighs trucks against transit passes already on the site (read from PPAS)
-of one PPC, in a mix of cases, and prints the PACs each month should show:
+of one PPC or one mill (count 0 = every free pass), in a mix of cases, and prints the PACs each
+month should show:
 
 	bench --site <site> execute <this module>.create_tp_demo_data --kwargs "{'ppc': 'PATUAPALI', 'count': 8}"
+	bench --site <site> execute <this module>.create_tp_demo_data --kwargs "{'mill': 'M051007', 'count': 0}"
 	bench --site <site> execute <this module>.delete_tp_demo_data
 """
 
@@ -103,12 +105,20 @@ def delete_demo_data():
 	print("Demo data deleted.")
 
 
-def create_tp_demo_data(ppc, count=8):
-	"""Weigh trucks against the first ``count`` transit passes of the PPC that have no GRN Note yet."""
-	ppc_code = frappe.db.get_value("PPC Master", {"ppc_name": ppc}, "name") or ppc
+def create_tp_demo_data(ppc=None, mill=None, count=8):
+	"""Weigh trucks against the first ``count`` transit passes (all when count is 0) of a PPC or a
+	mill that have no GRN Note yet. Each pass is saved on its own: a pass that fails is listed and skipped."""
+	if not (ppc or mill):
+		frappe.throw("Give a ppc or a mill.")
+	filters = {}
+	if ppc:
+		ppc_code = frappe.db.get_value("PPC Master", {"ppc_name": ppc}, "name") or ppc
+		filters["ppc"] = ["like", f"%({ppc_code})"]
+	if mill:
+		filters["pass_unique_key"] = ["like", f"{mill}-%"]
 	passes = frappe.get_all(
 		"PPAS Transit Pass",
-		filters={"ppc": ["like", f"%({ppc_code})"]},
+		filters=filters,
 		fields=[
 			"transit_pass_no",
 			"ppc",
@@ -121,35 +131,51 @@ def create_tp_demo_data(ppc, count=8):
 		order_by="transit_pass_date asc, transit_pass_no asc",
 		limit_page_length=0,
 	)
-	used = set(frappe.get_all("GRN Note", filters={"ppc": ["like", f"%({ppc_code})"]}, pluck="pass_unique_key"))
-	passes = [tp for tp in passes if tp.pass_unique_key not in used and flt(tp.quantity) > 0][: int(count)]
+	used = set(frappe.get_all("GRN Note", filters={"pass_unique_key": ["is", "set"]}, pluck="pass_unique_key"))
+	passes = [tp for tp in passes if tp.pass_unique_key not in used and flt(tp.quantity) > 0]
+	if int(count or 0):
+		passes = passes[: int(count)]
 	if not passes:
-		frappe.throw(f"No transit pass of PPC {ppc} is free to weigh.")
+		frappe.throw("No transit pass is free to weigh.")
 
 	expected = defaultdict(float)
+	failed = []
 	for index, tp in enumerate(passes):
 		case, trucks = TP_CASES[index % len(TP_CASES)]
 		base = getdate(tp.accepted_date or tp.transit_pass_date)
+		# PPC code and season code of the pass keep RST numbers unique: "...-PATUAPALI(S1050105)-K25-TP34".
+		_mill, ppc_part, season_code, _tp = (tp.pass_unique_key.split("-") + ["", "", "", ""])[:4]
+		ppc_code = ppc_part.rpartition("(")[2].rstrip(")") or ppc_part
+		month_counted = defaultdict(float)
 		received = 0.0
-		for truck_no, (days, share) in enumerate(trucks, 1):
-			truck_date = add_days(base, days)
-			net_qt = flt(tp.quantity * share, 2)
-			_weigh_truck(
-				tp.transit_pass_no,
-				truck_no,
-				tp.ppc,
-				str(truck_date),
-				net_qt,
-				rst_prefix=f"{TP_RST_PREFIX}{ppc_code}-",
-				vehicle=tp.vehicle_no,
-			)
-			# PACs rule: a pass counts at most its TP quantity.
-			counted = min(received + net_qt, tp.quantity) - min(received, tp.quantity)
-			received += net_qt
-			expected[getdate(truck_date).strftime("%b-%y")] += counted
-		print(f"TP {tp.transit_pass_no} ({tp.quantity} QT): {case}")
+		try:
+			for truck_no, (days, share) in enumerate(trucks, 1):
+				truck_date = add_days(base, days)
+				net_qt = flt(tp.quantity * share, 2)
+				_weigh_truck(
+					tp.transit_pass_no,
+					truck_no,
+					tp.ppc,
+					str(truck_date),
+					net_qt,
+					rst_prefix=f"{TP_RST_PREFIX}{ppc_code}-{season_code}-",
+					vehicle=tp.vehicle_no,
+				)
+				# PACs rule: a pass counts at most its TP quantity.
+				counted = min(received + net_qt, tp.quantity) - min(received, tp.quantity)
+				received += net_qt
+				month_counted[getdate(truck_date).strftime("%b-%y")] += counted
+			frappe.db.commit()
+		except Exception as e:
+			frappe.db.rollback()
+			failed.append(f"TP {tp.transit_pass_no} {tp.ppc}: {e}")
+			continue
+		for month, qty in month_counted.items():
+			expected[month] += qty
 
-	frappe.db.commit()
+	print(f"Weighed {len(passes) - len(failed)} of {len(passes)} transit passes.")
+	for line in failed:
+		print("  failed:", line)
 	print("Expected PACs:", {month: flt(qty, 2) for month, qty in expected.items()})
 
 

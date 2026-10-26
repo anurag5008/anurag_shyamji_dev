@@ -37,6 +37,7 @@ frappe.query_reports["Stock Account for Paddy"] = {
 			fieldtype: "Link",
 			options: "District Master",
 			reqd: 1,
+			description: __("PPCs assigned to this district in PPC Master"),
 		},
 		{
 			fieldname: "from_month",
