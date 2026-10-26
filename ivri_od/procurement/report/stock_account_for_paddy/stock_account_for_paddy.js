@@ -25,11 +25,11 @@ frappe.query_reports["Stock Account for Paddy"] = {
 			},
 		},
 		{
-			fieldname: "kms_season",
+			fieldname: "kms_year",
 			label: __("KMS Year"),
-			fieldtype: "Link",
-			options: "Season Master",
+			fieldtype: "Data",
 			reqd: 1,
+			description: __("Year in Season Master, e.g. 2025 (Kharif and Rabi)"),
 		},
 		{
 			fieldname: "paddy_account",

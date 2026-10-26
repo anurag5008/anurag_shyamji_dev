@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Profezzo and contributors
 """Stock Account for Paddy: monthly OB, receipts, milling issue, driage and CB for Civil Supplies.
 
-PACs: government GRN Notes of the mill, KMS Year and PPC district. Each transit pass counts
+PACs: government GRN Notes of the mill, KMS Year (Kharif and Rabi of that year) and PPC district.
+Each transit pass counts
 its TP quantity once fulfilled, else what was received (effective_tp_quantity_for_pass),
 spread over the months of its GRNs in receipt order.
 Issue for Milling: paddy released for milling in the DCRO "Paddy Release" rows of the mill.
@@ -37,8 +38,9 @@ def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	from_date, to_date = validate_filters(filters)
 
-	grns, skipped_grns = get_grns(filters, to_date)
-	releases = get_dcro_releases(filters, to_date)
+	seasons = get_kms_seasons(filters.kms_year)
+	grns, skipped_grns = get_grns(filters, seasons, to_date)
+	releases = get_dcro_releases(filters, seasons, to_date)
 	opening, movements = classify(grn_receipts(grns, get_tp_quantities(grns)) + releases, from_date)
 	data = build_rows(get_months(from_date, to_date), opening, movements)
 
@@ -48,7 +50,7 @@ def execute(filters=None):
 def validate_filters(filters):
 	for fieldname, label in (
 		("mill", _("Mill Name")),
-		("kms_season", _("KMS Year")),
+		("kms_year", _("KMS Year")),
 		("paddy_account", _("District")),
 		("from_month", _("From Month")),
 		("to_month", _("To Month")),
@@ -94,7 +96,15 @@ def get_columns():
 	return columns
 
 
-def get_grns(filters, to_date):
+def get_kms_seasons(kms_year):
+	"""Season Masters (Kharif and Rabi) of the KMS Year, e.g. 2025 -> Kharif 2025, Rabi 2025."""
+	seasons = frappe.get_all("Season Master", filters={"year": str(kms_year).strip()}, pluck="name")
+	if not seasons:
+		frappe.throw(_("No Season Master has the year {0}").format(kms_year))
+	return seasons
+
+
+def get_grns(filters, seasons, to_date):
 	"""Government GRN Notes of the mill and KMS Year up to To Month, with the PPC in the District.
 
 	Returns (grns, skipped): skipped are GRNs of the mill and year whose PPC has no District.
@@ -131,7 +141,7 @@ def get_grns(filters, to_date):
 		season_text = row.cmr_season or season_code_from_pass_key(row.pass_unique_key)
 		if season_text not in season_of:
 			season_of[season_text] = resolve_season_master_name(season_text)
-		if season_of[season_text] != filters.kms_season:
+		if season_of[season_text] not in seasons:
 			continue
 
 		if row.ppc not in district_of:
@@ -186,11 +196,12 @@ def grn_receipts(grns, tp_quantities):
 	return receipts
 
 
-def get_dcro_releases(filters, to_date):
+def get_dcro_releases(filters, seasons, to_date):
 	"""Paddy released for milling as (date, "issue_for_milling", qty), from the DCRO Paddy Release
 	rows of the mill (own and other district added up, rejected or cancelled orders left out).
-	Rows before the KMS Year's start date, when it is set, belong to an earlier year."""
-	season_start = frappe.db.get_value("Season Master", filters.kms_season, "start_date")
+	Rows before the KMS Year's first start date, when it is set, belong to an earlier year."""
+	starts = frappe.get_all("Season Master", filters={"name": ["in", seasons]}, pluck="start_date")
+	season_start = min((start for start in starts if start), default=None)
 	skip_status = [word.lower() for word in DCRO_BALANCE["skip_status"]]
 
 	releases = []

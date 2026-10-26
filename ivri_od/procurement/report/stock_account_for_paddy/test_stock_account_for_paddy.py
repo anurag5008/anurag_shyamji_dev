@@ -103,7 +103,7 @@ class TestStockAccountForPaddy(IntegrationTestCase):
 	def test_from_month_after_to_month(self):
 		filters = frappe._dict(
 			mill="MILL",
-			kms_season="KMS",
+			kms_year="2025",
 			paddy_account="DISTRICT",
 			from_month="2025-02-10",
 			to_month="2025-01-20",

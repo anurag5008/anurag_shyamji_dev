@@ -51,11 +51,13 @@
 </style>
 
 {% var qty_fields = ["ob", "pacs", "wshgs", "other_rect", "total_paddy", "issue_for_milling", "driage", "total", "cb"]; %}
+{% var kms_start = parseInt(filters.kms_year, 10); %}
+{% var kms_label = isNaN(kms_start) ? (filters.kms_year || "") : kms_start + "-" + String((kms_start + 1) % 100).padStart(2, "0"); %}
 
 <div class="paddy-stock-account">
 	<div class="heading">{%= frappe.utils.escape_html((filters.company || "").toUpperCase()) %}</div>
 	<div class="heading">
-		STOCK ACCOUNT OF PADDY FOR KMS {%= frappe.utils.escape_html(filters.kms_season || "") %}
+		STOCK ACCOUNT OF PADDY FOR KMS {%= frappe.utils.escape_html(kms_label) %}
 		({%= frappe.utils.escape_html((filters.paddy_account || "").toUpperCase()) %} A/C)
 	</div>
 

@@ -8,8 +8,8 @@ No DCRO rows are made: Issue for Milling comes only from paddy release rows read
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.create_demo_data
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.delete_demo_data
 
-Report filters: Mill Name M999901, KMS Year Kharif 2025, District DEMO DISTRICT, Nov-25 to Jan-26.
-Expected: PACs 220 / 200 / 160, Issue for Milling 0 / 0 / 0, CB 220 / 420 / 580.
+Report filters: Mill Name M999901, KMS Year 2025, District DEMO DISTRICT, Nov-25 to Jan-26.
+Expected: PACs 220 / 200 / 240 (Kharif and Rabi), Issue for Milling 0 / 0 / 0, CB 220 / 420 / 660.
 """
 
 import frappe
@@ -22,9 +22,7 @@ MILL_NAME = "DEMO RICE MILL"
 MILL_TEXT = f"{MILL_NAME}({MILL})"
 DISTRICT = "DEMO DISTRICT"
 OTHER_DISTRICT = "DEMO DISTRICT TWO"
-SEASON = "Kharif 2025"
-SEASON_TEXT = "Kharif(2025)"
-SEASON_CODE = "K25"
+KMS_YEAR = "2025"
 RST_PREFIX = "DEMO-RST-"
 
 PPCS = [
@@ -34,18 +32,20 @@ PPCS = [
 	("SDEMO03", "DEMO PPC THREE", OTHER_DISTRICT),
 ]
 
-# (TP no, PPC code, TP quantity, [(RST date, net weight), ...]) - one truck per weighment.
+# (TP no, PPC code, TP quantity, [(RST date, net weight), ...], crop) - one truck per weighment.
 TRANSIT_PASSES = [
 	# Fulfilled over two months: Nov 120 + Dec 90 = 210 -> counts 200 (120 in Nov, 80 in Dec).
-	("9001", "SDEMO01", 200, [("2025-11-10", 120), ("2025-12-05", 90)]),
+	("9001", "SDEMO01", 200, [("2025-11-10", 120), ("2025-12-05", 90)], "Kharif"),
 	# Short: 100 of 150 received -> counts 100 in Nov.
-	("9002", "SDEMO01", 150, [("2025-11-18", 100)]),
+	("9002", "SDEMO01", 150, [("2025-11-18", 100)], "Kharif"),
 	# Three trucks: Dec 60 + Dec 60 + Jan 70 = 190 -> counts 180 (60, 60 in Dec, 60 in Jan).
-	("9003", "SDEMO02", 180, [("2025-12-12", 60), ("2025-12-20", 60), ("2026-01-08", 70)]),
+	("9003", "SDEMO02", 180, [("2025-12-12", 60), ("2025-12-20", 60), ("2026-01-08", 70)], "Kharif"),
 	# Over TP in one truck: 105 of 100 -> counts 100 in Jan.
-	("9004", "SDEMO02", 100, [("2026-01-15", 105)]),
+	("9004", "SDEMO02", 100, [("2026-01-15", 105)], "Kharif"),
 	# PPC in another district: not in the DEMO DISTRICT statement.
-	("9005", "SDEMO03", 50, [("2026-01-20", 50)]),
+	("9005", "SDEMO03", 50, [("2026-01-20", 50)], "Kharif"),
+	# Rabi pass of the same KMS Year: counts 80 in Jan, with the Kharif passes.
+	("9006", "SDEMO01", 80, [("2026-01-25", 80)], "Rabi"),
 ]
 
 TARE_QT = 100.0
@@ -57,9 +57,9 @@ def create_demo_data():
 		frappe.throw("Demo data exists already. Run delete_demo_data first.")
 
 	_create_masters()
-	for tp_no, ppc_code, tp_qty, trucks in TRANSIT_PASSES:
+	for tp_no, ppc_code, tp_qty, trucks, crop in TRANSIT_PASSES:
 		ppc_text = _ppc_text(ppc_code)
-		_create_transit_pass(tp_no, ppc_text, tp_qty, len(trucks))
+		_create_transit_pass(tp_no, ppc_text, tp_qty, crop)
 		for truck_no, (rst_date, net_qt) in enumerate(trucks, 1):
 			_weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt)
 
@@ -113,8 +113,9 @@ def _create_masters():
 		frappe.get_doc(
 			{"doctype": "PPC Master", "code": code, "ppc_name": name, "district": district, "is_active": 1}
 		).insert()
-	if not frappe.db.exists("Season Master", SEASON):
-		frappe.throw(f"Season Master {SEASON} is missing.")
+	for crop in {crop for *_tp, crop in TRANSIT_PASSES}:
+		if not frappe.db.exists("Season Master", f"{crop} {KMS_YEAR}"):
+			frappe.throw(f"Season Master {crop} {KMS_YEAR} is missing.")
 
 
 def _ppc_text(code):
@@ -122,12 +123,12 @@ def _ppc_text(code):
 	return f"{name}({code})"
 
 
-def _create_transit_pass(tp_no, ppc_text, tp_qty, trucks):
-	key = f"{MILL}-{ppc_text}-{SEASON_CODE}-TP{tp_no}"
+def _create_transit_pass(tp_no, ppc_text, tp_qty, crop):
+	key = f"{MILL}-{ppc_text}-{crop[0]}{KMS_YEAR[-2:]}-TP{tp_no}"
 	frappe.get_doc(
 		{
 			"doctype": "PPAS Transit Pass",
-			"season": SEASON_TEXT,
+			"season": f"{crop}({KMS_YEAR})",
 			"pacs": ppc_text,
 			"ppc": ppc_text,
 			"miller": MILL_TEXT,
