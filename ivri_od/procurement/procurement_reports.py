@@ -14,6 +14,7 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("tp_mandi_quantity_fulfillment", "tp_mandi_quantity_fulfillment.json"),
 	("chhatni_tracking", "chhatni_tracking.json"),
 	("mandi_book", "mandi_book.json"),
+	("stock_account_for_paddy", "stock_account_for_paddy.json"),
 	("vehicle_gate_movement_summary", "vehicle_gate_movement_summary.json"),
 	("procurement_module_overview", "procurement_module_overview.json"),
 	("season_mapping_receipt_summary", "season_mapping_receipt_summary.json"),

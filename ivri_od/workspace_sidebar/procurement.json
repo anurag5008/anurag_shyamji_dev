@@ -585,6 +585,18 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "book",
+   "indent": 1,
+   "keep_closed": 1,
+   "label": "Paddy Stock Account",
+   "link_type": "URL",
+   "url": "/app/query-report/Stock%20Account%20for%20Paddy",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
    "icon": "trending-up",
    "indent": 1,
    "keep_closed": 1,

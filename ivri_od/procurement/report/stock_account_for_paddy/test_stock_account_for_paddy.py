@@ -1,5 +1,7 @@
 # Copyright (c) 2026, Profezzo and contributors
 
+from unittest.mock import patch
+
 import frappe
 from frappe.tests import IntegrationTestCase
 from frappe.utils import getdate
@@ -100,14 +102,16 @@ class TestStockAccountForPaddy(IntegrationTestCase):
 
 	def test_from_month_after_to_month(self):
 		filters = frappe._dict(
-			company="_Test Company",
+			mill="MILL",
 			kms_season="KMS",
-			paddy_account="ACC",
-			item_code="PADDY",
+			paddy_account="DISTRICT",
 			from_month="2025-02-10",
 			to_month="2025-01-20",
 		)
-		self.assertRaises(frappe.ValidationError, validate_filters, filters)
+		with patch("frappe.db.get_value", return_value="_Test Company"):
+			self.assertRaises(frappe.ValidationError, validate_filters, filters)
 
-		filters.to_month = "2025-02-01"
-		self.assertEqual(validate_filters(filters), (getdate("2025-02-01"), getdate("2025-02-28")))
+			filters.to_month = "2025-02-01"
+			self.assertEqual(validate_filters(filters), (getdate("2025-02-01"), getdate("2025-02-28")))
+		# Company comes from the mill.
+		self.assertEqual(filters.company, "_Test Company")

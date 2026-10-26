@@ -60,6 +60,9 @@ DCRO_REPORTS: list[tuple[str, str, str]] = [
 # SCMS Lot Search). Built from DCRO and SCMS together, so it sits on the Procurement page.
 DC_TRACK_REPORT = "DC Track"
 
+# Monthly paddy statement (OB, receipts, milling, driage, CB) submitted to Civil Supplies.
+PADDY_STOCK_REPORT = "Stock Account for Paddy"
+
 # Rice due and delivered per mill for a season (DC Details): its own page under Procurement.
 RICE_WORKSPACE = "Rice Delivered Summary"
 RICE_WORKSPACE_SLUG = "rice-delivered-summary"
@@ -308,6 +311,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"Registers",
 		[
 			("Mandi Book", "Report"),
+			(PADDY_STOCK_REPORT, "Report"),
 			("Entry Report", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
 			(DC_TRACK_REPORT, "Report"),
@@ -352,6 +356,7 @@ QUERY_REPORTS = {
 	"TP Mandi Quantity Fulfillment",
 	"Rice Dispatch",
 	"Mandi Book",
+	PADDY_STOCK_REPORT,
 	"Vehicle Gate Movement Summary",
 	"Entry Report",
 	DC_TRACK_REPORT,
@@ -808,6 +813,7 @@ def _link_label(link_to: str, link_type: str) -> str:
 		"Abstract Physical": "Abstract Physical",
 		"TP Mandi Quantity Fulfillment": "TP Mandi Fulfillment",
 		"Mandi Book": "Mandi Book",
+		PADDY_STOCK_REPORT: "Paddy Stock Account",
 		"Vehicle Gate Movement Summary": "Vehicle Gate Movement",
 		"Entry Report": "Entry Report",
 	}.get(link_to, link_to)

@@ -35,17 +35,19 @@ def execute(filters=None):
 
 def validate_filters(filters):
 	for fieldname, label in (
-		("company", _("Company")),
-		("kms_season", _("KMS Season")),
-		("paddy_account", _("Paddy Account")),
+		("mill", _("Mill Name")),
+		("kms_season", _("KMS Year")),
+		("paddy_account", _("District")),
 		("from_month", _("From Month")),
 		("to_month", _("To Month")),
 	):
 		if not filters.get(fieldname):
 			frappe.throw(_("{0} is mandatory").format(label))
 
-	if not filters.item_code and not filters.item_group:
-		frappe.throw(_("Select a Paddy Item or a Paddy Item Group"))
+	# The mill's company owns the stock; the print heading uses it too.
+	filters.company = frappe.db.get_value("Mill Master", filters.mill, "company")
+	if not filters.company:
+		frappe.throw(_("Set the Company in Mill Master {0}").format(filters.mill))
 
 	from_date = getdate(get_first_day(filters.from_month))
 	to_date = getdate(get_last_day(filters.to_month))
@@ -94,6 +96,7 @@ def get_ledger_rows(filters, to_date):
 			.select(
 				sle.voucher_type,
 				sle.voucher_no,
+				sle.item_code,
 				sle.posting_date,
 				sle.actual_qty,
 				sle.stock_uom,
@@ -125,13 +128,6 @@ def get_ledger_rows(filters, to_date):
 def apply_item_and_warehouse(query, sle, filters):
 	if filters.item_code:
 		query = query.where(sle.item_code == filters.item_code)
-
-	if filters.item_group:
-		item = frappe.qb.DocType("Item")
-		groups = [filters.item_group, *get_descendants_of("Item Group", filters.item_group)]
-		query = query.where(
-			sle.item_code.isin(frappe.qb.from_(item).select(item.name).where(item.item_group.isin(groups)))
-		)
 
 	if filters.warehouse:
 		warehouses = [filters.warehouse, *get_descendants_of("Warehouse", filters.warehouse)]
@@ -247,10 +243,18 @@ def get_total_row(month_rows):
 def get_message(ledger_rows, unclassified):
 	messages = []
 
+	items = sorted({row.item_code for row in ledger_rows})
+	if len(items) > 1:
+		messages.append(
+			_("Figures include {0} items ({1}). Select a Paddy Item to see one item only.").format(
+				len(items), ", ".join(items[:5])
+			)
+		)
+
 	uoms = sorted({row.stock_uom for row in ledger_rows if row.stock_uom})
 	if len(uoms) > 1:
 		messages.append(
-			_("Selected paddy items use more than one stock UOM ({0}). Figures are added as they are.").format(
+			_("These items use more than one stock UOM ({0}). Figures are added as they are.").format(
 				", ".join(uoms)
 			)
 		)
