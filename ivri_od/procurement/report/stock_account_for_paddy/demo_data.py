@@ -2,23 +2,20 @@
 """Masked demo data to test Stock Account for Paddy on a test site (never on a live site).
 
 Creates a demo mill, district, PPCs and transit passes, then runs every truck through the normal
-weighment flow (Gate Entry -> Quality Check -> RST Details -> Weigh Bridge -> Gate Exit -> GRN Note),
-and adds DCRO paddy release rows for the mill.
+weighment flow (Gate Entry -> Quality Check -> RST Details -> Weigh Bridge -> Gate Exit -> GRN Note).
+No DCRO rows are made: Issue for Milling comes only from paddy release rows read from the portal.
 
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.create_demo_data
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.delete_demo_data
 
 Report filters: Mill Name M999901, KMS Year Kharif 2025, District DEMO DISTRICT, Nov-25 to Jan-26.
-Expected: PACs 220 / 200 / 160, Issue for Milling 0 / 150 / 200, CB 220 / 270 / 230.
+Expected: PACs 220 / 200 / 160, Issue for Milling 0 / 0 / 0, CB 220 / 420 / 580.
 """
 
-import json
-
 import frappe
-from frappe.utils import flt, now_datetime
+from frappe.utils import flt
 
 from ivri_od.procurement.grn_tp_fulfillment import refresh_tp_fulfillment_for_pass
-from ivri_od.procurement.portal_sync import build_record_key, build_row_hash, parse_key_columns
 
 MILL = "M999901"
 MILL_NAME = "DEMO RICE MILL"
@@ -29,7 +26,6 @@ SEASON = "Kharif 2025"
 SEASON_TEXT = "Kharif(2025)"
 SEASON_CODE = "K25"
 RST_PREFIX = "DEMO-RST-"
-DEMO_TAG = "(demo)"
 
 PPCS = [
 	# (code, name, district)
@@ -52,18 +48,11 @@ TRANSIT_PASSES = [
 	("9005", "SDEMO03", 50, [("2026-01-20", 50)]),
 ]
 
-# DCRO Paddy Release rows: (RO no, date of requisition, own district, other district, status)
-DCRO_RELEASES = [
-	("DEMO-RO-1", "15-12-2025", 120, 30, "Approved"),
-	("DEMO-RO-2", "20-01-2026", 200, 0, "Approved"),
-	("DEMO-RO-3", "10-01-2026", 999, 0, "Rejected"),
-]
-
 TARE_QT = 100.0
 
 
 def create_demo_data():
-	"""Create the demo masters, transit passes, weighments (with GRN Notes) and DCRO rows."""
+	"""Create the demo masters, transit passes, and weighments (with GRN Notes)."""
 	if frappe.db.exists("Mill Master", MILL):
 		frappe.throw("Demo data exists already. Run delete_demo_data first.")
 
@@ -73,7 +62,6 @@ def create_demo_data():
 		_create_transit_pass(tp_no, ppc_text, tp_qty, len(trucks))
 		for truck_no, (rst_date, net_qt) in enumerate(trucks, 1):
 			_weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt)
-	_create_dcro_releases()
 
 	frappe.db.commit()
 	grns = frappe.get_all("GRN Note", filters={"pass_unique_key": ["like", f"{MILL}-%"]}, pluck="name")
@@ -81,8 +69,8 @@ def create_demo_data():
 
 
 def delete_demo_data():
-	"""Delete everything create_demo_data made: found from the demo RST numbers, the demo miller
-	text and the demo DCRO rows, so a run that stopped half way is cleaned up too."""
+	"""Delete everything create_demo_data made: found from the demo RST numbers and the demo miller
+	text, so a run that stopped half way is cleaned up too."""
 	rsts = frappe.get_all(
 		"RST Details",
 		filters={"rst_no": ["like", f"{RST_PREFIX}%"]},
@@ -105,7 +93,6 @@ def delete_demo_data():
 	_delete("Quality Check", _names("Quality Check", {"gate_entry": ["in", gate_entries]}))
 	_delete("Gate Entry", gate_entries)
 	_delete("PPAS Transit Pass", _names("PPAS Transit Pass", {"miller": ["like", f"{MILL_NAME}(%"]}))
-	_delete("Portal Record", _names("Portal Record", {"site": "DCRO", "summary": ["like", f"%{DEMO_TAG}"]}))
 	_delete("PPC Master", [code for code, _name, _district in PPCS])
 	_delete("Mill Master", [MILL])
 	_delete("District Master", [DISTRICT, OTHER_DISTRICT])
@@ -238,39 +225,6 @@ def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt):
 		update_modified=False,
 	)
 	refresh_tp_fulfillment_for_pass(grn.pass_unique_key)
-
-
-def _create_dcro_releases():
-	"""Saved like rows entered by hand (portal_manual.py): key from the section's key columns."""
-	section = frappe.get_cached_doc("Portal Site", "DCRO").get_section("Paddy Release")
-	key_columns = parse_key_columns(section.key_columns if section else "") or ["RO No."]
-	for row_no, (ro_no, requisition_date, own, other, status) in enumerate(DCRO_RELEASES, 1):
-		row = {
-			"Sl#": str(row_no),
-			"RO No.": ro_no,
-			"Date of Requistion": requisition_date,
-			"Paddy Lifted (Own District) (in Qtl)": "5000.00",
-			"Quantity of Paddy Released for Milling (Own District) (in Qtl)": f"{own:.2f}",
-			"Paddy Lifted (Other District) (in Qtl)": "0.00",
-			"Quantity of Paddy Released for Milling (Other District) (in Qtl)": f"{other:.2f}",
-			"Status of Released Order": status,
-		}
-		frappe.get_doc(
-			{
-				"doctype": "Portal Record",
-				"site": "DCRO",
-				"section": "Paddy Release",
-				"mill_id": MILL,
-				"record_key": build_record_key(row, key_columns),
-				"entry_source": "Manual",
-				"row_no": row_no,
-				"summary": f"{ro_no} {DEMO_TAG}",
-				"row_data": json.dumps(row),
-				"row_hash": build_row_hash(row),
-				"first_seen_on": now_datetime(),
-				"last_seen_on": now_datetime(),
-			}
-		).insert()
 
 
 def _names(doctype, filters):
