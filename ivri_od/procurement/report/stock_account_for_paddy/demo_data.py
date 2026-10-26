@@ -10,10 +10,18 @@ No DCRO rows are made: Issue for Milling comes only from paddy release rows read
 
 Report filters: Mill Name M999901, KMS Year 25-26, District DEMO DISTRICT, Nov-25 to Jan-26.
 Expected: PACs 220 / 200 / 240 (Kharif and Rabi), Issue for Milling 0 / 0 / 0, CB 220 / 420 / 660.
+
+create_tp_demo_data weighs trucks against transit passes already on the site (read from PPAS)
+of one PPC, in a mix of cases, and prints the PACs each month should show:
+
+	bench --site <site> execute <this module>.create_tp_demo_data --kwargs "{'ppc': 'PATUAPALI', 'count': 8}"
+	bench --site <site> execute <this module>.delete_tp_demo_data
 """
 
 import frappe
-from frappe.utils import flt
+from collections import defaultdict
+
+from frappe.utils import add_days, flt, getdate
 
 from ivri_od.procurement.grn_tp_fulfillment import refresh_tp_fulfillment_for_pass
 
@@ -24,6 +32,8 @@ DISTRICT = "DEMO DISTRICT"
 OTHER_DISTRICT = "DEMO DISTRICT TWO"
 KMS_YEAR = "2025"
 RST_PREFIX = "DEMO-RST-"
+# Weighments made against transit passes already on the site.
+TP_RST_PREFIX = "DEMO-TPRST-"
 
 PPCS = [
 	# (code, name, district)
@@ -46,6 +56,18 @@ TRANSIT_PASSES = [
 	("9005", "SDEMO03", 50, [("2026-01-20", 50)], "Kharif"),
 	# Rabi pass of the same KMS Year: counts 80 in Jan, with the Kharif passes.
 	("9006", "SDEMO01", 80, [("2026-01-25", 80)], "Rabi"),
+]
+
+# Trucks per transit pass for create_tp_demo_data, used in turn:
+# [(days after the TP was accepted, share of the TP quantity), ...]
+TP_CASES = [
+	("fulfilled, one truck", [(0, 1.0)]),
+	("fulfilled, two trucks in two months", [(0, 0.5), (30, 0.52)]),
+	("short", [(0, 0.9)]),
+	("over TP, one truck", [(0, 1.03)]),
+	("fulfilled, three trucks", [(0, 0.35), (12, 0.35), (32, 0.32)]),
+	("fulfilled, next month", [(25, 1.0)]),
+	("short, two trucks in two months", [(0, 0.5), (30, 0.3)]),
 ]
 
 TARE_QT = 100.0
@@ -71,9 +93,78 @@ def create_demo_data():
 def delete_demo_data():
 	"""Delete everything create_demo_data made: found from the demo RST numbers and the demo miller
 	text, so a run that stopped half way is cleaned up too."""
+	_delete_weighments(RST_PREFIX)
+	_delete("PPAS Transit Pass", _names("PPAS Transit Pass", {"miller": ["like", f"{MILL_NAME}(%"]}))
+	_delete("PPC Master", [code for code, _name, _district in PPCS])
+	_delete("Mill Master", [MILL])
+	_delete("District Master", [DISTRICT, OTHER_DISTRICT])
+
+	frappe.db.commit()
+	print("Demo data deleted.")
+
+
+def create_tp_demo_data(ppc, count=8):
+	"""Weigh trucks against the first ``count`` transit passes of the PPC that have no GRN Note yet."""
+	ppc_code = frappe.db.get_value("PPC Master", {"ppc_name": ppc}, "name") or ppc
+	passes = frappe.get_all(
+		"PPAS Transit Pass",
+		filters={"ppc": ["like", f"%({ppc_code})"]},
+		fields=[
+			"transit_pass_no",
+			"ppc",
+			"quantity",
+			"pass_unique_key",
+			"vehicle_no",
+			"transit_pass_date",
+			"accepted_date",
+		],
+		order_by="transit_pass_date asc, transit_pass_no asc",
+		limit_page_length=0,
+	)
+	used = set(frappe.get_all("GRN Note", filters={"ppc": ["like", f"%({ppc_code})"]}, pluck="pass_unique_key"))
+	passes = [tp for tp in passes if tp.pass_unique_key not in used and flt(tp.quantity) > 0][: int(count)]
+	if not passes:
+		frappe.throw(f"No transit pass of PPC {ppc} is free to weigh.")
+
+	expected = defaultdict(float)
+	for index, tp in enumerate(passes):
+		case, trucks = TP_CASES[index % len(TP_CASES)]
+		base = getdate(tp.accepted_date or tp.transit_pass_date)
+		received = 0.0
+		for truck_no, (days, share) in enumerate(trucks, 1):
+			truck_date = add_days(base, days)
+			net_qt = flt(tp.quantity * share, 2)
+			_weigh_truck(
+				tp.transit_pass_no,
+				truck_no,
+				tp.ppc,
+				str(truck_date),
+				net_qt,
+				rst_prefix=f"{TP_RST_PREFIX}{ppc_code}-",
+				vehicle=tp.vehicle_no,
+			)
+			# PACs rule: a pass counts at most its TP quantity.
+			counted = min(received + net_qt, tp.quantity) - min(received, tp.quantity)
+			received += net_qt
+			expected[getdate(truck_date).strftime("%b-%y")] += counted
+		print(f"TP {tp.transit_pass_no} ({tp.quantity} QT): {case}")
+
+	frappe.db.commit()
+	print("Expected PACs:", {month: flt(qty, 2) for month, qty in expected.items()})
+
+
+def delete_tp_demo_data():
+	"""Delete the weighments (and their GRN Notes) made by create_tp_demo_data; transit passes stay."""
+	_delete_weighments(TP_RST_PREFIX)
+	frappe.db.commit()
+	print("Transit pass demo weighments deleted.")
+
+
+def _delete_weighments(rst_prefix):
+	"""Gate Entry, Quality Check, RST, Weigh Bridge, Gate Exit and GRN Note of the demo RST numbers."""
 	rsts = frappe.get_all(
 		"RST Details",
-		filters={"rst_no": ["like", f"{RST_PREFIX}%"]},
+		filters={"rst_no": ["like", f"{rst_prefix}%"]},
 		fields=["name", "weigh_bridge_measurement"],
 	)
 	wbms = [rst.weigh_bridge_measurement for rst in rsts if rst.weigh_bridge_measurement]
@@ -92,13 +183,6 @@ def delete_demo_data():
 	_delete("RST Details", [rst.name for rst in rsts])
 	_delete("Quality Check", _names("Quality Check", {"gate_entry": ["in", gate_entries]}))
 	_delete("Gate Entry", gate_entries)
-	_delete("PPAS Transit Pass", _names("PPAS Transit Pass", {"miller": ["like", f"{MILL_NAME}(%"]}))
-	_delete("PPC Master", [code for code, _name, _district in PPCS])
-	_delete("Mill Master", [MILL])
-	_delete("District Master", [DISTRICT, OTHER_DISTRICT])
-
-	frappe.db.commit()
-	print("Demo data deleted.")
 
 
 def _create_masters():
@@ -143,9 +227,9 @@ def _create_transit_pass(tp_no, ppc_text, tp_qty, crop):
 	).insert()
 
 
-def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt):
+def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt, rst_prefix=RST_PREFIX, vehicle=None):
 	"""One truck through gate, QC, weighbridge and gate exit; the Gate Exit makes the GRN Note."""
-	vehicle = f"OD00DM{tp_no}{truck_no}"
+	vehicle = vehicle or f"OD00DM{tp_no}{truck_no}"
 	at = f"{rst_date} 10:30:00"
 	bags = int(net_qt * 2)
 
@@ -178,7 +262,7 @@ def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt):
 	rst = frappe.get_doc(
 		{
 			"doctype": "RST Details",
-			"rst_no": f"{RST_PREFIX}{tp_no}-{truck_no}",
+			"rst_no": f"{rst_prefix}{tp_no}-{truck_no}",
 			"tp_no": tp_no,
 			"party_name": ppc_text,
 			"vehicle_no": vehicle,
