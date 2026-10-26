@@ -12,7 +12,9 @@ from ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy 
 	dcro_release,
 	get_months,
 	grn_receipts,
+	kms_year_label,
 	season_code_from_pass_key,
+	season_master_year,
 	validate_filters,
 )
 
@@ -100,10 +102,17 @@ class TestStockAccountForPaddy(IntegrationTestCase):
 		self.assertEqual(season_code_from_pass_key("M051007-BAKTI(S1050104)-K25-TP45"), "K25")
 		self.assertEqual(season_code_from_pass_key(""), "")
 
+	def test_kms_year(self):
+		self.assertEqual(kms_year_label(2025), "25-26")
+		self.assertEqual(kms_year_label(2099), "99-00")
+		self.assertEqual(season_master_year("25-26"), "2025")
+		for wrong in ("2025", "25-27", ""):
+			self.assertRaises(frappe.ValidationError, season_master_year, wrong)
+
 	def test_from_month_after_to_month(self):
 		filters = frappe._dict(
 			mill="MILL",
-			kms_year="2025",
+			kms_year="25-26",
 			paddy_account="DISTRICT",
 			from_month="2025-02-10",
 			to_month="2025-01-20",

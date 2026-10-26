@@ -8,7 +8,7 @@ No DCRO rows are made: Issue for Milling comes only from paddy release rows read
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.create_demo_data
 	bench --site <site> execute ivri_od.procurement.report.stock_account_for_paddy.demo_data.delete_demo_data
 
-Report filters: Mill Name M999901, KMS Year 2025, District DEMO DISTRICT, Nov-25 to Jan-26.
+Report filters: Mill Name M999901, KMS Year 25-26, District DEMO DISTRICT, Nov-25 to Jan-26.
 Expected: PACs 220 / 200 / 240 (Kharif and Rabi), Issue for Milling 0 / 0 / 0, CB 220 / 420 / 660.
 """
 

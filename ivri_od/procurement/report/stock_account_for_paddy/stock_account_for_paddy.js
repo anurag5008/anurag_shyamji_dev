@@ -27,9 +27,9 @@ frappe.query_reports["Stock Account for Paddy"] = {
 		{
 			fieldname: "kms_year",
 			label: __("KMS Year"),
-			fieldtype: "Data",
+			fieldtype: "Select",
 			reqd: 1,
-			description: __("Year in Season Master, e.g. 2025 (Kharif and Rabi)"),
+			description: __("Kharif and Rabi of the year"),
 		},
 		{
 			fieldname: "paddy_account",
@@ -60,6 +60,22 @@ frappe.query_reports["Stock Account for Paddy"] = {
 			hidden: 1,
 		},
 	],
+	onload(report) {
+		// KMS Years from Season Master, newest first ("25-26" = Kharif 2025 and Rabi 2025).
+		return frappe
+			.call(
+				"ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy.get_kms_years"
+			)
+			.then((r) => {
+				const years = r.message || [];
+				const filter = report.get_filter("kms_year");
+				filter.df.options = years;
+				filter.refresh();
+				if (!years.includes(filter.get_value())) {
+					return filter.set_value(years[0] || "");
+				}
+			});
+	},
 	formatter(value, row, column, data, default_formatter) {
 		value = default_formatter(value, row, column, data);
 		return data && data.bold ? `<b>${value}</b>` : value;

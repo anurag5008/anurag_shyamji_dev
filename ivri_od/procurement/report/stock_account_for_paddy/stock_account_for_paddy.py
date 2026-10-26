@@ -1,7 +1,8 @@
 # Copyright (c) 2026, Profezzo and contributors
 """Stock Account for Paddy: monthly OB, receipts, milling issue, driage and CB for Civil Supplies.
 
-PACs: government GRN Notes of the mill, KMS Year (Kharif and Rabi of that year) and PPC district.
+PACs: government GRN Notes of the mill, KMS Year (Kharif and Rabi of one Season Master year,
+shown as "25-26" for year 2025) and PPC district.
 Each transit pass counts
 its TP quantity once fulfilled, else what was received (effective_tp_quantity_for_pass),
 spread over the months of its GRNs in receipt order.
@@ -10,12 +11,13 @@ WSHGs, Other Rect and Driage have no source yet and stay 0."""
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from datetime import datetime
 
 import frappe
 from frappe import _
-from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate
+from frappe.utils import add_months, cint, flt, get_first_day, get_last_day, getdate
 
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.portal_report import _load, _sum_of
@@ -96,11 +98,30 @@ def get_columns():
 	return columns
 
 
+@frappe.whitelist()
+def get_kms_years():
+	"""KMS Years of Season Master, newest first: year 2025 (Kharif 2025, Rabi 2025) is "25-26"."""
+	years = {cint(year) for year in frappe.get_all("Season Master", pluck="year") if cint(year)}
+	return [kms_year_label(year) for year in sorted(years, reverse=True)]
+
+
+def kms_year_label(year):
+	return f"{year % 100:02d}-{(year + 1) % 100:02d}"
+
+
+def season_master_year(kms_year):
+	"""Season Master year of a KMS Year: "25-26" -> "2025"."""
+	match = re.fullmatch(r"(\d{2})-(\d{2})", (kms_year or "").strip())
+	if not match or (int(match.group(1)) + 1) % 100 != int(match.group(2)):
+		frappe.throw(_("KMS Year must look like 25-26"))
+	return str(2000 + int(match.group(1)))
+
+
 def get_kms_seasons(kms_year):
-	"""Season Masters (Kharif and Rabi) of the KMS Year, e.g. 2025 -> Kharif 2025, Rabi 2025."""
-	seasons = frappe.get_all("Season Master", filters={"year": str(kms_year).strip()}, pluck="name")
+	"""Season Masters (Kharif and Rabi) of the KMS Year, e.g. 25-26 -> Kharif 2025, Rabi 2025."""
+	seasons = frappe.get_all("Season Master", filters={"year": season_master_year(kms_year)}, pluck="name")
 	if not seasons:
-		frappe.throw(_("No Season Master has the year {0}").format(kms_year))
+		frappe.throw(_("No Season Master is in KMS Year {0}").format(kms_year))
 	return seasons
 
 
