@@ -9,96 +9,96 @@ from frappe.utils import getdate
 from ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy import (
 	build_rows,
 	classify,
+	dcro_release,
 	get_months,
+	grn_receipts,
+	season_code_from_pass_key,
 	validate_filters,
 )
 
-FROM_DATE = getdate("2024-11-01")
+FROM_DATE = getdate("2025-11-01")
 
 
-def sle(voucher_no, posting_date, qty, voucher_type="Stock Entry", source=None, movement=None):
-	return frappe._dict(
-		voucher_type=voucher_type,
-		voucher_no=voucher_no,
-		posting_date=posting_date,
-		actual_qty=qty,
-		stock_uom="Quintal",
-		paddy_source=source,
-		paddy_movement=movement,
-	)
+def grn(key, receipt_date, net_weight):
+	return frappe._dict(pass_unique_key=key, receipt_date=receipt_date, net_weight=net_weight)
 
 
-LEDGER = [
-	# Before the period: goes into the first OB.
-	sle("PR-OLD", "2024-10-15", 50, "Purchase Receipt", "PACS"),
-	sle("MILL-OLD", "2024-10-20", -10, movement="Issue for Milling"),
-	# November
-	sle("PR-1", "2024-11-05", 100.25, "Purchase Receipt", "PACS"),
-	sle("PR-2", "2024-11-06", 40, "Purchase Receipt", "WSHG"),
-	sle("SE-RECEIPT", "2024-11-07", 5, source=None),
-	sle("MILL-1", "2024-11-10", -60.5, movement="Issue for Milling"),
-	sle("DRIAGE-1", "2024-11-30", -0.75, movement="Driage"),
-	# December: no movement. January
-	sle("PR-RETURN", "2025-01-03", -4, "Purchase Receipt", "WSHG"),
-	sle("PR-3", "2025-01-04", 30, "Purchase Receipt", "WSHG"),
-	# Transfer between two selected warehouses nets to zero.
-	sle("TRANSFER", "2025-01-08", -20),
-	sle("TRANSFER", "2025-01-08", 20),
-	# Milling done as a transfer to a milling warehouse: only the outgoing leg counts.
-	sle("MILL-2", "2025-01-09", -25, movement="Issue for Milling"),
-	sle("MILL-2", "2025-01-09", 25, movement="Issue for Milling"),
-	# Paddy going out through an entry type with no Paddy Movement.
-	sle("SE-SALE", "2025-01-10", -3),
+# GRNs in receipt order.
+GRNS = [
+	# TP-1 (100 QT): 60 in October (before the period), 50 in November -> fulfilled, counts 100.
+	grn("M1-P(S1)-K25-TP1", "2025-10-20", 60),
+	grn("M1-P(S1)-K25-TP1", "2025-11-03", 50),
+	# TP-2 (80 QT): two trucks in November, 30 + 30 -> short, counts 60.
+	grn("M1-P(S1)-K25-TP2", "2025-11-05", 30),
+	grn("M1-P(S1)-K25-TP2", "2025-11-06", 30),
+	# TP-3 (50 QT): 49.5 in November, 3 more in January -> fulfilled, counts 50.
+	grn("M1-P(S1)-K25-TP3", "2025-11-20", 49.5),
+	grn("M1-P(S1)-K25-TP3", "2026-01-04", 3),
 ]
+TP_QUANTITIES = {"M1-P(S1)-K25-TP1": 100, "M1-P(S1)-K25-TP2": 80, "M1-P(S1)-K25-TP3": 50}
+
+DCRO_ROW = {
+	"RO No.": "RO1",
+	"Date of Requistion": "15-11-2025",
+	"Paddy Lifted (Own District) (in Qtl)": "500.00",
+	"Quantity of Paddy Released for Milling (Own District) (in Qtl)": "70.00",
+	"Quantity of Paddy Released for Milling (Other District) (in Qtl)": "5.50",
+	"Status of Released Order": "Approved",
+}
+SKIP = ["reject", "cancel"]
 
 
 class TestStockAccountForPaddy(IntegrationTestCase):
 	def get_rows(self):
-		opening, movements, unclassified = classify(LEDGER, FROM_DATE)
-		return build_rows(get_months(FROM_DATE, getdate("2025-01-31")), opening, movements), unclassified
+		movements = grn_receipts(GRNS, TP_QUANTITIES)
+		movements.append(dcro_release(DCRO_ROW, SKIP))
+		movements.append((getdate("2025-10-25"), "issue_for_milling", 10))
+		opening, by_month = classify(movements, FROM_DATE)
+		return build_rows(get_months(FROM_DATE, getdate("2026-01-31")), opening, by_month)
 
-	def test_every_month_shown_with_ob_from_previous_cb(self):
-		rows, _unclassified = self.get_rows()
-		month_rows, total_row = rows[:-1], rows[-1]
+	def test_pacs_counts_tp_quantity_once_fulfilled(self):
+		receipts = [qty for _date, _column, qty in grn_receipts(GRNS, TP_QUANTITIES)]
+		self.assertEqual(receipts, [60, 40, 30, 30, 49.5, 0.5])
 
-		self.assertEqual([row["month"] for row in month_rows], ["Nov-24", "Dec-24", "Jan-25"])
-		self.assertEqual(month_rows[0]["ob"], 40)
+	def test_dcro_release(self):
+		self.assertEqual(dcro_release(DCRO_ROW, SKIP), (getdate("2025-11-15"), "issue_for_milling", 75.5))
+		self.assertIsNone(dcro_release({**DCRO_ROW, "Status of Released Order": "Rejected"}, SKIP))
+		self.assertIsNone(dcro_release({**DCRO_ROW, "Date of Requistion": ""}, SKIP))
+
+	def test_months_ob_cb(self):
+		rows = self.get_rows()
+		month_rows = rows[:-1]
+
+		self.assertEqual([row["month"] for row in month_rows], ["Nov-25", "Dec-25", "Jan-26"])
+		# OB: 60 received in October - 10 released in October.
+		self.assertEqual(month_rows[0]["ob"], 50)
+		november = month_rows[0]
+		self.assertEqual((november["pacs"], november["wshgs"], november["other_rect"]), (149.5, 0, 0))
+		self.assertEqual(november["total_paddy"], 199.5)
+		self.assertEqual((november["issue_for_milling"], november["driage"], november["total"]), (75.5, 0, 75.5))
+		self.assertEqual(november["cb"], 124)
+
 		for previous, current in zip(month_rows, month_rows[1:]):
 			self.assertEqual(current["ob"], previous["cb"])
 		for row in rows:
 			self.assertEqual(row["cb"], round(row["total_paddy"] - row["total"], 2))
-
-		december = month_rows[1]
-		self.assertEqual(
-			[december[f] for f in ("pacs", "wshgs", "other_rect", "issue_for_milling", "driage")], [0] * 5
-		)
-		self.assertTrue(total_row["bold"])
-
-	def test_columns(self):
-		rows, unclassified = self.get_rows()
-		november, january = rows[0], rows[2]
-
-		self.assertEqual((november["pacs"], november["wshgs"], november["other_rect"]), (100.25, 40, 5))
-		self.assertEqual(november["total_paddy"], 185.25)
-		self.assertEqual(
-			(november["issue_for_milling"], november["driage"], november["total"]), (60.5, 0.75, 61.25)
-		)
-		self.assertEqual(november["cb"], 124)
-
-		self.assertEqual((january["wshgs"], january["other_rect"]), (26, 0))
-		self.assertEqual(january["issue_for_milling"], 25)
-		self.assertEqual([voucher.voucher_no for voucher in unclassified], ["SE-SALE"])
+		self.assertEqual(month_rows[1]["pacs"], 0)
+		self.assertEqual(month_rows[2]["pacs"], 0.5)
 
 	def test_total_row(self):
-		rows, _unclassified = self.get_rows()
+		rows = self.get_rows()
 		month_rows, total_row = rows[:-1], rows[-1]
 
+		self.assertTrue(total_row["bold"])
 		self.assertEqual(total_row["ob"], month_rows[0]["ob"])
 		for field in ("pacs", "wshgs", "other_rect", "issue_for_milling", "driage", "total"):
 			self.assertEqual(total_row[field], round(sum(row[field] for row in month_rows), 2))
-		receipts = total_row["pacs"] + total_row["wshgs"] + total_row["other_rect"]
-		self.assertEqual(total_row["total_paddy"], round(total_row["ob"] + receipts, 2))
+		self.assertEqual(total_row["total_paddy"], round(total_row["ob"] + total_row["pacs"], 2))
 		self.assertEqual(total_row["cb"], month_rows[-1]["cb"])
+
+	def test_season_code_from_pass_key(self):
+		self.assertEqual(season_code_from_pass_key("M051007-BAKTI(S1050104)-K25-TP45"), "K25")
+		self.assertEqual(season_code_from_pass_key(""), "")
 
 	def test_from_month_after_to_month(self):
 		filters = frappe._dict(

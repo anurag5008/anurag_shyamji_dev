@@ -9,7 +9,7 @@ frappe.query_reports["Stock Account for Paddy"] = {
 			options: "Mill Master",
 			reqd: 1,
 			on_change: (report) => {
-				// The mill's company is used for the stock and for the print heading.
+				// The mill's company is printed in the heading.
 				const mill = report.get_filter_value("mill");
 				const company_of_mill = mill
 					? frappe.db.get_value("Mill Master", mill, "company").then((r) => r.message?.company || "")
@@ -51,22 +51,6 @@ frappe.query_reports["Stock Account for Paddy"] = {
 			fieldtype: "Date",
 			reqd: 1,
 			default: frappe.datetime.month_end(),
-		},
-		{
-			fieldname: "item_code",
-			label: __("Paddy Item"),
-			fieldtype: "Link",
-			options: "Item",
-			get_query: () => ({ filters: { is_stock_item: 1 } }),
-		},
-		{
-			fieldname: "warehouse",
-			label: __("Warehouse"),
-			fieldtype: "Link",
-			options: "Warehouse",
-			get_query: () => ({
-				filters: { company: frappe.query_report.get_filter_value("company") },
-			}),
 		},
 		{
 			fieldname: "company",

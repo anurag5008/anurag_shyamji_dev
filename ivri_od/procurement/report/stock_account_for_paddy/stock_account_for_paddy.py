@@ -1,36 +1,48 @@
 # Copyright (c) 2026, Profezzo and contributors
-"""Stock Account for Paddy: monthly OB, receipts, milling issue, driage and CB for Civil Supplies."""
+"""Stock Account for Paddy: monthly OB, receipts, milling issue, driage and CB for Civil Supplies.
+
+PACs: government GRN Notes of the mill, KMS Year and PPC district. Each transit pass counts
+its TP quantity once fulfilled, else what was received (effective_tp_quantity_for_pass),
+spread over the months of its GRNs in receipt order.
+Issue for Milling: paddy released for milling in the DCRO "Paddy Release" rows of the mill.
+WSHGs, Other Rect and Driage have no source yet and stay 0."""
 
 from __future__ import annotations
 
 from collections import defaultdict
+from datetime import datetime
 
 import frappe
 from frappe import _
 from frappe.utils import add_months, flt, get_first_day, get_last_day, getdate
-from frappe.utils.nestedset import get_descendants_of
 
-# Paddy Source (Purchase Receipt / Stock Entry) -> receipt column. Blank or anything else goes to Other Rect.
-RECEIPT_COLUMNS = {"PACS": "pacs", "WSHG": "wshgs"}
-OTHER_RECEIPT_COLUMN = "other_rect"
-# Paddy Movement (Stock Entry Type) -> issue column.
-ISSUE_COLUMNS = {"Issue for Milling": "issue_for_milling", "Driage": "driage"}
+from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
+from ivri_od.procurement.portal_report import _load, _sum_of
+from ivri_od.procurement.ppc_pass_metrics import effective_tp_quantity_for_pass
+from ivri_od.procurement.report.paddy_release_from_dcro.paddy_release_from_dcro import (
+	BALANCE as DCRO_BALANCE,
+	DATE_COLUMN as DCRO_DATE_COLUMN,
+	SECTION as DCRO_SECTION,
+)
+from ivri_od.procurement.transit_pass_resolve import mill_id_from_transit_pass, resolve_ppc_master_name
 
 RECEIPTS = ("pacs", "wshgs", "other_rect")
 ISSUES = ("issue_for_milling", "driage")
-VOUCHER_TYPES = ("Purchase Receipt", "Stock Entry")
 PRECISION = 2
+# Same order as the TP fulfillment of GRN Notes (grn_tp_fulfillment.py).
+GRN_ORDER = "receipt_datetime asc, receipt_date asc, receipt_time asc, creation asc"
 
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
 	from_date, to_date = validate_filters(filters)
 
-	ledger_rows = get_ledger_rows(filters, to_date)
-	opening, movements, unclassified = classify(ledger_rows, from_date)
+	grns, skipped_grns = get_grns(filters, to_date)
+	releases = get_dcro_releases(filters, to_date)
+	opening, movements = classify(grn_receipts(grns, get_tp_quantities(grns)) + releases, from_date)
 	data = build_rows(get_months(from_date, to_date), opening, movements)
 
-	return get_columns(), data, get_message(ledger_rows, unclassified)
+	return get_columns(), data, get_message(skipped_grns, filters)
 
 
 def validate_filters(filters):
@@ -44,7 +56,7 @@ def validate_filters(filters):
 		if not filters.get(fieldname):
 			frappe.throw(_("{0} is mandatory").format(label))
 
-	# The mill's company owns the stock; the print heading uses it too.
+	# The mill's company is printed in the heading.
 	filters.company = frappe.db.get_value("Mill Master", filters.mill, "company")
 	if not filters.company:
 		frappe.throw(_("Set the Company in Mill Master {0}").format(filters.mill))
@@ -82,118 +94,153 @@ def get_columns():
 	return columns
 
 
-def get_ledger_rows(filters, to_date):
-	"""Stock ledger rows of paddy vouchers tagged with the selected KMS Season and Paddy Account."""
-	sle = frappe.qb.DocType("Stock Ledger Entry")
-	rows = []
+def get_grns(filters, to_date):
+	"""Government GRN Notes of the mill and KMS Year up to To Month, with the PPC in the District.
 
-	for voucher_type in VOUCHER_TYPES:
-		voucher = frappe.qb.DocType(voucher_type)
-		query = (
-			frappe.qb.from_(sle)
-			.inner_join(voucher)
-			.on(voucher.name == sle.voucher_no)
-			.select(
-				sle.voucher_type,
-				sle.voucher_no,
-				sle.item_code,
-				sle.posting_date,
-				sle.actual_qty,
-				sle.stock_uom,
-				voucher.paddy_source,
-			)
-			.where(
-				(sle.voucher_type == voucher_type)
-				& (sle.is_cancelled == 0)
-				& (sle.company == filters.company)
-				& (sle.posting_date <= to_date)
-				& (voucher.kms_season == filters.kms_season)
-				& (voucher.paddy_account == filters.paddy_account)
-			)
-		)
-
-		if voucher_type == "Stock Entry":
-			entry_type = frappe.qb.DocType("Stock Entry Type")
-			query = (
-				query.left_join(entry_type)
-				.on(entry_type.name == voucher.stock_entry_type)
-				.select(entry_type.paddy_movement)
-			)
-
-		rows.extend(apply_item_and_warehouse(query, sle, filters).run(as_dict=True))
-
-	return rows
-
-
-def apply_item_and_warehouse(query, sle, filters):
-	if filters.item_code:
-		query = query.where(sle.item_code == filters.item_code)
-
-	if filters.warehouse:
-		warehouses = [filters.warehouse, *get_descendants_of("Warehouse", filters.warehouse)]
-		query = query.where(sle.warehouse.isin(warehouses))
-
-	return query
-
-
-def classify(ledger_rows, from_date):
-	"""Return (opening balance, {month: {column: qty}}, unclassified outward vouchers).
-
-	Rows are first netted per voucher, so a transfer between two selected warehouses cancels out.
-	Milling and driage count only the paddy that left (negative rows) of their vouchers.
+	Returns (grns, skipped): skipped are GRNs of the mill and year whose PPC has no District.
 	"""
-	vouchers = {}
-	for row in ledger_rows:
-		key = (row.voucher_type, row.voucher_no, getdate(row.posting_date))
-		voucher = vouchers.setdefault(
-			key,
-			frappe._dict(
-				voucher_type=row.voucher_type,
-				voucher_no=row.voucher_no,
-				posting_date=getdate(row.posting_date),
-				paddy_source=row.paddy_source,
-				paddy_movement=row.get("paddy_movement"),
-				net_qty=0.0,
-				out_qty=0.0,
-			),
-		)
-		voucher.net_qty += flt(row.actual_qty)
-		if flt(row.actual_qty) < 0:
-			voucher.out_qty -= flt(row.actual_qty)
+	rows = frappe.get_all(
+		"GRN Note",
+		filters={
+			"is_local_procurement": 0,
+			"docstatus": ["<", 2],
+			"pass_unique_key": ["like", f"{filters.mill}-%"],
+			"receipt_date": ["<=", to_date],
+		},
+		fields=[
+			"name",
+			"pass_unique_key",
+			"mill_name",
+			"cmr_season",
+			"ppc",
+			"tp_quantity",
+			"net_weight",
+			"receipt_date",
+		],
+		order_by=GRN_ORDER,
+		limit_page_length=0,
+	)
 
-	opening = 0.0
-	movements = defaultdict(lambda: defaultdict(float))
-	unclassified = []
-
-	for voucher in vouchers.values():
-		column, qty = get_column_and_qty(voucher)
-		if not column:
-			if voucher.net_qty < 0:
-				unclassified.append(voucher)
+	season_of, district_of = {}, {}
+	grns, skipped = [], []
+	for row in rows:
+		mill = mill_id_from_transit_pass({"pass_unique_key": row.pass_unique_key, "miller": row.mill_name})
+		if mill != filters.mill:
 			continue
 
-		if voucher.posting_date < from_date:
+		season_text = row.cmr_season or season_code_from_pass_key(row.pass_unique_key)
+		if season_text not in season_of:
+			season_of[season_text] = resolve_season_master_name(season_text)
+		if season_of[season_text] != filters.kms_season:
+			continue
+
+		if row.ppc not in district_of:
+			ppc = resolve_ppc_master_name(row.ppc)
+			district_of[row.ppc] = ppc and frappe.db.get_value("PPC Master", ppc, "district")
+		if not district_of[row.ppc]:
+			skipped.append(row)
+		elif district_of[row.ppc] == filters.paddy_account:
+			grns.append(row)
+
+	return grns, skipped
+
+
+def season_code_from_pass_key(pass_unique_key):
+	"""Season code of a pass key: "M051007-BAKTI(S1050104)-K25-TP45" -> "K25"."""
+	parts = (pass_unique_key or "").rsplit("-", 2)
+	return parts[1] if len(parts) == 3 else ""
+
+
+def get_tp_quantities(grns):
+	"""{pass key: TP quantity}: the largest TP quantity on its GRNs, else the PPAS Transit Pass quantity."""
+	tp_quantities = defaultdict(float)
+	for grn in grns:
+		tp_quantities[grn.pass_unique_key] = max(tp_quantities[grn.pass_unique_key], flt(grn.tp_quantity))
+
+	missing = [key for key, qty in tp_quantities.items() if not qty]
+	if missing:
+		for tp in frappe.get_all(
+			"PPAS Transit Pass",
+			filters={"pass_unique_key": ["in", missing]},
+			fields=["pass_unique_key", "quantity"],
+		):
+			tp_quantities[tp.pass_unique_key] = flt(tp.quantity)
+
+	return tp_quantities
+
+
+def grn_receipts(grns, tp_quantities):
+	"""PACs quantity of each GRN as (date, "pacs", qty).
+
+	Per pass, in receipt order: what the pass counts after this GRN minus what it counted before,
+	so a fulfilled TP counts its TP quantity once and a short TP counts what was received.
+	"""
+	received_so_far = defaultdict(float)
+	receipts = []
+	for grn in grns:
+		key = grn.pass_unique_key
+		before = effective_tp_quantity_for_pass(received_so_far[key], tp_quantities[key])
+		received_so_far[key] += flt(grn.net_weight)
+		after = effective_tp_quantity_for_pass(received_so_far[key], tp_quantities[key])
+		receipts.append((getdate(grn.receipt_date), "pacs", after - before))
+	return receipts
+
+
+def get_dcro_releases(filters, to_date):
+	"""Paddy released for milling as (date, "issue_for_milling", qty), from the DCRO Paddy Release
+	rows of the mill (own and other district added up, rejected or cancelled orders left out).
+	Rows before the KMS Year's start date, when it is set, belong to an earlier year."""
+	season_start = frappe.db.get_value("Season Master", filters.kms_season, "start_date")
+	skip_status = [word.lower() for word in DCRO_BALANCE["skip_status"]]
+
+	releases = []
+	for record in frappe.get_all(
+		"Portal Record",
+		filters={"site": "DCRO", "section": DCRO_SECTION, "mill_id": filters.mill},
+		fields=["row_data"],
+		limit_page_length=0,
+	):
+		release = dcro_release(_load(record.row_data), skip_status)
+		if not release:
+			continue
+		if release[0] > to_date or (season_start and release[0] < getdate(season_start)):
+			continue
+		releases.append(release)
+	return releases
+
+
+def dcro_release(cells, skip_status):
+	"""(date, "issue_for_milling", qty) of one DCRO row, or None without a date or for a rejected order."""
+	status = " ".join(value for header, value in cells.items() if "status" in header.lower()).lower()
+	if any(word in status for word in skip_status):
+		return None
+	release_date = parse_portal_date(cells.get(DCRO_DATE_COLUMN))
+	if not release_date:
+		return None
+	return release_date, "issue_for_milling", flt(_sum_of(cells, DCRO_BALANCE["released"]))
+
+
+def parse_portal_date(value):
+	"""dd-mm-yyyy or dd/mm/yyyy as on the portal."""
+	text = (value or "").strip()
+	for date_format in ("%d-%m-%Y", "%d/%m/%Y"):
+		try:
+			return datetime.strptime(text, date_format).date()
+		except ValueError:
+			continue
+	return None
+
+
+def classify(movements, from_date):
+	"""Return (opening balance, {month: {column: qty}}) from (date, column, qty) movements."""
+	opening = 0.0
+	by_month = defaultdict(lambda: defaultdict(float))
+	for movement_date, column, qty in movements:
+		if movement_date < from_date:
 			opening += qty if column in RECEIPTS else -qty
 		else:
-			movements[voucher.posting_date.replace(day=1)][column] += qty
-
-	return opening, movements, unclassified
-
-
-def get_column_and_qty(voucher):
-	"""Column the voucher belongs to, with the quantity to show (issues as positive figures)."""
-	if voucher.paddy_movement in ISSUE_COLUMNS:
-		return ISSUE_COLUMNS[voucher.paddy_movement], voucher.out_qty
-
-	receipt_column = RECEIPT_COLUMNS.get(voucher.paddy_source, OTHER_RECEIPT_COLUMN)
-	if voucher.voucher_type == "Purchase Receipt":
-		# A purchase return reduces the receipts of its source.
-		return receipt_column, voucher.net_qty
-
-	if voucher.net_qty > 0:
-		return receipt_column, voucher.net_qty
-
-	return None, 0.0
+			by_month[movement_date.replace(day=1)][column] += qty
+	return opening, by_month
 
 
 def get_months(from_date, to_date):
@@ -240,33 +287,10 @@ def get_total_row(month_rows):
 	return total_row
 
 
-def get_message(ledger_rows, unclassified):
-	messages = []
-
-	items = sorted({row.item_code for row in ledger_rows})
-	if len(items) > 1:
-		messages.append(
-			_("Figures include {0} items ({1}). Select a Paddy Item to see one item only.").format(
-				len(items), ", ".join(items[:5])
-			)
-		)
-
-	uoms = sorted({row.stock_uom for row in ledger_rows if row.stock_uom})
-	if len(uoms) > 1:
-		messages.append(
-			_("These items use more than one stock UOM ({0}). Figures are added as they are.").format(
-				", ".join(uoms)
-			)
-		)
-
-	if unclassified:
-		qty = flt(sum(-voucher.net_qty for voucher in unclassified), PRECISION)
-		names = ", ".join(voucher.voucher_no for voucher in unclassified[:5])
-		messages.append(
-			_(
-				"{0} paddy left through {1} stock entries whose type has no Paddy Movement ({2}). "
-				"It is not in this statement, so CB can differ from the actual stock."
-			).format(qty, len(unclassified), names)
-		)
-
-	return "<br>".join(messages) or None
+def get_message(skipped_grns, filters):
+	if not skipped_grns:
+		return None
+	ppcs = sorted({grn.ppc for grn in skipped_grns if grn.ppc})
+	return _(
+		"{0} GRN Notes of mill {1} are not counted because their PPC has no District in PPC Master: {2}"
+	).format(len(skipped_grns), filters.mill, ", ".join(ppcs[:10]) or _("PPC not set"))
