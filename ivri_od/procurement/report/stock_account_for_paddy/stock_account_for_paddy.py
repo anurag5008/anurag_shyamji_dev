@@ -127,7 +127,8 @@ def get_kms_seasons(kms_year):
 def get_grns(filters, seasons, to_date):
 	"""Government GRN Notes of the mill and KMS Year up to To Month, with the PPC in the District.
 
-	Returns (grns, skipped): skipped are GRNs of the mill and year whose PPC has no District.
+	Returns (grns, skipped): skipped are GRNs of the mill and year whose PPC is not in PPC Master
+	or has no District.
 	"""
 	rows = frappe.get_all(
 		"GRN Note",
@@ -323,5 +324,6 @@ def get_message(skipped_grns, filters):
 		return None
 	ppcs = sorted({grn.ppc for grn in skipped_grns if grn.ppc})
 	return _(
-		"{0} GRN Notes of mill {1} are not counted because their PPC has no District in PPC Master: {2}"
+		"{0} GRN Notes of mill {1} are not counted because their PPC is not in PPC Master "
+		"or has no District: {2}"
 	).format(len(skipped_grns), filters.mill, ", ".join(ppcs[:10]) or _("PPC not set"))
