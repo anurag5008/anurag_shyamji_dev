@@ -10,6 +10,8 @@
  "field_order": [
   "miller_code",
   "company",
+  "display_name",
+  "accounting_company",
   "column_break_1",
   "type",
   "is_active"
@@ -35,6 +37,19 @@
    "label": "Company",
    "options": "Company",
    "reqd": 1
+  },
+  {
+   "description": "Full operating-unit name shown to users, with the (Raw) or (Boiled) suffix.",
+   "fieldname": "display_name",
+   "fieldtype": "Data",
+   "label": "Display Name"
+  },
+  {
+   "description": "Legal accounting entity of this unit. Filled once the legal Company exists.",
+   "fieldname": "accounting_company",
+   "fieldtype": "Link",
+   "label": "Accounting Company",
+   "options": "Company"
   },
   {
    "fieldname": "column_break_1",

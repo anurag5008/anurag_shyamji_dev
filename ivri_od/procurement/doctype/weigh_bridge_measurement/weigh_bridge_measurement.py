@@ -484,16 +484,11 @@ class WeighBridgeMeasurement(Document):
 				self.no_of_bags = tp.bags
 
 	def _sync_bag_details_from_qc(self):
+		"""Bag Details always mirror the linked Quality Check: its packet lines, or no rows when there is no
+		Quality Check or it has no bag lines. Never the lines of a Quality Check the weighment no longer has.
+		Only the entered per-bag weights are kept (by row)."""
 		qc_name = (self.quality_check or "").strip()
-		if not qc_name:
-			self.bag_weight_details = []
-			self._sync_total_bags_from_qc_table()
-			return
-
-		saved = _saved_bag_weights(self.bag_weight_details)
-		rows = build_bag_details_from_qc(qc_name, saved)
-		if not rows:
-			return
+		rows = build_bag_details_from_qc(qc_name, _saved_bag_weights(self.bag_weight_details)) if qc_name else []
 
 		self.bag_weight_details = []
 		for row_data in rows:
@@ -509,11 +504,7 @@ class WeighBridgeMeasurement(Document):
 		self._sync_total_bags_from_qc_table()
 
 	def _persist_bag_details_from_qc(self):
-		"""Write QC bag lines to DB without blocking on Gunny Cut weight validation."""
-		if not (self.quality_check or "").strip():
-			return
-		if not build_bag_details_from_qc(self.quality_check, _saved_bag_weights(self.bag_weight_details)):
-			return
+		"""Write the linked QC's bag lines (none when there is no QC) to DB without blocking on Gunny Cut weight validation."""
 		self._sync_bag_details_from_qc()
 		self.flags.ignore_validate = True
 		self.save(ignore_permissions=True)
@@ -996,20 +987,27 @@ def get_bag_details_from_qc(quality_check, wbm_name=None):
 
 
 def _wbm_names_matching_vehicle(vehicle_no: str) -> list[str]:
+	"""Weighments whose effective truck is this vehicle.
+
+	A weighment belongs to one physical truck (see get_effective_truck_no): the actual truck when it differs
+	from the Transit Pass truck. The Transit Pass truck number on its own must not claim a weighment made on
+	another truck, otherwise saving the Quality Check of the Transit Pass truck takes over the Quality Check
+	and Gate Entry of the weighment of the substitute truck."""
 	vehicle_no = normalize_vehicle_no(vehicle_no)
 	if not vehicle_no:
 		return []
-	return frappe.db.sql(
+	rows = frappe.db.sql(
 		"""
-		SELECT name
+		SELECT name, actual_truck_no, truck_no_in_tp, vehicle_no, same_truck_as_transit_pass, is_farmer_or_agent
 		FROM `tabWeigh Bridge Measurement`
 		WHERE UPPER(TRIM(IFNULL(actual_truck_no, ''))) = %s
 			OR UPPER(TRIM(IFNULL(truck_no_in_tp, ''))) = %s
 			OR UPPER(TRIM(IFNULL(vehicle_no, ''))) = %s
 		""",
 		(vehicle_no, vehicle_no, vehicle_no),
-		pluck=True,
+		as_dict=True,
 	)
+	return [row.name for row in rows if get_effective_truck_no(row) == vehicle_no]
 
 
 def find_wbm_names_for_quality_sync(vehicle_no: str, quality_check: str = "") -> list[str]:
@@ -1071,7 +1069,8 @@ def sync_weigh_bridge_quality_for_vehicle(
 def unlink_quality_check_from_weigh_bridge(quality_check: str, keep_gate_entry: str = "") -> list[str]:
 	"""A Quality Check was moved to another vehicle visit: weighments of the old visit go back to Pending QC.
 
-	Their GRN Notes are synced too, so the wrong Quality Check values leave the final GRN.
+	Their Bag Details are emptied with the link (they were the moved QC's bags), and their GRN Notes are synced,
+	so neither the wrong Quality Check values nor its bag counts stay on the weighment or the final GRN.
 	"""
 	quality_check = (quality_check or "").strip()
 	if not quality_check:
@@ -1088,6 +1087,7 @@ def unlink_quality_check_from_weigh_bridge(quality_check: str, keep_gate_entry: 
 			{"quality_check": "", "quality_test": PENDING_QC, "slno_of_qc": 0},
 			update_modified=True,
 		)
+		_ensure_wbm_bag_details_from_qc(name, {"quality_check": "", "bag_details": []})
 		persist_wbm_quality_and_net_after_qc_sync(name)
 		_ensure_grn_note_for_weigh_bridge(name)
 	return names
@@ -1370,7 +1370,9 @@ def ensure_grn_note_for_weigh_bridge(wbm_name: str):
 
 
 def _ensure_wbm_bag_details_from_qc(name: str, data: dict | None = None):
-	"""Persist QC jute/plastic bag counts on WBM when missing or out of sync."""
+	"""Persist the linked QC's jute/plastic bag counts on the WBM when missing or out of sync.
+
+	With no Quality Check (or one without bag lines) the Bag Details must be empty, so stale rows are removed."""
 	if not name or not frappe.db.exists("Weigh Bridge Measurement", name):
 		return
 	if data is None:
@@ -1391,8 +1393,8 @@ def _ensure_wbm_bag_details_from_qc(name: str, data: dict | None = None):
 
 	qc_name = (data.get("quality_check") or "").strip()
 	bag_details = data.get("bag_details") or []
-	if not qc_name or not bag_details:
-		return
+	if not qc_name and (frappe.db.get_value("Weigh Bridge Measurement", name, "quality_check") or "").strip():
+		return  # still linked to a Quality Check: that link decides the rows, not this lookup
 
 	existing = frappe.get_all(
 		"Weigh Bridge Bag Detail",

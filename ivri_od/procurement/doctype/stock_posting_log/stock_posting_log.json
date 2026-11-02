@@ -1,0 +1,284 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "modified": "2026-10-27 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Stock Posting Log",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "quick_entry": 0,
+ "index_web_pages_for_search": 1,
+ "autoname": "naming_series:",
+ "naming_rule": "By \"Naming Series\" field",
+ "track_changes": 1,
+ "title_field": "grn_note",
+ "search_fields": "grn_note,stock_entry,status,operating_unit",
+ "field_order": [
+  "naming_series",
+  "grn_note",
+  "status",
+  "stock_entry",
+  "active_key",
+  "col1",
+  "company",
+  "operating_unit",
+  "warehouse",
+  "item_code",
+  "batch_no",
+  "season",
+  "qty_section",
+  "net_weight_qt",
+  "stock_qty",
+  "stock_uom",
+  "no_of_bags",
+  "col2",
+  "pass_unique_key",
+  "weigh_bridge_measurement",
+  "mill_name",
+  "qc_decision",
+  "is_local_procurement",
+  "audit_section",
+  "posted_by",
+  "posted_on",
+  "col3",
+  "cancelled_by",
+  "cancelled_on",
+  "cancel_reason"
+ ],
+ "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "SPL-.#####",
+   "default": "SPL-.#####",
+   "hidden": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "grn_note",
+   "fieldtype": "Link",
+   "label": "GRN Note",
+   "options": "GRN Note",
+   "reqd": 1,
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Status",
+   "options": "Posted\nCancelled",
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "default": "Posted"
+  },
+  {
+   "fieldname": "stock_entry",
+   "fieldtype": "Link",
+   "label": "Stock Entry",
+   "options": "Stock Entry",
+   "read_only": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "active_key",
+   "fieldtype": "Data",
+   "label": "Active Key",
+   "read_only": 1,
+   "hidden": 1,
+   "unique": 1,
+   "no_copy": 1,
+   "description": "Equals the GRN Note while Posted; empty once Cancelled. Its unique index stops a second active posting."
+  },
+  {
+   "fieldname": "col1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "operating_unit",
+   "fieldtype": "Link",
+   "label": "Operating Unit",
+   "options": "Mill Master",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "warehouse",
+   "fieldtype": "Link",
+   "label": "Warehouse",
+   "options": "Warehouse",
+   "read_only": 1
+  },
+  {
+   "fieldname": "item_code",
+   "fieldtype": "Link",
+   "label": "Item",
+   "options": "Item",
+   "read_only": 1
+  },
+  {
+   "fieldname": "batch_no",
+   "fieldtype": "Link",
+   "label": "Batch",
+   "options": "Batch",
+   "read_only": 1
+  },
+  {
+   "fieldname": "season",
+   "fieldtype": "Link",
+   "label": "Season",
+   "options": "Season Master",
+   "read_only": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "qty_section",
+   "fieldtype": "Section Break",
+   "label": "Posted Quantity (snapshot at posting)"
+  },
+  {
+   "fieldname": "net_weight_qt",
+   "fieldtype": "Float",
+   "label": "Net Weight (QT)",
+   "precision": "3",
+   "read_only": 1,
+   "description": "GRN Note net_weight (same as Weigh Bridge Measurement net_weight) when posted. Not recalculated."
+  },
+  {
+   "fieldname": "stock_qty",
+   "fieldtype": "Float",
+   "label": "Stock Quantity",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "stock_uom",
+   "fieldtype": "Link",
+   "label": "Stock UOM",
+   "options": "UOM",
+   "read_only": 1
+  },
+  {
+   "fieldname": "no_of_bags",
+   "fieldtype": "Int",
+   "label": "No. of Bags",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "pass_unique_key",
+   "fieldtype": "Data",
+   "label": "Pass Unique Key",
+   "read_only": 1
+  },
+  {
+   "fieldname": "weigh_bridge_measurement",
+   "fieldtype": "Link",
+   "label": "Weigh Bridge Measurement",
+   "options": "Weigh Bridge Measurement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "mill_name",
+   "fieldtype": "Data",
+   "label": "Mill Name (on GRN)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "qc_decision",
+   "fieldtype": "Data",
+   "label": "QC Decision",
+   "read_only": 1
+  },
+  {
+   "fieldname": "is_local_procurement",
+   "fieldtype": "Check",
+   "label": "Local Procurement",
+   "read_only": 1
+  },
+  {
+   "fieldname": "audit_section",
+   "fieldtype": "Section Break",
+   "label": "Audit"
+  },
+  {
+   "fieldname": "posted_by",
+   "fieldtype": "Link",
+   "label": "Posted By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "posted_on",
+   "fieldtype": "Datetime",
+   "label": "Posted On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "col3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cancelled_by",
+   "fieldtype": "Link",
+   "label": "Cancelled By",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancelled_on",
+   "fieldtype": "Datetime",
+   "label": "Cancelled On",
+   "read_only": 1
+  },
+  {
+   "fieldname": "cancel_reason",
+   "fieldtype": "Small Text",
+   "label": "Cancel Reason",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Stock User",
+   "read": 1,
+   "report": 1,
+   "export": 1
+  }
+ ],
+ "allow_import": 0,
+ "in_create": 1
+}

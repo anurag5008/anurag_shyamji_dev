@@ -25,9 +25,11 @@ frappe.ui.form.on("Quality Check", {
 	onload(frm) {
 		setup_vehicle_no_autocomplete(frm);
 		setup_qc_child_table_grids(frm);
+		hide_unloading_point_filter_description(frm);
 	},
 	refresh(frm) {
 		frm.toggle_display("is_farmer_or_agent", Boolean(frm.doc.is_farmer_or_agent));
+		hide_unloading_point_filter_description(frm);
 		setup_vehicle_no_autocomplete(frm);
 		sync_qc_decision_from_returns(frm);
 		setup_qc_child_table_grids(frm);
@@ -165,6 +167,18 @@ function setup_qc_child_table_grids(frm) {
 
 		grid.setup_toolbar();
 	});
+}
+
+function hide_unloading_point_filter_description(frm) {
+	// A Link field with filters ends its dropdown with a line that spells the filters out. The Unloading Point
+	// keeps its filters (physical location set, not a group, enabled) but needs no such line, so this field's
+	// control is told not to build it. Only this one control is changed.
+	const control = frm.fields_dict.unloading_point;
+	if (!control || control._filter_description_hidden) {
+		return;
+	}
+	control.get_filter_description = async () => null;
+	control._filter_description_hidden = true;
 }
 
 function ensure_single_qc_grid_row(frm, fieldname) {

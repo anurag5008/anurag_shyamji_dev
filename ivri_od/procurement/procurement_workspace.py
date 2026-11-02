@@ -159,7 +159,7 @@ WORKSPACE_SHORTCUTS = [
 	{"label": DC_TRACK_REPORT, "type": "Report", "link_to": DC_TRACK_REPORT, "icon": "check-square", "color": "Purple"},
 	{"label": DC_DETAILS_REPORT, "type": "Report", "link_to": DC_DETAILS_REPORT, "icon": "layout-grid", "color": "Green"},
 	{
-		"label": "Miller Verification",
+		"label": "PVR",
 		"type": "DocType",
 		"link_to": "Miller Verification Report",
 		"icon": "clipboard-check",
@@ -212,10 +212,9 @@ PORTAL_SHORTCUTS = [
 		"color": "Cyan",
 	},
 ]
-# "Procurement desk" heading with the ivri_od logo: the logo set on the site's ivri_od
-# Desktop Icon, else the app's own image, so no site's logo is kept in this app.
+# "Procurement desk" heading with the red and yellow "S" emblem, the same logo as the sidebar header.
 PROCUREMENT_HEADER_BLOCK = "Procurement Header"
-DEFAULT_IVRI_OD_LOGO = "/assets/ivri_od/images/procurement.svg"
+PROCUREMENT_LOGO = "/assets/ivri_od/icons/desktop_icons/solid/procurement.svg"
 PROCUREMENT_HEADER_STYLE = """.procurement-header { display: flex; align-items: center; gap: 14px; padding: 6px 0 2px; }
 .procurement-logo { height: 48px; width: 48px; object-fit: contain; flex-shrink: 0; }
 .procurement-text { min-width: 0; }
@@ -305,13 +304,9 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Registers",
+		"CMR",
 		[
-			("Mandi Book", "Report"),
-			("Entry Report", "Report"),
-			("Vehicle Gate Movement Summary", "Report"),
-			(DC_TRACK_REPORT, "Report"),
-			(DC_DETAILS_REPORT, "Report"),
+			("Miller Verification Report", "DocType"),
 		],
 	),
 	(
@@ -325,9 +320,13 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		],
 	),
 	(
-		"Verification",
+		"Registers",
 		[
-			("Miller Verification Report", "DocType"),
+			("Mandi Book", "Report"),
+			("Entry Report", "Report"),
+			("Vehicle Gate Movement Summary", "Report"),
+			(DC_TRACK_REPORT, "Report"),
+			(DC_DETAILS_REPORT, "Report"),
 		],
 	),
 ]
@@ -409,13 +408,12 @@ def build_workspace_content() -> str:
 
 
 def _ensure_procurement_header_block():
-	"""The "Procurement desk" heading with the ivri_od logo beside it."""
-	logo = frappe.db.get_value("Desktop Icon", "ivri_od", "logo_url") or DEFAULT_IVRI_OD_LOGO
+	"""The "Govt. Procurement & CMR desk" heading with the "S" emblem beside it."""
 	html = (
 		'<div class="procurement-header">'
-		f'<img class="procurement-logo" src="{escape_html(logo)}" alt="">'
+		f'<img class="procurement-logo" src="{escape_html(PROCUREMENT_LOGO)}" alt="">'
 		'<div class="procurement-text">'
-		'<h1 class="procurement-title">Procurement desk</h1>'
+		'<h1 class="procurement-title">Govt. Procurement &amp; CMR desk</h1>'
 		f'<p class="procurement-subtitle">{FLOW_INTRO}</p>'
 		"</div></div>"
 	)
@@ -800,7 +798,7 @@ def _workspace_target_exists(link_to: str, link_type: str) -> bool:
 def _link_label(link_to: str, link_type: str) -> str:
 	if link_type != "Report":
 		# Shorter labels where the full DocType name is cut off in a card.
-		return {"Weigh Bridge Measurement": "Weigh Bridge"}.get(link_to, link_to)
+		return {"Weigh Bridge Measurement": "Weigh Bridge", "Miller Verification Report": "PVR"}.get(link_to, link_to)
 	return {
 		"Procurement Module Overview": "Module Overview",
 		"Season Mapping Receipt Summary": "Season Mapping Receipt",

@@ -1,0 +1,72 @@
+{
+ "_note": "Business-approved choices that the code cannot know. Empty lists mean: not decided yet, nothing will be created. Units, legal Companies and the nine physical locations are fixed in inventory_foundation.py. Warehouses: the plant owner confirmed that Raw and Boiled paddy share the existing physical warehouses, so there are exactly nine (one per physical location).",
+ "warehouses": [
+  {
+   "location": "SSPP GODOWN"
+  },
+  {
+   "location": "SSPP GALI"
+  },
+  {
+   "location": "SSPP OPEN GODOWN"
+  },
+  {
+   "location": "RGFP MAIN GODOWN"
+  },
+  {
+   "location": "RGFP GALI"
+  },
+  {
+   "location": "RGFP CHALAN"
+  },
+  {
+   "location": "LGI PLANT"
+  },
+  {
+   "location": "LGI NEW PLANT"
+  },
+  {
+   "location": "LGI ECO STAND PLANT"
+  }
+ ],
+ "_warehouses_format": "[{\"location\": \"SSPP GODOWN\"}]  one SHARED warehouse per physical location, under that location's legal Company. Raw and Boiled share it. An entry that also has a \"unit\" is the older per-unit warehouse.",
+ "items": [
+  {
+   "role": "paddy",
+   "item_code": "PADDY",
+   "item_name": "Paddy",
+   "item_group": "Raw Material"
+  },
+  {
+   "role": "raw_rice",
+   "item_code": "RAW-RICE",
+   "item_name": "Raw Rice",
+   "item_group": "Products"
+  },
+  {
+   "role": "boiled_rice",
+   "item_code": "BOILED-RICE",
+   "item_name": "Boiled Rice",
+   "item_group": "Products"
+  },
+  {
+   "role": "by_product",
+   "item_code": "RICE-BRAN",
+   "item_name": "Rice Bran",
+   "item_group": "Products"
+  },
+  {
+   "role": "by_product",
+   "item_code": "HUSK",
+   "item_name": "Husk",
+   "item_group": "Products"
+  },
+  {
+   "role": "by_product",
+   "item_code": "MURI-RICE",
+   "item_name": "Muri Rice",
+   "item_group": "Products"
+  }
+ ],
+ "_items_format": "[{\"role\": \"paddy|raw_rice|boiled_rice|by_product\", \"item_code\": \"...\", \"item_name\": \"...\", \"item_group\": \"an existing Item Group\"}]  roles: one paddy, one raw_rice, one boiled_rice, any number of by_product"
+}
