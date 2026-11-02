@@ -1,0 +1,15 @@
+{
+ "add_total_row": 0,
+ "doctype": "Report",
+ "is_standard": "Yes",
+ "module": "Procurement",
+ "name": "Stock by Physical Location",
+ "ref_doctype": "Warehouse",
+ "report_name": "Stock by Physical Location",
+ "report_type": "Script Report",
+ "roles": [
+  {"role": "System Manager"},
+  {"role": "Stock Manager"},
+  {"role": "Stock User"}
+ ]
+}

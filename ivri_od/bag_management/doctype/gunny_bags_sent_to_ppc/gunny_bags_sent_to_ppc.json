@@ -1,0 +1,110 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "autoname": "format:GBP-{YYYY}-{#####}",
+ "creation": "2026-10-28 14:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "issue_date",
+  "operating_unit",
+  "column_break_1",
+  "ppc",
+  "district",
+  "bags_section",
+  "bags_sent",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "issue_date",
+   "fieldtype": "Date",
+   "label": "Issue Date",
+   "reqd": 1,
+   "default": "Today",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "operating_unit",
+   "fieldtype": "Link",
+   "label": "Operating Unit / Miller",
+   "options": "Mill Master",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ppc",
+   "fieldtype": "Link",
+   "label": "PPC",
+   "options": "PPC Master",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "label": "District",
+   "options": "District Master",
+   "read_only": 1,
+   "fetch_from": "ppc.district",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "bags_section",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "bags_sent",
+   "fieldtype": "Int",
+   "label": "Number of Bags Sent",
+   "reqd": 1,
+   "non_negative": 1,
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "options": "Gunny Bags Sent to PPC",
+   "read_only": 1,
+   "no_copy": 1,
+   "print_hide": 1
+  }
+ ],
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-10-28 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bag Management",
+ "name": "Gunny Bags Sent to PPC",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "submit": 1,
+   "cancel": 1,
+   "amend": 1,
+   "report": 1,
+   "export": 1,
+   "print": 1
+  }
+ ],
+ "quick_entry": 0,
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "ppc",
+ "search_fields": "ppc,operating_unit,district",
+ "track_changes": 1
+}

@@ -1,0 +1,126 @@
+{
+ "_what_this_is": "Decision template. NOT read by the setup planner. No Item is created from it.",
+ "_how_to_use": "For each Item the business really wants: fill item_code and item_name, check item_group, set confirmed true. Delete or leave false anything not wanted. Add other by-products ONLY if confirmed (use the 'other_confirmed_by_products' list).",
+ "_how_it_is_applied": "Confirmed entries are copied as {\"role\", \"item_code\", \"item_name\", \"item_group\"} into inventory_setup_approved.json 'items', the plan is rebuilt and its plan_hash reviewed before apply_plan(). Items are created as batch-tracked stock Items with no rate.",
+ "_existing_item_groups": [
+  "All Item Groups",
+  "Consumable",
+  "Products",
+  "Raw Material",
+  "Services",
+  "Sub Assemblies"
+ ],
+ "_existing_items_today": 0,
+ "_rules": [
+  "One shared Paddy Item. Raw vs Boiled paddy is told apart by the owning operating unit, not by a second Item.",
+  "Raw Rice and Boiled Rice are two separate Items.",
+  "Every recoverable by-product is its own stock Item, batch-tracked so the procurement season stays with it.",
+  "No purchase rate, valuation rate or price is part of this template."
+ ],
+ "items": [
+  {
+   "confirmed": true,
+   "role": "paddy",
+   "item_code": "PADDY",
+   "item_name": "Paddy",
+   "suggested_item_name": "Paddy",
+   "suggested_item_group": "Raw Material",
+   "other_existing_groups_to_consider": [
+    "Products",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": "One shared Item for all paddy."
+  },
+  {
+   "confirmed": true,
+   "role": "raw_rice",
+   "item_code": "RAW-RICE",
+   "item_name": "Raw Rice",
+   "suggested_item_name": "Raw Rice",
+   "suggested_item_group": "Products",
+   "other_existing_groups_to_consider": [
+    "Raw Material",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "role": "boiled_rice",
+   "item_code": "BOILED-RICE",
+   "item_name": "Boiled Rice",
+   "suggested_item_name": "Boiled Rice",
+   "suggested_item_group": "Products",
+   "other_existing_groups_to_consider": [
+    "Raw Material",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "role": "by_product",
+   "item_code": "RICE-BRAN",
+   "item_name": "Rice Bran",
+   "suggested_item_name": "Rice Bran",
+   "suggested_item_group": "Products",
+   "other_existing_groups_to_consider": [
+    "Raw Material",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "role": "by_product",
+   "item_code": "HUSK",
+   "item_name": "Husk",
+   "suggested_item_name": "Husk",
+   "suggested_item_group": "Products",
+   "other_existing_groups_to_consider": [
+    "Raw Material",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "role": "by_product",
+   "item_code": "MURI-RICE",
+   "item_name": "Muri Rice",
+   "suggested_item_name": "Muri Rice",
+   "suggested_item_group": "Products",
+   "other_existing_groups_to_consider": [
+    "Raw Material",
+    "Consumable"
+   ],
+   "stock_uom": "Quintal",
+   "stock_uom_note": "Quintal needs float_precision 3 (see precision decision). If precision stays 2, the stock UOM would have to be Kg.",
+   "is_stock_item": true,
+   "has_batch_no": true,
+   "notes": "Added by the user as a confirmed recoverable by-product."
+  }
+ ],
+ "other_confirmed_by_products": [],
+ "_other_by_products_note": "Empty on purpose. Nothing in the existing records supports any other by-product (there are 0 Items today)."
+}

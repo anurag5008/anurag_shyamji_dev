@@ -476,11 +476,10 @@ function apply_bag_details_table(frm, rows) {
 }
 
 function bag_table_needs_qc_sync(frm, qc, bag_details) {
-	if (!qc) {
-		return false;
-	}
 	const rows = frm.doc.bag_weight_details || [];
-	if (!bag_details?.length) {
+	// The table mirrors the linked QC. With no QC, or a QC without bag lines, it must be empty:
+	// rows left over from a QC this weighment no longer has are removed.
+	if (!qc || !bag_details?.length) {
 		return rows.length > 0;
 	}
 	if (!rows.length) {
@@ -503,11 +502,11 @@ function bag_table_needs_qc_sync(frm, qc, bag_details) {
 function should_refresh_bags_from_qc(frm, data) {
 	const qc = data.quality_check || "";
 	const bag_details = data.bag_details || [];
-	if (!qc || !bag_details.length) {
-		return false;
-	}
 	if (bag_table_needs_qc_sync(frm, qc, bag_details)) {
 		return true;
+	}
+	if (!qc || !bag_details.length) {
+		return false;
 	}
 	const qc_modified = data.qc_modified || "";
 	if (qc_modified && frm._wbm_qc_bag_modified !== qc_modified) {

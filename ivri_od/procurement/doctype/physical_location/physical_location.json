@@ -1,0 +1,85 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "modified": "2026-10-27 18:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Physical Location",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "quick_entry": 0,
+ "index_web_pages_for_search": 1,
+ "autoname": "field:location_name",
+ "naming_rule": "By fieldname",
+ "track_changes": 1,
+ "title_field": "location_name",
+ "search_fields": "company",
+ "field_order": [
+  "location_name",
+  "company",
+  "is_active",
+  "shared_with_other_companies"
+ ],
+ "fields": [
+  {
+   "fieldname": "location_name",
+   "fieldtype": "Data",
+   "label": "Location Name",
+   "reqd": 1,
+   "unique": 1,
+   "in_list_view": 1,
+   "description": "Include the owner so two sites with the same name stay apart, e.g. SSPP GALI and RGFP GALI."
+  },
+  {
+   "fieldname": "company",
+   "fieldtype": "Link",
+   "label": "Company",
+   "options": "Company",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "label": "Is Active",
+   "default": "1",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "shared_with_other_companies",
+   "fieldtype": "Check",
+   "label": "Holds Stock of Other Companies",
+   "default": "0",
+   "description": "Tick only when another legal Company is approved to keep stock here. Otherwise warehouses here must belong to the location's Company."
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "delete": 1,
+   "report": 1,
+   "export": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1,
+   "report": 1
+  },
+  {
+   "role": "Stock User",
+   "read": 1,
+   "report": 1
+  }
+ ]
+}

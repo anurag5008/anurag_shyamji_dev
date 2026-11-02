@@ -1,0 +1,186 @@
+{
+ "_what_this_is": "Decision template. NOT read by the setup planner. Nothing here creates anything.",
+ "_how_to_use": "For every (owner unit, physical location) pair that REALLY holds stock, change \"confirmed\" to true. Leave the rest false. Pairs listed twice for one location (two units) mean the location is shared by those owners.",
+ "_how_it_is_applied": "After you confirm, the confirmed pairs are copied as {\"unit\": ..., \"location\": ...} into inventory_setup_approved.json 'warehouses', the plan is rebuilt, and its new plan_hash is reviewed before apply_plan().",
+ "_rules": [
+  "All 15 candidates use the unit's own legal Company's locations. Storing a unit's stock in another Company's location is NOT listed: it needs 'Holds Stock of Other Companies' on the location and a separate explicit approval.",
+  "SSPP GALI and RGFP GALI are different physical places.",
+  "One warehouse per (owner unit, location). Nothing is assumed: an unconfirmed pair is never created."
+ ],
+ "pairs": [
+  {
+   "confirmed": true,
+   "unit": "M050414",
+   "unit_type": "RAW",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP GODOWN",
+   "warehouse_name_preview": "GODOWN Raw - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M051007"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050414",
+   "unit_type": "RAW",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP GALI",
+   "warehouse_name_preview": "GALI Raw - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M051007"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050414",
+   "unit_type": "RAW",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP OPEN GODOWN",
+   "warehouse_name_preview": "OPEN GODOWN Raw - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M051007"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M051007",
+   "unit_type": "BOILED",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP GODOWN",
+   "warehouse_name_preview": "GODOWN Boiled - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M050414"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M051007",
+   "unit_type": "BOILED",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP GALI",
+   "warehouse_name_preview": "GALI Boiled - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M050414"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M051007",
+   "unit_type": "BOILED",
+   "legal_company": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "location": "SSPP OPEN GODOWN",
+   "warehouse_name_preview": "OPEN GODOWN Boiled - SSPP",
+   "also_candidate_for_units_in_same_location": [
+    "M050414"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050415",
+   "unit_type": "RAW",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP MAIN GODOWN",
+   "warehouse_name_preview": "MAIN GODOWN Raw - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050410"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050415",
+   "unit_type": "RAW",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP GALI",
+   "warehouse_name_preview": "GALI Raw - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050410"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050415",
+   "unit_type": "RAW",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP CHALAN",
+   "warehouse_name_preview": "CHALAN Raw - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050410"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050410",
+   "unit_type": "BOILED",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP MAIN GODOWN",
+   "warehouse_name_preview": "MAIN GODOWN Boiled - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050415"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050410",
+   "unit_type": "BOILED",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP GALI",
+   "warehouse_name_preview": "GALI Boiled - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050415"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050410",
+   "unit_type": "BOILED",
+   "legal_company": "Radhe Govind Food Products",
+   "location": "RGFP CHALAN",
+   "warehouse_name_preview": "CHALAN Boiled - RGFP",
+   "also_candidate_for_units_in_same_location": [
+    "M050415"
+   ],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050421",
+   "unit_type": "BOILED",
+   "legal_company": "Laddu Gopal Industries",
+   "location": "LGI PLANT",
+   "warehouse_name_preview": "PLANT Boiled - LGI",
+   "also_candidate_for_units_in_same_location": [],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050421",
+   "unit_type": "BOILED",
+   "legal_company": "Laddu Gopal Industries",
+   "location": "LGI NEW PLANT",
+   "warehouse_name_preview": "NEW PLANT Boiled - LGI",
+   "also_candidate_for_units_in_same_location": [],
+   "notes": ""
+  },
+  {
+   "confirmed": true,
+   "unit": "M050421",
+   "unit_type": "BOILED",
+   "legal_company": "Laddu Gopal Industries",
+   "location": "LGI ECO STAND PLANT",
+   "warehouse_name_preview": "ECO STAND PLANT Boiled - LGI",
+   "also_candidate_for_units_in_same_location": [],
+   "notes": ""
+  }
+ ]
+}

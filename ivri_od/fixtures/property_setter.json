@@ -1,0 +1,4098 @@
+[
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-main-field_order",
+  "doctype_or_field": "DocType",
+  "doc_type": "Purchase Order",
+  "property": "field_order",
+  "property_type": "Data",
+  "value": "[\"supplier_section\", \"naming_series\", \"supplier\", \"supplier_name\", \"order_confirmation_no\", \"order_confirmation_date\", \"column_break_7\", \"transaction_date\", \"transaction_time\", \"schedule_date\", \"column_break1\", \"company\", \"print_company_name\", \"is_subcontracted\", \"has_unit_price_items\", \"supplier_warehouse\", \"before_items_section\", \"scan_barcode\", \"last_scanned_warehouse\", \"items_col_break\", \"set_from_warehouse\", \"set_warehouse\", \"items_section\", \"items\", \"quality_pds_rate_1\", \"quality_pds_rate_2\", \"quality_pds_rate_3\", \"sb_last_purchase\", \"total_qty\", \"total_net_weight\", \"column_break_40\", \"base_total\", \"base_net_total\", \"column_break_26\", \"total\", \"net_total\", \"mill_details_section\", \"gunny_condition\", \"dust_condition\", \"payment_mode\", \"mill_details_col\", \"delivery_type\", \"location_name\", \"vehicle_section\", \"vehicle_ownership\", \"transporter\", \"vehicle_number\", \"vehicle_col\", \"driver\", \"freight_charges\", \"discount_section\", \"apply_discount_on\", \"base_discount_amount\", \"column_break_45\", \"additional_discount_percentage\", \"discount_amount\", \"hamali_section\", \"hamali_payer\", \"hamali_rate\", \"hamali_col\", \"total_hamali\", \"accounting_dimensions_section\", \"cost_center\", \"dimension_col_break\", \"project\", \"currency_and_price_list\", \"currency\", \"conversion_rate\", \"cb_price_list\", \"buying_price_list\", \"price_list_currency\", \"plc_conversion_rate\", \"ignore_pricing_rule\", \"section_break_48\", \"pricing_rules\", \"set_reserve_warehouse\", \"taxes_section\", \"tax_category\", \"taxes_and_charges\", \"column_break_53\", \"shipping_rule\", \"column_break_50\", \"incoterm\", \"named_place\", \"section_break_52\", \"taxes\", \"totals\", \"base_taxes_and_charges_added\", \"base_taxes_and_charges_deducted\", \"base_total_taxes_and_charges\", \"column_break_39\", \"taxes_and_charges_added\", \"taxes_and_charges_deducted\", \"total_taxes_and_charges\", \"totals_section\", \"grand_total\", \"in_words\", \"column_break4\", \"disable_rounded_total\", \"rounding_adjustment\", \"rounded_total\", \"base_totals_section\", \"base_grand_total\", \"base_in_words\", \"column_break_jkoz\", \"base_rounding_adjustment\", \"base_rounded_total\", \"section_break_tnkm\", \"advance_paid\", \"final_amount_section\", \"total_final_amount\", \"sec_tax_breakup\", \"other_charges_calculation\", \"item_wise_tax_details\", \"address_and_contact_tab\", \"section_addresses\", \"supplier_address\", \"address_display\", \"supplier_group\", \"col_break_address\", \"contact_person\", \"contact_display\", \"contact_mobile\", \"contact_email\", \"shipping_address_section\", \"dispatch_address\", \"dispatch_address_display\", \"column_break_99\", \"shipping_address\", \"shipping_address_display\", \"company_billing_address_section\", \"billing_address\", \"column_break_103\", \"billing_address_display\", \"drop_ship\", \"customer\", \"customer_name\", \"column_break_19\", \"customer_contact_person\", \"customer_contact_display\", \"customer_contact_mobile\", \"customer_contact_email\", \"terms_tab\", \"payment_schedule_section\", \"payment_terms_template\", \"payment_schedule\", \"terms_section_break\", \"tc_name\", \"terms\", \"more_info_tab\", \"tracking_section\", \"status\", \"advance_payment_status\", \"column_break_75\", \"per_billed\", \"per_received\", \"column_break5\", \"letter_head\", \"group_same_items\", \"column_break_86\", \"select_print_heading\", \"language\", \"auto_repeat_section\", \"from_date\", \"to_date\", \"column_break_97\", \"auto_repeat\", \"update_auto_repeat_reference\", \"additional_info_section\", \"title\", \"party_account_currency\", \"represents_company\", \"ref_sq\", \"amended_from\", \"column_break_74\", \"mps\", \"is_internal_supplier\", \"inter_company_order_reference\", \"is_old_subcontracting_flow\", \"connections_tab\", \"raw_material_details\", \"supplied_items\"]"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-item_code-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "item_code",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Item"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-item_code-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "item_code",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "3"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-schedule_date-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "schedule_date",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-warehouse-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "warehouse",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-currency_and_price_list-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "currency_and_price_list",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-taxes_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "taxes_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-section_break_52-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "section_break_52",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-totals-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "totals",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-totals_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "totals_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-advance_paid-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "advance_paid",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-company-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "company",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-supplier-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "supplier",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-rate-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "rate",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-rate-mandatory_depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "rate",
+  "property": "mandatory_depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN' && !(doc.quality || \"\").includes(\"PDS\")"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-discount_section-depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "discount_section",
+  "property": "depends_on",
+  "property_type": "Data",
+  "value": "eval:doc.payment_mode=='Cash'"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-apply_discount_on-default",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "apply_discount_on",
+  "property": "default",
+  "property_type": "Text",
+  "value": "Net Total"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-additional_discount_percentage-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "additional_discount_percentage",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Cash Discount %"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-discount_amount-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "discount_amount",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Cash Discount Amount"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-base_discount_amount-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "base_discount_amount",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Cash Discount Amount (Company Currency)"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-set_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "set_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-scan_barcode-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "scan_barcode",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-base_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "base_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-base_net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "base_net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order-net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order",
+  "field_name": "net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-supplier-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "supplier",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-currency_and_price_list-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "currency_and_price_list",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-taxes_charges_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "taxes_charges_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-taxes_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "taxes_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-totals-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "totals",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-totals_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "totals_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-base_totals_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "base_totals_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-section_break_42-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "section_break_42",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-sec_tax_breakup-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "sec_tax_breakup",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-pricing_rule_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "pricing_rule_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-raw_material_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "raw_material_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-address_and_contact_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "address_and_contact_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-terms_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "terms_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-more_info_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "more_info_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-subscription_detail-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "subscription_detail",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-printing_settings-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "printing_settings",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-transporter_info-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "transporter_info",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-additional_info_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "additional_info_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-status_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "status_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-subcontracting_receipt-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "subcontracting_receipt",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-set_posting_time-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "set_posting_time",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-posting_time-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "posting_time",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-apply_putaway_rule-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "apply_putaway_rule",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-is_return-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "is_return",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-return_against-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "return_against",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-scan_barcode-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "scan_barcode",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-last_scanned_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "last_scanned_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-set_from_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "set_from_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-rejected_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "rejected_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-is_subcontracted-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "is_subcontracted",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-supplier_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "supplier_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-project-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "project",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-total_net_weight-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "total_net_weight",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-base_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "base_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-base_net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "base_net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-get_current_stock-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "get_current_stock",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-barcode-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "barcode",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-has_item_scanned-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "has_item_scanned",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-product_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "product_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-description-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "description",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-item_group-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "item_group",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-image_view-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "image_view",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-received_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "received_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rejected_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rejected_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-stock_uom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "stock_uom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-conversion_factor-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "conversion_factor",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-retain_sample-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "retain_sample",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-sample_quantity-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "sample_quantity",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-received_stock_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "received_stock_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-stock_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "stock_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-returned_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "returned_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-price_list_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "price_list_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_price_list_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_price_list_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-margin_type-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "margin_type",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-margin_rate_or_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "margin_rate_or_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rate_with_margin-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rate_with_margin",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-discount_percentage-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "discount_percentage",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-distributed_discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "distributed_discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_rate_with_margin-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_rate_with_margin",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-stock_uom_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "stock_uom_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-is_free_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "is_free_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-net_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "net_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-net_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "net_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-item_tax_template-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "item_tax_template",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_net_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_net_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-base_net_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "base_net_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-landed_cost_voucher_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "landed_cost_voucher_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-amount_difference_with_purchase_invoice-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "amount_difference_with_purchase_invoice",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-billed_amt-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "billed_amt",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rejected_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rejected_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-material_request-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "material_request",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-purchase_invoice-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "purchase_invoice",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-allow_zero_valuation_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "allow_zero_valuation_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-return_qty_from_rejected_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "return_qty_from_rejected_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-asset_location-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "asset_location",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-asset_category-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "asset_category",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-schedule_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "schedule_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-quality_inspection-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "quality_inspection",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-delivery_note_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "delivery_note_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-putaway_rule-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "putaway_rule",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-add_serial_batch_for_rejected_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "add_serial_batch_for_rejected_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rejected_serial_and_batch_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rejected_serial_and_batch_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-serial_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "serial_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rejected_serial_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rejected_serial_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-include_exploded_items-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "include_exploded_items",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-bom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "bom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-weight_per_unit-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "weight_per_unit",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-total_weight-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "total_weight",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-weight_uom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "weight_uom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-manufacturer-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "manufacturer",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-manufacturer_part_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "manufacturer_part_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-expense_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "expense_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-wip_composite_asset-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "wip_composite_asset",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-provisional_expense_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "provisional_expense_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-project-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "project",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-cost_center-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "cost_center",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-sales_order-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "sales_order",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-set_warehouse-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "set_warehouse",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Warehouse"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-qty-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "qty",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Received Qty"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-item_code-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "item_code",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Item"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rejected_qty-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rejected_qty",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-warehouse-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "warehouse",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-uom-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "uom",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-qty-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "qty",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rate-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rate",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-amount-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "amount",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "2"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-uom-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "uom",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-page_break-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "page_break",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rate-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rate",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rate-mandatory_depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rate",
+  "property": "mandatory_depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN' && !(doc.quality || \"\").includes(\"PDS\")"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-main-field_order",
+  "doctype_or_field": "DocType",
+  "doc_type": "Purchase Receipt",
+  "property": "field_order",
+  "property_type": "Data",
+  "value": "[\"supplier_section\", \"column_break0\", \"naming_series\", \"purchase_order\", \"supplier\", \"supplier_name\", \"supplier_delivery_note\", \"subcontracting_receipt\", \"column_break1\", \"posting_date\", \"posting_time\", \"set_posting_time\", \"column_break_12\", \"company\", \"set_warehouse\", \"print_company_name\", \"receipt_status\", \"apply_putaway_rule\", \"is_return\", \"return_against\", \"accounting_dimensions_section\", \"cost_center\", \"dimension_col_break\", \"project\", \"currency_and_price_list\", \"currency\", \"conversion_rate\", \"column_break2\", \"buying_price_list\", \"price_list_currency\", \"plc_conversion_rate\", \"ignore_pricing_rule\", \"sec_warehouse\", \"scan_barcode\", \"last_scanned_warehouse\", \"column_break_31\", \"set_from_warehouse\", \"col_break_warehouse\", \"rejected_warehouse\", \"is_subcontracted\", \"supplier_warehouse\", \"items_section\", \"items\", \"quality_pds_percentage\", \"quality_pds_section\", \"quality_pds_rate_1\", \"quality_pds_rate_2\", \"quality_pds_rate_3\", \"quality_pds_pct_col\", \"quality_pds_pct_1\", \"quality_pds_pct_2\", \"quality_pds_pct_3\", \"quality_pds_col\", \"quality_pds_qty_1\", \"quality_pds_qty_2\", \"quality_pds_qty_3\", \"quality_pds_amount\", \"section_break0\", \"total_qty\", \"total_net_weight\", \"column_break_43\", \"base_total\", \"base_net_total\", \"column_break_27\", \"total\", \"net_total\", \"receipt_conditions_section\", \"gunny_condition\", \"dust_condition\", \"payment_mode\", \"receipt_conditions_col\", \"delivery_type\", \"location_name\", \"receipt_vehicle_section\", \"vehicle_ownership\", \"transporter\", \"vehicle_number\", \"receipt_vehicle_col\", \"driver\", \"freight_charges\", \"weigh_bridge_measurement\", \"quality_check\", \"receipt_quality_section\", \"moisture\", \"receipt_quality_col\", \"dust_kg\", \"receipt_hamali_section\", \"hamali_payer\", \"hamali_rate\", \"receipt_hamali_col\", \"total_hamali\", \"receipt_deal_section\", \"deal_amount\", \"receipt_final_col\", \"amount_difference\", \"receipt_final_section\", \"total_final_amount\", \"taxes_charges_section\", \"tax_category\", \"taxes_and_charges\", \"shipping_col\", \"shipping_rule\", \"column_break_53\", \"incoterm\", \"named_place\", \"taxes_section\", \"taxes\", \"totals\", \"base_taxes_and_charges_added\", \"base_taxes_and_charges_deducted\", \"base_total_taxes_and_charges\", \"column_break3\", \"taxes_and_charges_added\", \"taxes_and_charges_deducted\", \"total_taxes_and_charges\", \"totals_section\", \"grand_total\", \"in_words\", \"column_break_50\", \"disable_rounded_total\", \"rounding_adjustment\", \"rounded_total\", \"base_totals_section\", \"base_grand_total\", \"base_in_words\", \"column_break_ugyv\", \"base_rounding_adjustment\", \"base_rounded_total\", \"section_break_42\", \"apply_discount_on\", \"base_discount_amount\", \"column_break_44\", \"additional_discount_percentage\", \"discount_amount\", \"sec_tax_breakup\", \"other_charges_calculation\", \"item_wise_tax_details\", \"pricing_rule_details\", \"pricing_rules\", \"raw_material_details\", \"get_current_stock\", \"supplied_items\", \"address_and_contact_tab\", \"section_addresses\", \"supplier_address\", \"address_display\", \"col_break_address\", \"contact_person\", \"contact_display\", \"contact_mobile\", \"contact_email\", \"section_break_98\", \"dispatch_address\", \"dispatch_address_display\", \"column_break_100\", \"shipping_address\", \"shipping_address_display\", \"billing_address_section\", \"billing_address\", \"column_break_104\", \"billing_address_display\", \"terms_tab\", \"tc_name\", \"terms\", \"more_info_tab\", \"status_section\", \"status\", \"column_break4\", \"per_billed\", \"per_returned\", \"subscription_detail\", \"auto_repeat\", \"printing_settings\", \"letter_head\", \"group_same_items\", \"column_break_97\", \"select_print_heading\", \"language\", \"transporter_info\", \"transporter_name\", \"column_break5\", \"lr_no\", \"lr_date\", \"additional_info_section\", \"instructions\", \"is_internal_supplier\", \"represents_company\", \"title\", \"inter_company_reference\", \"column_break_131\", \"remarks\", \"range\", \"amended_from\", \"is_old_subcontracting_flow\", \"other_details\", \"connections_tab\"]"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-sec_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt",
+  "field_name": "sec_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-item_code-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "item_code",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "2"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt-main-default_print_format",
+  "doctype_or_field": "DocType",
+  "doc_type": "Purchase Receipt",
+  "property": "default_print_format",
+  "property_type": "Data",
+  "value": "Purchase Receipt - Shyamji"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Order Item-rate-depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Order Item",
+  "field_name": "rate",
+  "property": "depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN'"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Receipt Item-rate-depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Receipt Item",
+  "field_name": "rate",
+  "property": "depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN'"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-tax_id-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "tax_id",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-posting_time-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "posting_time",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-set_posting_time-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "set_posting_time",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_paid-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_paid",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_return-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_return",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-return_against-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "return_against",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-update_outstanding_for_self-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "update_outstanding_for_self",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-update_billed_amount_in_purchase_order-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "update_billed_amount_in_purchase_order",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-update_billed_amount_in_purchase_receipt-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "update_billed_amount_in_purchase_receipt",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-apply_tds-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "apply_tds",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-amended_from-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "amended_from",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-accounting_dimensions_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "accounting_dimensions_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-cost_center-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "cost_center",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-project-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "project",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-currency_and_price_list-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "currency_and_price_list",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-currency-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "currency",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-conversion_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "conversion_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-use_transaction_date_exchange_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "use_transaction_date_exchange_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-buying_price_list-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "buying_price_list",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-price_list_currency-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "price_list_currency",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-plc_conversion_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "plc_conversion_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-ignore_pricing_rule-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "ignore_pricing_rule",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-sec_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "sec_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-scan_barcode-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "scan_barcode",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-last_scanned_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "last_scanned_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-update_stock-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "update_stock",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-set_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "set_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-set_from_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "set_from_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_subcontracted-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_subcontracted",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-rejected_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "rejected_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-supplier_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "supplier_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-total_net_weight-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "total_net_weight",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-claimed_landed_cost_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "claimed_landed_cost_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-net_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "net_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-taxes_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "taxes_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-tax_category-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "tax_category",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-taxes_and_charges-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "taxes_and_charges",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-shipping_rule-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "shipping_rule",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-incoterm-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "incoterm",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-named_place-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "named_place",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-section_break_51-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "section_break_51",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-taxes-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "taxes",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-totals-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "totals",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_taxes_and_charges_added-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_taxes_and_charges_added",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_taxes_and_charges_deducted-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_taxes_and_charges_deducted",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_total_taxes_and_charges-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_total_taxes_and_charges",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-taxes_and_charges_added-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "taxes_and_charges_added",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-taxes_and_charges_deducted-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "taxes_and_charges_deducted",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-total_taxes_and_charges-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "total_taxes_and_charges",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-totals_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "totals_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-use_company_roundoff_cost_center-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "use_company_roundoff_cost_center",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-grand_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "grand_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-in_words-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "in_words",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-disable_rounded_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "disable_rounded_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-rounding_adjustment-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "rounding_adjustment",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-rounded_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "rounded_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_totals_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_totals_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_grand_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_grand_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_in_words-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_in_words",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_rounding_adjustment-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_rounding_adjustment",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_rounded_total-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_rounded_total",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-section_break_ttrv-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "section_break_ttrv",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-total_advance-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "total_advance",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-outstanding_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "outstanding_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-section_tax_withholding_entry-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "section_tax_withholding_entry",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-tax_withholding_group-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "tax_withholding_group",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-ignore_tax_withholding_threshold-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "ignore_tax_withholding_threshold",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-override_tax_withholding_entries-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "override_tax_withholding_entries",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-tax_withholding_entries-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "tax_withholding_entries",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-section_break_44-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "section_break_44",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-apply_discount_on-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "apply_discount_on",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-additional_discount_percentage-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "additional_discount_percentage",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-sec_tax_breakup-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "sec_tax_breakup",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-other_charges_calculation-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "other_charges_calculation",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-item_wise_tax_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "item_wise_tax_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-pricing_rule_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "pricing_rule_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-pricing_rules-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "pricing_rules",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-raw_materials_supplied-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "raw_materials_supplied",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-supplied_items-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "supplied_items",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-payments_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "payments_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-payments_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "payments_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-mode_of_payment-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "mode_of_payment",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_paid_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_paid_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-clearance_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "clearance_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-cash_bank_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "cash_bank_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-paid_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "paid_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-advances_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "advances_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-allocate_advances_automatically-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "allocate_advances_automatically",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-only_include_allocated_payments-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "only_include_allocated_payments",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-get_advances-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "get_advances",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-advances-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "advances",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-write_off-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "write_off",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-write_off_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "write_off_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-base_write_off_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "base_write_off_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-write_off_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "write_off_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-write_off_cost_center-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "write_off_cost_center",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-address_and_contact_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "address_and_contact_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-section_addresses-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "section_addresses",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-supplier_address-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "supplier_address",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-address_display-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "address_display",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-contact_person-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "contact_person",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-contact_display-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "contact_display",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-contact_mobile-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "contact_mobile",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-contact_email-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "contact_email",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-company_shipping_address_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "company_shipping_address_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-dispatch_address-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "dispatch_address",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-dispatch_address_display-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "dispatch_address_display",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-shipping_address-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "shipping_address",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-shipping_address_display-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "shipping_address_display",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-company_billing_address_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "company_billing_address_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-billing_address-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "billing_address",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-billing_address_display-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "billing_address_display",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-terms_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "terms_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-payment_schedule_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "payment_schedule_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-payment_terms_template-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "payment_terms_template",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-ignore_default_payment_terms_template-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "ignore_default_payment_terms_template",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-payment_schedule-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "payment_schedule",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-terms_section_break-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "terms_section_break",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-tc_name-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "tc_name",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-terms-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "terms",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-more_info_tab-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "more_info_tab",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-status_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "status_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-status-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "status",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-per_received-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "per_received",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-accounting_details_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "accounting_details_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-credit_to-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "credit_to",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-party_account_currency-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "party_account_currency",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_opening-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_opening",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-against_expense_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "against_expense_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-unrealized_profit_loss_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "unrealized_profit_loss_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-subscription_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "subscription_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-subscription-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "subscription",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-from_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "from_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-to_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "to_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-automation_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "automation_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-auto_repeat-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "auto_repeat",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-update_auto_repeat_reference-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "update_auto_repeat_reference",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-printing_settings-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "printing_settings",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-letter_head-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "letter_head",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-group_same_items-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "group_same_items",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-select_print_heading-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "select_print_heading",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-language-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "language",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-sb_14-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "sb_14",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-on_hold-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "on_hold",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-release_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "release_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-hold_comment-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "hold_comment",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-additional_info_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "additional_info_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_internal_supplier-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_internal_supplier",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-title-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "title",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-represents_company-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "represents_company",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-supplier_group-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "supplier_group",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-sender-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "sender",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-inter_company_invoice_reference-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "inter_company_invoice_reference",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-is_old_subcontracting_flow-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "is_old_subcontracting_flow",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-remarks-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice",
+  "field_name": "remarks",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-product_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "product_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-description_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "description_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-description-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "description",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-brand-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "brand",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_group-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_group",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-image-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "image",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-image_view-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "image_view",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-quantity_and_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "quantity_and_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-received_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "received_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rejected_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rejected_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-conversion_factor-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "conversion_factor",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-stock_uom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "stock_uom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-stock_qty-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "stock_qty",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-sec_break1-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "sec_break1",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-price_list_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "price_list_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_price_list_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_price_list_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-section_break_26-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "section_break_26",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-margin_type-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "margin_type",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-margin_rate_or_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "margin_rate_or_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rate_with_margin-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rate_with_margin",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-discount_percentage-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "discount_percentage",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-distributed_discount_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "distributed_discount_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_rate_with_margin-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_rate_with_margin",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-sec_break2-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "sec_break2",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_tax_template-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_tax_template",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-tax_withholding_category-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "tax_withholding_category",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-pricing_rules-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "pricing_rules",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-stock_uom_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "stock_uom_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-is_free_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "is_free_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-apply_tds-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "apply_tds",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-allow_zero_valuation_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "allow_zero_valuation_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-section_break_22-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "section_break_22",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-net_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "net_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-net_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "net_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_net_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_net_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-base_net_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "base_net_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-valuation_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "valuation_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-sales_incoming_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "sales_incoming_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_tax_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_tax_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-landed_cost_voucher_amount-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "landed_cost_voucher_amount",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rm_supp_cost-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rm_supp_cost",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-warehouse_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "warehouse_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-add_serial_batch_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "add_serial_batch_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-serial_and_batch_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "serial_and_batch_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-use_serial_batch_fields-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "use_serial_batch_fields",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-from_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "from_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-quality_inspection-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "quality_inspection",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rejected_warehouse-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rejected_warehouse",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rejected_serial_and_batch_bundle-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rejected_serial_and_batch_bundle",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-section_break_rqbe-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "section_break_rqbe",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-serial_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "serial_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rejected_serial_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rejected_serial_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-batch_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "batch_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-manufacture_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "manufacture_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-manufacturer-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "manufacturer",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-manufacturer_part_no-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "manufacturer_part_no",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-accounting-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "accounting",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-expense_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "expense_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-wip_composite_asset-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "wip_composite_asset",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-is_fixed_asset-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "is_fixed_asset",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-asset_location-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "asset_location",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-asset_category-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "asset_category",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-deferred_expense_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "deferred_expense_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-deferred_expense_account-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "deferred_expense_account",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-service_stop_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "service_stop_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-enable_deferred_expense-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "enable_deferred_expense",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-service_start_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "service_start_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-service_end_date-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "service_end_date",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-reference-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "reference",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_tax_rate-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_tax_rate",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-bom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "bom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-include_exploded_items-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "include_exploded_items",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-purchase_invoice_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "purchase_invoice_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-po_detail-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "po_detail",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-pr_detail-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "pr_detail",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-sales_invoice_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "sales_invoice_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-material_request-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "material_request",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-material_request_item-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "material_request_item",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-delivered_by_supplier-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "delivered_by_supplier",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_weight_details-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_weight_details",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-weight_per_unit-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "weight_per_unit",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-total_weight-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "total_weight",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-weight_uom-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "weight_uom",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-accounting_dimensions_section-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "accounting_dimensions_section",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-project-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "project",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-cost_center-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "cost_center",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-section_break_82-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "section_break_82",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-page_break-hidden",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "page_break",
+  "property": "hidden",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_code-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_code",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Item"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_code-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_code",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "2"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-qty-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "qty",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-uom-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "uom",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-uom-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "uom",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rate-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rate",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "1"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-amount-columns",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "amount",
+  "property": "columns",
+  "property_type": "Int",
+  "value": "2"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rate-reqd",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rate",
+  "property": "reqd",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rate-mandatory_depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rate",
+  "property": "mandatory_depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN' && !(doc.quality || \"\").includes(\"PDS\")"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-rate-depends_on",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "rate",
+  "property": "depends_on",
+  "property_type": "Code",
+  "value": "eval:doc.item_code!='RICE-BRAN'"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-item_name-in_list_view",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "item_name",
+  "property": "in_list_view",
+  "property_type": "Check",
+  "value": "0"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice-main-default_print_format",
+  "doctype_or_field": "DocType",
+  "doc_type": "Purchase Invoice",
+  "property": "default_print_format",
+  "property_type": "Data",
+  "value": "Purchase Invoice - Shyamji"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Purchase Invoice Item-qty-label",
+  "doctype_or_field": "DocField",
+  "doc_type": "Purchase Invoice Item",
+  "field_name": "qty",
+  "property": "label",
+  "property_type": "Data",
+  "value": "Quantity"
+ }
+]
