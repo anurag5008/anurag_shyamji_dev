@@ -1,0 +1,206 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-04 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Vehicle Wise Statement",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "naming_series:",
+ "document_type": "Document",
+ "allow_import": 0,
+ "field_order": [
+  "naming_series",
+  "statement_type",
+  "cmr_note",
+  "filters_section",
+  "miller",
+  "season",
+  "column_break_1",
+  "district",
+  "mill_name_and_place",
+  "details_section",
+  "items",
+  "totals_section",
+  "total_vehicles",
+  "hired_qty",
+  "hired_amount",
+  "own_qty",
+  "own_amount",
+  "column_break_2",
+  "total_qty",
+  "total_amount",
+  "total_vouchers",
+  "kms_title"
+ ],
+ "fields": [
+  {
+   "default": "VWS-.YYYY.-.####",
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "hidden": 1,
+   "label": "Naming Series",
+   "options": "VWS-.YYYY.-.####",
+   "reqd": 1
+  },
+  {
+   "fieldname": "statement_type",
+   "fieldtype": "Select",
+   "label": "Statement For",
+   "options": "Paddy\nCMR",
+   "default": "Paddy",
+   "reqd": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
+  },
+  {
+   "fieldname": "cmr_note",
+   "fieldtype": "HTML",
+   "options": "<p class=\"text-muted\">The CMR (rice) statement is not ready yet. It will be added soon. Choose <b>Paddy</b> to make a statement now.</p>",
+   "depends_on": "eval:doc.statement_type==\"CMR\""
+  },
+  {
+   "fieldname": "filters_section",
+   "fieldtype": "Section Break",
+   "label": "Filters",
+   "depends_on": "eval:doc.statement_type!=\"CMR\""
+  },
+  {
+   "fieldname": "miller",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Miller",
+   "description": "The millers found in the PPAS Transit Passes.",
+   "mandatory_depends_on": "eval:doc.statement_type!=\"CMR\""
+  },
+  {
+   "fieldname": "season",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Season",
+   "description": "The seasons found in the PPAS Transit Passes.",
+   "mandatory_depends_on": "eval:doc.statement_type!=\"CMR\""
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Optional. Only the passes of the PPCs that the PPC Master puts under this district are used.",
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "District",
+   "options": "District Master"
+  },
+  {
+   "fieldname": "mill_name_and_place",
+   "fieldtype": "Data",
+   "label": "Mill Name and Place (for the print)",
+   "description": "For example: SHREE SHYAMJI PADDY PROCESSING (P) LTD., SALANDI. Leave empty to use the Miller."
+  },
+  {
+   "fieldname": "details_section",
+   "fieldtype": "Section Break",
+   "label": "Vehicle Wise Statement",
+   "depends_on": "eval:doc.statement_type!=\"CMR\""
+  },
+  {
+   "fieldname": "items",
+   "fieldtype": "Table",
+   "label": "Vehicles",
+   "options": "Vehicle Wise Statement Item"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Total",
+   "depends_on": "eval:doc.statement_type!=\"CMR\""
+  },
+  {
+   "fieldname": "total_vehicles",
+   "fieldtype": "Int",
+   "label": "Vehicles",
+   "read_only": 1
+  },
+  {
+   "fieldname": "hired_qty",
+   "fieldtype": "Float",
+   "label": "Total Qty - Hired Vehicles",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "hired_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount - Hired Vehicles",
+   "read_only": 1
+  },
+  {
+   "fieldname": "own_qty",
+   "fieldtype": "Float",
+   "label": "Total Qty - Own Vehicles",
+   "read_only": 1,
+   "precision": "2"
+  },
+  {
+   "fieldname": "own_amount",
+   "fieldtype": "Currency",
+   "label": "Total Amount - Own Vehicles",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_qty",
+   "fieldtype": "Float",
+   "label": "G. Total Qty in Qntls",
+   "precision": "2",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount",
+   "fieldtype": "Currency",
+   "label": "G. Total Amount in Rs",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_vouchers",
+   "fieldtype": "Int",
+   "label": "Total Vouchers",
+   "read_only": 1
+  },
+  {
+   "fieldname": "kms_title",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "KMS Title",
+   "read_only": 1
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "track_changes": 1,
+ "title_field": "miller"
+}

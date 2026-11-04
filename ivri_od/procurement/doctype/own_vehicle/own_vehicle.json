@@ -1,0 +1,61 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 15:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Own Vehicle",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "autoname": "field:vehicle_no",
+ "document_type": "Setup",
+ "field_order": [
+  "vehicle_no",
+  "is_active",
+  "remarks"
+ ],
+ "fields": [
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vehicle No",
+   "reqd": 1,
+   "unique": 1,
+   "description": "A vehicle in this list is shown as an Own Vehicle in the Vehicle Wise Statement. Every other vehicle is a Hired Vehicle."
+  },
+  {
+   "default": "1",
+   "fieldname": "is_active",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Is Active"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  }
+ ],
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "track_changes": 1
+}
