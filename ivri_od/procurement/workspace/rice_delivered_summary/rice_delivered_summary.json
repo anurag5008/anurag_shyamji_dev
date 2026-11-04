@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"3875e37a85\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Rice Delivered Summary</b></span>\", \"col\": 12}}, {\"id\": \"5af1737a7a\", \"type\": \"paragraph\", \"data\": {\"text\": \"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.\", \"col\": 12}}, {\"id\": \"a5851c4b70\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Details\", \"col\": 4}}, {\"id\": \"65bfc80e1c\", \"type\": \"card\", \"data\": {\"card_name\": \"Rice delivery reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"793ee24ce3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Rice Delivered Summary</b></span>\", \"col\": 12}}, {\"id\": \"54a4d0374a\", \"type\": \"paragraph\", \"data\": {\"text\": \"Rice due (CMR) and DC lots issued / delivered to FCI and RRC, per mill and season. Rates are set in <b>Rice Delivery Setup</b>; Lot Quantity in <b>Rice Lot Quantity</b>.\", \"col\": 12}}, {\"id\": \"0cde219677\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Details\", \"col\": 4}}, {\"id\": \"d9ee57e648\", \"type\": \"card\", \"data\": {\"card_name\": \"Rice delivery reports\", \"col\": 4}}]",
  "creation": "2026-10-22 11:28:56.697660",
  "custom_blocks": [],
  "docstatus": 0,
@@ -34,7 +34,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-04 11:49:02.433914",
+ "modified": "2026-11-04 13:40:28.391409",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Rice Delivered Summary",

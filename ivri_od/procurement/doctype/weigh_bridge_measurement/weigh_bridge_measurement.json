@@ -344,7 +344,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "depends_on": "eval:doc.gunny_type=='Gunny Cut'",
    "fieldname": "bag_weight_details",
    "fieldtype": "Table",
    "label": "Bag Details (from QC)",
@@ -388,7 +387,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-06 15:55:56.936740",
+ "modified": "2026-10-28 13:35:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Weigh Bridge Measurement",

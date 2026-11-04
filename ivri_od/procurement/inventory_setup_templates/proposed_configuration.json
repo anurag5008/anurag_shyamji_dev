@@ -1,0 +1,78 @@
+{
+ "_status": "PROPOSED. Not applied. Not read by the setup planner. Review only.",
+ "_generated_from": [
+  "warehouse_pairs_decision.json",
+  "item_decisions.json",
+  "inventory_foundation.py (approved structure)"
+ ],
+ "plan_hash_when_generated": "a88290d4eec8ce71e9818dfd8a4c026c800b8be763125f1829cb9eb7f23b99c0",
+ "plan_counts_when_generated": {
+  "create": 12,
+  "update": 5,
+  "pending_decision": 2
+ },
+ "confirmed_business_structure": {
+  "legal_companies": {
+   "SSPP": "Shree Shyamji Paddy Processing Pvt Ltd",
+   "RGFP": "Radhe Govind Food Products",
+   "LGI": "Laddu Gopal Industries"
+  },
+  "operating_unit_to_company": {
+   "M050414": {
+    "company": "Shree Shyamji Paddy Processing Pvt Ltd",
+    "type": "RAW"
+   },
+   "M051007": {
+    "company": "Shree Shyamji Paddy Processing Pvt Ltd",
+    "type": "BOILED"
+   },
+   "M050415": {
+    "company": "Radhe Govind Food Products",
+    "type": "RAW"
+   },
+   "M050410": {
+    "company": "Radhe Govind Food Products",
+    "type": "BOILED"
+   },
+   "M050421": {
+    "company": "Laddu Gopal Industries",
+    "type": "BOILED"
+   }
+  },
+  "physical_locations": [
+   "SSPP GODOWN",
+   "SSPP GALI",
+   "SSPP OPEN GODOWN",
+   "RGFP MAIN GODOWN",
+   "RGFP GALI",
+   "RGFP CHALAN",
+   "LGI PLANT",
+   "LGI NEW PLANT",
+   "LGI ECO STAND PLANT"
+  ],
+  "note": "These come from the approved business structure and are what the current plan would create or fill. Applying them still needs your approval of the plan hash."
+ },
+ "candidate_for_inventory_setup_approved_json": {
+  "warehouses": [],
+  "items": []
+ },
+ "unset_pending_business_confirmation": {
+  "warehouse_pairs": "15 candidates, 0 confirmed -> none are carried over",
+  "items": "6 roles, 0 carry confirmed code and name -> none are carried over",
+  "item_codes_and_names": "unset on purpose",
+  "confirmed_but_incomplete_items": []
+ },
+ "settings_proposed_not_applied": {
+  "float_precision": {
+   "current": "2",
+   "proposed": "3",
+   "status": "awaiting explicit approval",
+   "plan": "float_precision_change_plan.md"
+  }
+ },
+ "must_not_change_yet": [
+  "Rice Delivery Setup.driage_percentage (live Raw = 0.78; sheet figure implies 0.078): verify first",
+  "the six free-text unloading points are not mapped to the nine locations",
+  "Stock Posting Settings stays disabled"
+ ]
+}

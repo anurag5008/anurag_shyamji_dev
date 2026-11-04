@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"799009c853\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Procurement Header\", \"col\": 12}}, {\"id\": \"0b168fb774\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 16px; font-weight: 600; color: var(--heading-color, var(--text-color));\\\">Quick shortcuts</span>\", \"col\": 12}}, {\"id\": \"856f288e87\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Transit Pass\", \"col\": 3}}, {\"id\": \"2917391512\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"8fc64dbdb4\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"bae0296868\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"73cc739d40\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"25f8680e08\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Exit\", \"col\": 3}}, {\"id\": \"73f2b820e2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"4e04ad5b7c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mandi Book\", \"col\": 3}}, {\"id\": \"59fb574cd6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Track\", \"col\": 3}}, {\"id\": \"2b286decfd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Details\", \"col\": 3}}, {\"id\": \"deccab4a0b\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Miller Verification\", \"col\": 3}}, {\"id\": \"4be8cc7560\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"5b6b67aa27\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"4e6a26fd2a\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 16px; font-weight: 600; color: var(--heading-color, var(--text-color));\\\">All modules</span>\", \"col\": 12}}, {\"id\": \"54cbf3a4b7\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 3}}, {\"id\": \"caca8e9346\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 3}}, {\"id\": \"f9c19182fd\", \"type\": \"card\", \"data\": {\"card_name\": \"Govt portals\", \"col\": 3}}, {\"id\": \"4b4d245ef9\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Government Portals Reports\", \"col\": 3}}, {\"id\": \"1e556f8258\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate & weighing\", \"col\": 3}}, {\"id\": \"65bc9d8669\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 3}}, {\"id\": \"55054e85ab\", \"type\": \"card\", \"data\": {\"card_name\": \"Registers\", \"col\": 3}}, {\"id\": \"3bbabec215\", \"type\": \"card\", \"data\": {\"card_name\": \"CMR Billing\", \"col\": 3}}, {\"id\": \"d58f7c0099\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"e1ee77b826\", \"type\": \"card\", \"data\": {\"card_name\": \"Verification\", \"col\": 3}}]",
+ "content": "[{\"id\": \"eb703f9303\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Procurement Header\", \"col\": 12}}, {\"id\": \"8bbb06f26a\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 16px; font-weight: 600; color: var(--heading-color, var(--text-color));\\\">Quick shortcuts</span>\", \"col\": 12}}, {\"id\": \"3c8fd8e7f2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Transit Pass\", \"col\": 3}}, {\"id\": \"c49976edc1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Entry\", \"col\": 3}}, {\"id\": \"bd38472e57\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Quality Check\", \"col\": 3}}, {\"id\": \"7902b1210a\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RST Details\", \"col\": 3}}, {\"id\": \"69ad5ff971\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Weigh Bridge\", \"col\": 3}}, {\"id\": \"17a723c53f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gate Exit\", \"col\": 3}}, {\"id\": \"c54a59aa2a\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"GRN Note\", \"col\": 3}}, {\"id\": \"5021d47af6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mandi Book\", \"col\": 3}}, {\"id\": \"296db82c04\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Track\", \"col\": 3}}, {\"id\": \"b5088db2d2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Details\", \"col\": 3}}, {\"id\": \"72986fbf3c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PVR\", \"col\": 3}}, {\"id\": \"70299b13d3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Module Overview\", \"col\": 3}}, {\"id\": \"cab2f4a86a\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"61c3b5c95b\", \"type\": \"header\", \"data\": {\"text\": \"<span style=\\\"font-size: 16px; font-weight: 600; color: var(--heading-color, var(--text-color));\\\">All modules</span>\", \"col\": 12}}, {\"id\": \"5b5b1570fc\", \"type\": \"card\", \"data\": {\"card_name\": \"Masters\", \"col\": 3}}, {\"id\": \"1a516d99f4\", \"type\": \"card\", \"data\": {\"card_name\": \"Season & targets\", \"col\": 3}}, {\"id\": \"fe13a882a9\", \"type\": \"card\", \"data\": {\"card_name\": \"Govt portals\", \"col\": 3}}, {\"id\": \"3fa2fd9920\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"Government Portals Reports\", \"col\": 3}}, {\"id\": \"d85cf1e09b\", \"type\": \"card\", \"data\": {\"card_name\": \"Gate & weighing\", \"col\": 3}}, {\"id\": \"10e01efc6e\", \"type\": \"card\", \"data\": {\"card_name\": \"Receipt & GRN\", \"col\": 3}}, {\"id\": \"7172d6e525\", \"type\": \"card\", \"data\": {\"card_name\": \"CMR\", \"col\": 3}}, {\"id\": \"7ace4e86b4\", \"type\": \"card\", \"data\": {\"card_name\": \"CMR Billing\", \"col\": 3}}, {\"id\": \"a1a78cd53d\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 3}}, {\"id\": \"11ce23706c\", \"type\": \"card\", \"data\": {\"card_name\": \"Registers\", \"col\": 3}}]",
  "creation": "2026-10-01 12:04:12.928182",
  "custom_blocks": [
   {
@@ -311,79 +311,19 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Registers",
-   "link_count": 7,
+   "label": "CMR",
+   "link_count": 1,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
    "hidden": 0,
-   "is_query_report": 1,
-   "label": "Mandi Book",
+   "is_query_report": 0,
+   "label": "PVR",
    "link_count": 0,
-   "link_to": "Mandi Book",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Entry Report",
-   "link_count": 0,
-   "link_to": "Entry Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Vehicle Gate Movement",
-   "link_count": 0,
-   "link_to": "Vehicle Gate Movement Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "DC Track",
-   "link_count": 0,
-   "link_to": "DC Track",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "DC Details",
-   "link_count": 0,
-   "link_to": "DC Details",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Paddy Stock Register",
-   "link_count": 0,
-   "link_to": "Paddy Stock Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Rice Stock Register",
-   "link_count": 0,
-   "link_to": "Rice Stock Register",
-   "link_type": "Report",
+   "link_to": "Miller Verification Report",
+   "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
   },
@@ -508,24 +448,84 @@
   {
    "hidden": 0,
    "is_query_report": 0,
-   "label": "Verification",
-   "link_count": 1,
+   "label": "Registers",
+   "link_count": 7,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
   },
   {
    "hidden": 0,
-   "is_query_report": 0,
-   "label": "Miller Verification Report",
+   "is_query_report": 1,
+   "label": "Mandi Book",
    "link_count": 0,
-   "link_to": "Miller Verification Report",
-   "link_type": "DocType",
+   "link_to": "Mandi Book",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Entry Report",
+   "link_count": 0,
+   "link_to": "Entry Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Vehicle Gate Movement",
+   "link_count": 0,
+   "link_to": "Vehicle Gate Movement Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Track",
+   "link_count": 0,
+   "link_to": "DC Track",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Details",
+   "link_count": 0,
+   "link_to": "DC Details",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Paddy Stock Register",
+   "link_count": 0,
+   "link_to": "Paddy Stock Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Rice Stock Register",
+   "link_count": 0,
+   "link_to": "Rice Stock Register",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   }
  ],
- "modified": "2026-11-04 11:49:02.243272",
+ "modified": "2026-11-04 13:40:28.013771",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",
@@ -633,7 +633,7 @@
    "color": "Orange",
    "doc_view": "List",
    "icon": "clipboard-check",
-   "label": "Miller Verification",
+   "label": "PVR",
    "link_to": "Miller Verification Report",
    "type": "DocType",
    "url": ""

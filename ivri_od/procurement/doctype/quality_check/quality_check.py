@@ -54,6 +54,7 @@ class QualityCheck(Document):
 		self._sync_farmer_or_agent_mode()
 		self._validate_gate_entry()
 		self._validate_farmer_or_agent_fields()
+		self._validate_unloading_warehouse()
 		self._sync_qc_decision_from_returned_bags()
 		self._validate_qc_decision()
 		self._normalize_fields()
@@ -137,6 +138,46 @@ class QualityCheck(Document):
 					frappe.bold(existing),
 				),
 				title=_("Duplicate Vehicle"),
+			)
+
+	def _legacy_unloading_point(self) -> bool:
+		"""A saved Quality Check from before Unloading Point became a Warehouse link still holds free text
+		(e.g. "Warehouse 1"). If that value is unchanged it is left exactly as it is, and the record stays editable."""
+		value = (self.get("unloading_point") or "").strip()
+		if not value or self.is_new():
+			return False
+		stored = (frappe.db.get_value("Quality Check", self.name, "unloading_point") or "").strip()
+		return stored == value and not frappe.db.exists("Warehouse", value)
+
+	def _validate_links(self):
+		"""Frappe checks every Link on every save. An unchanged legacy Unloading Point is skipped, nothing else is:
+		all other links are validated as usual and the stored value is never touched."""
+		if not self._legacy_unloading_point():
+			return super()._validate_links()
+		legacy = self.unloading_point
+		self.unloading_point = None
+		try:
+			super()._validate_links()
+		finally:
+			self.unloading_point = legacy
+
+	def _validate_unloading_warehouse(self):
+		"""A new or changed Unloading Point must be a physical warehouse: enabled, not a group, mapped to a physical
+		location. Raw and Boiled share it, so no operating unit is needed here; the receipt is posted for the unit of
+		the Transit Pass later."""
+		value = (self.get("unloading_point") or "").strip()
+		if is_farmer_or_agent_qc(self) or not value or self._legacy_unloading_point():
+			return
+		row = frappe.db.get_value(
+			"Warehouse", value, ["name", "operating_unit", "physical_location", "is_group", "disabled"], as_dict=True
+		)
+		if not row:
+			frappe.throw(_("Unloading Point {0} is not a Warehouse.").format(frappe.bold(value)))
+		if cint(row.is_group) or cint(row.disabled) or not (row.physical_location or "").strip():
+			frappe.throw(
+				_("Unloading Point {0} must be an enabled warehouse linked to a physical location.").format(
+					frappe.bold(value)
+				)
 			)
 
 	def _sync_farmer_or_agent_mode(self):

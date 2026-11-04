@@ -1,0 +1,88 @@
+{
+ "actions": [],
+ "allow_rename": 0,
+ "creation": "2026-10-27 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "modified": "2026-10-27 18:10:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Stock Posting Settings",
+ "owner": "Administrator",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": [],
+ "quick_entry": 0,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "track_changes": 1,
+ "field_order": [
+  "enabled",
+  "government_paddy_item",
+  "item_roles_section",
+  "raw_rice_item",
+  "boiled_rice_item",
+  "by_products_section",
+  "by_product_items"
+ ],
+ "fields": [
+  {
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "label": "Enable Government Paddy Stock Posting",
+   "default": "0",
+   "description": "Off by default. While off, nothing can be posted to stock."
+  },
+  {
+   "fieldname": "government_paddy_item",
+   "fieldtype": "Link",
+   "label": "Government Paddy Item",
+   "options": "Item",
+   "description": "Stock item (batch-tracked, stock UOM Quintal) used for accepted government paddy. No rate is ever set.",
+   "depends_on": "enabled"
+  },
+  {
+   "fieldname": "item_roles_section",
+   "fieldtype": "Section Break",
+   "label": "Item Roles",
+   "description": "Which Item plays which part. Raw rice and Boiled rice are separate Items; paddy is one Item. Nothing here creates an Item."
+  },
+  {
+   "fieldname": "raw_rice_item",
+   "fieldtype": "Link",
+   "label": "Raw Rice Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "boiled_rice_item",
+   "fieldtype": "Link",
+   "label": "Boiled Rice Item",
+   "options": "Item"
+  },
+  {
+   "fieldname": "by_products_section",
+   "fieldtype": "Section Break",
+   "label": "Recoverable By-Products"
+  },
+  {
+   "fieldname": "by_product_items",
+   "fieldtype": "Table",
+   "label": "By-Product Items",
+   "options": "Stock Posting By-Product Item",
+   "description": "Each recoverable by-product (broken rice, bran, husk, ...) is its own stock Item."
+  }
+ ],
+ "permissions": [
+  {
+   "role": "System Manager",
+   "read": 1,
+   "write": 1,
+   "create": 1
+  },
+  {
+   "role": "Stock Manager",
+   "read": 1,
+   "write": 1
+  }
+ ]
+}

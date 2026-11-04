@@ -4,6 +4,7 @@
 ivri_od.patches.v1_0.create_procurement_module
 ivri_od.patches.v1_0.rename_demo_rst_data_to_rst_details
 ivri_od.patches.v1_0.migrate_weigh_bridge_pass_unique_link
+ivri_od.patches.v1_0.move_bag_management_into_ivri_od
 
 [post_model_sync]
 # Patches added in this section will be executed after doctypes are migrated
@@ -145,3 +146,10 @@ ivri_od.patches.v1_0.clear_season_mapping_of_deleted_allocations
 ivri_od.patches.v1_0.rekey_dc_transit_challan_records
 ivri_od.patches.v1_0.rice_lot_bags_per_lot
 ivri_od.patches.v1_0.dc_transit_challan_acceptance_note
+ivri_od.patches.v1_0.mill_master_display_name_accounting_company
+ivri_od.patches.v1_0.purchase_order_remove_qty_fields
+ivri_od.patches.v1_0.pvr_display_name_for_miller_verification_report
+ivri_od.patches.v1_0.create_bags_uom
+ivri_od.patches.v1_0.allow_rate_change_on_receipt
+ivri_od.patches.v1_0.remove_pds_entry_select
+ivri_od.patches.v1_0.remove_po_grand_total_from_receipt

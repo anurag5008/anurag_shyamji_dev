@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"5c0ab0f3a0\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Custody and Maintenance Charges</b></span>\", \"col\": 12}}, {\"id\": \"d9919e84cc\", \"type\": \"paragraph\", \"data\": {\"text\": \"Joint custody and maintenance charges payable to the miller for a KMS Year (1 Nov to 31 Oct), from the average paddy stock held each month.\", \"col\": 12}}, {\"id\": \"1852fdbb8f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Joint Custody and Maintenance Charge Report\", \"col\": 4}}, {\"id\": \"403917f1b5\", \"type\": \"card\", \"data\": {\"card_name\": \"Custody charge reports\", \"col\": 4}}, {\"id\": \"886ab18bed\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mill Paddy Transfer\", \"col\": 4}}]",
+ "content": "[{\"id\": \"e462a512f8\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Custody and Maintenance Charges</b></span>\", \"col\": 12}}, {\"id\": \"cae858b373\", \"type\": \"paragraph\", \"data\": {\"text\": \"Joint custody and maintenance charges payable to the miller for a KMS Year (1 Nov to 31 Oct), from the average paddy stock held each month.\", \"col\": 12}}, {\"id\": \"b92e98e9b6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Joint Custody and Maintenance Charge Report\", \"col\": 4}}, {\"id\": \"87f4298ff7\", \"type\": \"card\", \"data\": {\"card_name\": \"Custody charge reports\", \"col\": 4}}, {\"id\": \"7ef1c88187\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mill Paddy Transfer\", \"col\": 4}}]",
  "creation": "2026-11-04 10:44:20.059825",
  "custom_blocks": [],
  "docstatus": 0,
@@ -34,7 +34,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-04 11:49:02.469333",
+ "modified": "2026-11-04 13:40:28.464263",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Custody and Maintenance Charges",

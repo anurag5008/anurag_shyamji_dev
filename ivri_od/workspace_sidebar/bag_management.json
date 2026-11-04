@@ -1,0 +1,53 @@
+{
+ "app": "ivri_od",
+ "creation": "2026-10-28 14:00:00.000000",
+ "docstatus": 0,
+ "doctype": "Workspace Sidebar",
+ "header_icon": "package",
+ "idx": 0,
+ "items": [
+  {
+   "child": 0,
+   "collapsible": 0,
+   "icon": "home",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Bag Management Home",
+   "link_to": "Bag Management",
+   "link_type": "Workspace",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 0,
+   "icon": "package",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Gunny Bags Sent to PPC",
+   "link_to": "Gunny Bags Sent to PPC",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 0,
+   "collapsible": 0,
+   "icon": "layout-grid",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Gunny Bags Ledger",
+   "link_to": "Gunny Bags Ledger",
+   "link_type": "Report",
+   "show_arrow": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-10-29 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bag Management",
+ "name": "Bag Management",
+ "owner": "Administrator",
+ "standard": 1,
+ "title": "Bag Management"
+}

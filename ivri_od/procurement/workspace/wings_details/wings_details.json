@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"64d4180b52\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>WINGS Details</b></span>\", \"col\": 12}}, {\"id\": \"2c5d76eee2\", \"type\": \"paragraph\", \"data\": {\"text\": \"TEC, stack, booking/delivery and target data read from the WINGS portal (fciarms.in) with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"5a6ab16fbf\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"WINGS Manual Entry\", \"col\": 12}}, {\"id\": \"58311fffb0\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"TEC Report from WINGS\", \"col\": 4}}, {\"id\": \"6bcfe8b57c\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stack Status from WINGS\", \"col\": 4}}, {\"id\": \"a5a08b2c61\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Booking Delivery Status from WINGS\", \"col\": 4}}, {\"id\": \"7bc69d6f92\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Targets Advanced Paddy from WINGS\", \"col\": 4}}, {\"id\": \"438394aa07\", \"type\": \"card\", \"data\": {\"card_name\": \"WINGS reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"18f16282d3\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>WINGS Details</b></span>\", \"col\": 12}}, {\"id\": \"af52dc4177\", \"type\": \"paragraph\", \"data\": {\"text\": \"TEC, stack, booking/delivery and target data read from the WINGS portal (fciarms.in) with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"75d305ce29\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"WINGS Manual Entry\", \"col\": 12}}, {\"id\": \"a03239b499\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"TEC Report from WINGS\", \"col\": 4}}, {\"id\": \"71bed64008\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Stack Status from WINGS\", \"col\": 4}}, {\"id\": \"9082fc561a\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Booking Delivery Status from WINGS\", \"col\": 4}}, {\"id\": \"8456803bfa\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Targets Advanced Paddy from WINGS\", \"col\": 4}}, {\"id\": \"df21a5520a\", \"type\": \"card\", \"data\": {\"card_name\": \"WINGS reports\", \"col\": 4}}]",
  "creation": "2026-10-15 16:07:22.617816",
  "custom_blocks": [
   {
@@ -69,7 +69,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-11-04 11:49:02.390132",
+ "modified": "2026-11-04 13:40:28.307776",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "WINGS Details",

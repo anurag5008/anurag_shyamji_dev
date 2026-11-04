@@ -1,0 +1,53 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"gbp0header\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Bag Management</b></span>\", \"col\": 12}}, {\"id\": \"gbp0shortc\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gunny Bags Sent to PPC\", \"col\": 4}}, {\"id\": \"gbl0shortc\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gunny Bags Ledger\", \"col\": 4}}]",
+ "creation": "2026-10-28 14:00:00.000000",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "package",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Bag Management",
+ "links": [],
+ "modified": "2026-10-29 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Bag Management",
+ "name": "Bag Management",
+ "number_cards": [],
+ "owner": "Administrator",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  }
+ ],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Green",
+   "doc_view": "List",
+   "icon": "package",
+   "label": "Gunny Bags Sent to PPC",
+   "link_to": "Gunny Bags Sent to PPC",
+   "type": "DocType",
+   "url": ""
+  },
+  {
+   "color": "Blue",
+   "doc_view": "List",
+   "icon": "layout-grid",
+   "label": "Gunny Bags Ledger",
+   "link_to": "Gunny Bags Ledger",
+   "report_ref_doctype": "Weigh Bridge Measurement",
+   "type": "Report",
+   "url": ""
+  }
+ ],
+ "title": "Bag Management",
+ "type": "Workspace"
+}
