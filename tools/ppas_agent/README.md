@@ -124,3 +124,24 @@ Manual Entry (procurement/portal_manual.py). A row read from the portal always
 replaces a manual row with the same key.
 
 Tests (no Chrome needed): `python -m unittest test_portal_scraper`
+
+Version 21: AC Notes checked again. DCRO DC Transit Challan rows get a "Net Weight" column
+read from their AC Note (else the Net Quantity of "If FCI AC Not Available"). In the daily
+read a row with no AC Note saved yet is not sent as known, so it is read again in full
+(any agent version). Known rows come with `recheck_documents` ("AC Note Doc"): version 21
+saves only that document again for each known row (not Details) and reads every row (no
+stop at the first known row), so an AC Note changed on the portal replaces the saved one
+and its Net Weight. The same file is not saved twice.
+
+Version 26: AC Notes no longer downloaded again. The ERP stops sending `recheck_documents`:
+a DCRO DC Transit Challan row whose AC Note is already saved is known and skipped; a row
+with no AC Note (and every new row) is read in full. Known rows come with `read_all_pages`,
+so the agent reads every page (no stop at the first known row), as an older row may still
+be waiting for its AC Note. An older agent stops at the first known row (newest first).
+
+Version 22: elements read by id. A "Page Filter Columns" line such as `KMS Year = #INTKMS`
+(DCRO Paddy Release) names an element by its exact id; the ERP sends these ids per page
+(`page_fields`) and the agent reads each element whatever it is: a drop-down's chosen text,
+a box's value (also hidden or read-only) or the element's text. Its value is saved as that
+column of every row. An older agent still sends visible drop-downs and text boxes, so `#id`
+works there too when the element is one of them.

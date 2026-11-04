@@ -15,6 +15,9 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("chhatni_tracking", "chhatni_tracking.json"),
 	("mandi_book", "mandi_book.json"),
 	("stock_account_for_paddy", "stock_account_for_paddy.json"),
+	("new_nbt_gunny_account", "new_nbt_gunny_account.json"),
+	("paddy_stock_register", "paddy_stock_register.json"),
+	("rice_stock_register", "rice_stock_register.json"),
 	("vehicle_gate_movement_summary", "vehicle_gate_movement_summary.json"),
 	("procurement_module_overview", "procurement_module_overview.json"),
 	("season_mapping_receipt_summary", "season_mapping_receipt_summary.json"),
@@ -37,6 +40,7 @@ STANDARD_REPORTS: tuple[tuple[str, str], ...] = (
 	("targets_advanced_paddy_from_wings", "targets_advanced_paddy_from_wings.json"),
 	("rejected_lot_for_rrc_from_scms", "rejected_lot_for_rrc_from_scms.json"),
 	("pending_lot_in_for_rrc_from_scms", "pending_lot_in_for_rrc_from_scms.json"),
+	("joint_custody_and_maintenance_charge_report", "joint_custody_and_maintenance_charge_report.json"),
 )
 
 

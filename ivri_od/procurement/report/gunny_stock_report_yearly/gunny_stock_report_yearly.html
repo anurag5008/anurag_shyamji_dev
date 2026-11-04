@@ -1,0 +1,114 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.gunny-stock-yearly {
+		color: #000;
+		font-size: 11px;
+	}
+	.gunny-stock-yearly .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 13px;
+		margin-bottom: 4px;
+	}
+	.gunny-stock-yearly table.statement {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 8px;
+	}
+	.gunny-stock-yearly table.statement th,
+	.gunny-stock-yearly table.statement td {
+		border: 1px solid #000;
+		padding: 3px 4px;
+	}
+	.gunny-stock-yearly table.statement th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.gunny-stock-yearly table.statement td.qty {
+		text-align: right;
+	}
+	.gunny-stock-yearly table.statement tr.total-row td {
+		font-weight: bold;
+	}
+	.gunny-stock-yearly .notes {
+		margin-top: 8px;
+		font-weight: bold;
+	}
+	.gunny-stock-yearly table.signatures {
+		width: 100%;
+		margin-top: 50px;
+		page-break-inside: avoid;
+	}
+	.gunny-stock-yearly table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{% var before_group = [["paddy_qtl", 2], ["oscsc_ob", 0], ["oscsc", 0], ["tr_receipt", 0], ["old_bag_rate", 2], ["tr_issue", 0], ["new_used_cmr", 0], ["new_unused", 0]]; %}
+{% var group = [["old_carried", 0], ["old_procured", 0]]; %}
+{% var after_group = [["old_used", 0], ["old_unused", 0], ["unused_cost", 2]]; %}
+{% var qty_fields = before_group.concat(group, after_group); %}
+{% var kms_label = /^\d{2}-\d{2}$/.test(filters.kms_year || "") ? "20" + filters.kms_year : (filters.kms_year || ""); %}
+{% var notes = (original_data && original_data.length && original_data[original_data.length - 1].notes) || []; %}
+
+<div class="gunny-stock-yearly">
+	<div class="heading">NAME OF THE MILLER:- {%= frappe.utils.escape_html((filters.company || "").toUpperCase()) %}</div>
+	<div class="heading">
+		KMS:- {%= frappe.utils.escape_html(kms_label) %}:-
+		{%= frappe.utils.escape_html((filters.paddy_account || "").toUpperCase()) %} STOCK A/C OF OLD GUNNY
+	</div>
+
+	<table class="statement">
+		<thead>
+			<tr>
+				<th rowspan="2">Month</th>
+				<th rowspan="2">Qtl of Paddy Procurement</th>
+				<th rowspan="2">OSCSC OB</th>
+				<th rowspan="2">OSCSC</th>
+				<th rowspan="2">Tr. Receipt</th>
+				<th rowspan="2">Actual Cost of Old Bags Procured</th>
+				<th rowspan="2">Tr. Issue</th>
+				<th rowspan="2">No. of New Bags Used for CMR</th>
+				<th rowspan="2">Nos of New Bags Remained Unused</th>
+				<th colspan="2">No of old bags in stock</th>
+				<th rowspan="2">No. of Old Bags Used in Current KMS</th>
+				<th rowspan="2">No. of Old Bags Remained Unused</th>
+				<th rowspan="2">Actual Cost of Unused Bags</th>
+			</tr>
+			<tr>
+				<th>Carried Over from PY</th>
+				<th>Procured from CKMS</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.bold ? "total-row" : "" %}">
+				<td>{%= frappe.utils.escape_html(row.month || "") %}</td>
+				{% for (var j = 0; j < qty_fields.length; j++) { var value = row[qty_fields[j][0]]; %}
+				<td class="qty">{%= (value === undefined || value === null || value === "") ? "" : format_number(value, null, qty_fields[j][1]) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	{% if (notes.length) { %}
+	<div class="notes">
+		{% for (var k = 0; k < notes.length; k++) { %}
+		<div>NB: {%= frappe.utils.escape_html(notes[k]) %}</div>
+		{% } %}
+	</div>
+	{% } %}
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

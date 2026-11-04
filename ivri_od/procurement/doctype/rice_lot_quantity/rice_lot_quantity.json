@@ -5,7 +5,8 @@
  "engine": "InnoDB",
  "issingle": 1,
  "field_order": [
-  "lot_quantity"
+  "lot_quantity",
+  "bags_per_lot"
  ],
  "fields": [
   {
@@ -15,10 +16,18 @@
    "reqd": 1,
    "non_negative": 1,
    "description": "Rice (in Qtl) in one lot, for all mills. Used in DC Details: Total Lot = CMR Due / Lot Quantity."
+  },
+  {
+   "fieldname": "bags_per_lot",
+   "fieldtype": "Int",
+   "label": "No. of Bags per Lot",
+   "default": "580",
+   "non_negative": 1,
+   "description": "Gunny bags in one lot of rice, for all mills. Used in New NBT Gunny Account: Issue OSCSC = lots delivered x No. of Bags per Lot."
   }
  ],
  "links": [],
- "modified": "2026-10-22 14:00:00.000000",
+ "modified": "2026-11-02 12:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Rice Lot Quantity",

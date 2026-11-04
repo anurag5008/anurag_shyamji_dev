@@ -62,6 +62,15 @@ DC_TRACK_REPORT = "DC Track"
 
 # Monthly paddy statement (OB, receipts, milling, driage, CB) submitted to Civil Supplies.
 PADDY_STOCK_REPORT = "Stock Account for Paddy"
+# Monthly gunny bag statement (OSCSC and PP), from portal scraping.
+GUNNY_ACCOUNT_REPORT = "New NBT Gunny Account"
+# Monthly rice statement (OB, rice received from milling, FCI / RRC delivery, CB).
+RICE_STOCK_REPORT = "Rice Stock Report"
+# Month-wise stock account of new and old gunny bags for one KMS Year and District account.
+GUNNY_YEARLY_REPORT = "Gunny Stock Report Yearly"
+# Day-wise paper registers for one Season (Kharif / Rabi): paddy and CMR rice (stock_register.py).
+PADDY_REGISTER_REPORT = "Paddy Stock Register"
+RICE_REGISTER_REPORT = "Rice Stock Register"
 
 # Rice due and delivered per mill for a season (DC Details): its own page under Procurement.
 RICE_WORKSPACE = "Rice Delivered Summary"
@@ -70,6 +79,16 @@ DC_DETAILS_REPORT = "DC Details"
 RICE_REPORTS: list[tuple[str, str, str]] = [
 	(DC_DETAILS_REPORT, "layout-grid", "Green"),
 ]
+
+# Custody and maintenance charges payable to millers for a KMS Year: its own page under Procurement.
+CUSTODY_WORKSPACE = "Custody and Maintenance Charges"
+CUSTODY_WORKSPACE_SLUG = "custody-and-maintenance-charges"
+CUSTODY_REPORT = "Joint Custody and Maintenance Charge Report"
+CUSTODY_REPORTS: list[tuple[str, str, str]] = [
+	(CUSTODY_REPORT, "file-text", "Orange"),
+]
+# Manual entry of paddy received from another mill (Receipt - Transfer from other Mill).
+CUSTODY_TRANSFER_DOCTYPE = "Mill Paddy Transfer"
 
 # FCI depot data: one page lists every report built from WINGS (fciarms.in) portal data.
 WINGS_WORKSPACE = "WINGS Details"
@@ -267,6 +286,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Season Master", "DocType"),
 			("Rice Delivery Setup", "DocType"),
 			("Rice Lot Quantity", "DocType"),
+			("Milling Capacity Master", "DocType"),  # minimum daily milling (Paddy Stock Register)
 		],
 	),
 	(
@@ -311,11 +331,23 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"Registers",
 		[
 			("Mandi Book", "Report"),
-			(PADDY_STOCK_REPORT, "Report"),
 			("Entry Report", "Report"),
 			("Vehicle Gate Movement Summary", "Report"),
 			(DC_TRACK_REPORT, "Report"),
 			(DC_DETAILS_REPORT, "Report"),
+			(PADDY_REGISTER_REPORT, "Report"),
+			(RICE_REGISTER_REPORT, "Report"),
+		],
+	),
+	(
+		# Statements given to Civil Supplies for CMR billing (also a "CMR Billing" section in the sidebar).
+		"CMR Billing",
+		[
+			(PADDY_STOCK_REPORT, "Report"),
+			(GUNNY_ACCOUNT_REPORT, "Report"),
+			(RICE_STOCK_REPORT, "Report"),
+			(GUNNY_YEARLY_REPORT, "Report"),
+			(CUSTODY_REPORT, "Report"),
 		],
 	),
 	(
@@ -357,6 +389,11 @@ QUERY_REPORTS = {
 	"Rice Dispatch",
 	"Mandi Book",
 	PADDY_STOCK_REPORT,
+	GUNNY_ACCOUNT_REPORT,
+	RICE_STOCK_REPORT,
+	GUNNY_YEARLY_REPORT,
+	PADDY_REGISTER_REPORT,
+	RICE_REGISTER_REPORT,
 	"Vehicle Gate Movement Summary",
 	"Entry Report",
 	DC_TRACK_REPORT,
@@ -364,6 +401,7 @@ QUERY_REPORTS = {
 	*(name for name, _icon, _color in DCRO_REPORTS),
 	*(name for name, _icon, _color in WINGS_REPORTS),
 	*(name for name, _icon, _color in RICE_REPORTS),
+	*(name for name, _icon, _color in CUSTODY_REPORTS),
 }
 
 
@@ -472,6 +510,7 @@ def sync_procurement_desk_ui():
 	apply_wings_workspace()
 	apply_ppas_workspace()
 	apply_rice_workspace()
+	apply_custody_workspace()
 	_import_procurement_sidebar()
 	_cleanup_hidden_workspace_links()
 	frappe.clear_cache()
@@ -691,6 +730,38 @@ def apply_rice_workspace():
 	)
 
 
+def apply_custody_workspace():
+	"""Page "Custody and Maintenance Charges": charges payable to the miller for a KMS Year."""
+	_apply_portal_workspace(
+		CUSTODY_WORKSPACE,
+		"file-text",
+		"Joint custody and maintenance charges payable to the miller for a KMS Year "
+		"(1 Nov to 31 Oct), from the average paddy stock held each month.",
+		CUSTODY_REPORTS,
+		"Custody charge reports",
+		None,
+		None,
+		None,
+		ref_doctype="Stock Ledger Entry",
+	)
+	_add_doctype_shortcut(CUSTODY_WORKSPACE, CUSTODY_TRANSFER_DOCTYPE, "repeat", "Blue")
+
+
+def _add_doctype_shortcut(workspace, doctype, icon, color):
+	"""Add a DocType shortcut to a page built by _apply_portal_workspace (which only adds reports)."""
+	if not frappe.db.exists("DocType", doctype):
+		return
+	doc = frappe.get_doc("Workspace", workspace)
+	doc.append("shortcuts", {"label": doctype, "type": "DocType", "link_to": doctype, "icon": icon, "color": color})
+	blocks = json.loads(doc.content or "[]")
+	blocks.append({"id": _block_id(), "type": "shortcut", "data": {"shortcut_name": doctype, "col": 4}})
+	doc.content = json.dumps(blocks)
+	doc.flags.ignore_permissions = True
+	doc.flags.ignore_links = True
+	doc.save(ignore_version=True)
+	frappe.db.commit()
+
+
 def _apply_portal_workspace(
 	title,
 	icon,
@@ -704,6 +775,7 @@ def _apply_portal_workspace(
 	block_html=None,
 	block_script=None,
 	show_card=True,
+	ref_doctype="Portal Record",
 ):
 	"""A page of portal reports (or DocTypes, with ``link_type``) with a Manual Entry button (none when
 	``block`` is None). A child page of Procurement (not an app of its own), opened from its
@@ -747,7 +819,7 @@ def _apply_portal_workspace(
 	for name, report_icon, color in reports:
 		shortcut = {"label": name, "type": link_type, "link_to": name, "icon": report_icon, "color": color}
 		if link_type == "Report":
-			shortcut["report_ref_doctype"] = "Portal Record"
+			shortcut["report_ref_doctype"] = ref_doctype
 		doc.append("shortcuts", shortcut)
 		if show_card:
 			doc.append(
@@ -814,6 +886,7 @@ def _link_label(link_to: str, link_type: str) -> str:
 		"TP Mandi Quantity Fulfillment": "TP Mandi Fulfillment",
 		"Mandi Book": "Mandi Book",
 		PADDY_STOCK_REPORT: "Paddy Stock Account",
+		GUNNY_ACCOUNT_REPORT: "NBT Gunny Account",
 		"Vehicle Gate Movement Summary": "Vehicle Gate Movement",
 		"Entry Report": "Entry Report",
 	}.get(link_to, link_to)

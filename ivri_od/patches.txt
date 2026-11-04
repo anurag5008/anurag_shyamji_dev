@@ -133,3 +133,15 @@ ivri_od.patches.v1_0.weigh_bridge_list_view_final_columns
 ivri_od.patches.v1_0.weigh_bridge_list_view_quality_columns
 ivri_od.patches.v1_0.rename_rice_dispatch_summary_report
 ivri_od.patches.v1_0.dcro_view_dc_search_box
+ivri_od.patches.v1_0.dc_transit_challan_net_weight
+ivri_od.patches.v1_0.dcro_paddy_release_kms_year
+ivri_od.patches.v1_0.dcro_paddy_release_season
+ivri_od.patches.v1_0.scms_lot_search_district
+ivri_od.patches.v1_0.dc_transit_challan_accepted_date
+ivri_od.patches.v1_0.view_dc_district_from_pdf
+ivri_od.patches.v1_0.dc_transit_challan_moisture
+ivri_od.patches.v1_0.mvr_rice_delivered_week_total
+ivri_od.patches.v1_0.clear_season_mapping_of_deleted_allocations
+ivri_od.patches.v1_0.rekey_dc_transit_challan_records
+ivri_od.patches.v1_0.rice_lot_bags_per_lot
+ivri_od.patches.v1_0.dc_transit_challan_acceptance_note

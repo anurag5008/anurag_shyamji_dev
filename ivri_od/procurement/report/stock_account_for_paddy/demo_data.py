@@ -20,10 +20,12 @@ month should show:
 	bench --site <site> execute <this module>.delete_tp_demo_data
 """
 
-import frappe
+import time
 from collections import defaultdict
 
+import frappe
 from frappe.utils import add_days, flt, getdate
+from frappe.utils.background_jobs import get_queue
 
 from ivri_od.procurement.grn_tp_fulfillment import refresh_tp_fulfillment_for_pass
 
@@ -73,6 +75,7 @@ TP_CASES = [
 ]
 
 TARE_QT = 100.0
+DEMO_DRIVER = "Demo Driver"
 
 
 def create_demo_data():
@@ -191,16 +194,20 @@ def _delete_weighments(rst_prefix):
 	rsts = frappe.get_all(
 		"RST Details",
 		filters={"rst_no": ["like", f"{rst_prefix}%"]},
-		fields=["name", "weigh_bridge_measurement"],
+		fields=["name", "weigh_bridge_measurement", "vehicle_no"],
 	)
 	wbms = [rst.weigh_bridge_measurement for rst in rsts if rst.weigh_bridge_measurement]
 	grns = frappe.get_all(
 		"GRN Note", filters={"weigh_bridge_measurement": ["in", wbms or [""]]}, fields=["name", "gate_entry"]
 	)
+	# The links to the Gate Entry can be cleared by later syncs, so demo Gate Entries are also
+	# found by the demo driver and the trucks of the demo RSTs.
 	gate_entries = {grn.gate_entry for grn in grns}
 	gate_entries |= set(
 		frappe.get_all("Weigh Bridge Measurement", filters={"name": ["in", wbms or [""]]}, pluck="gate_entry")
 	)
+	vehicles = list({rst.vehicle_no for rst in rsts if rst.vehicle_no}) or [""]
+	gate_entries |= set(_names("Gate Entry", {"driver_name": DEMO_DRIVER, "vehicle_no": ["in", vehicles]}))
 	gate_entries = list(gate_entries - {None, ""}) or [""]
 
 	_delete("GRN Note", [grn.name for grn in grns])
@@ -266,7 +273,7 @@ def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt, rst_prefix=RST_PRE
 			"in_purpose": "Paddy",
 			"vehicle_no": vehicle,
 			"party_name": ppc_text,
-			"driver_name": "Demo Driver",
+			"driver_name": DEMO_DRIVER,
 			"entry_datetime": at,
 		}
 	).insert()
@@ -278,7 +285,7 @@ def _weigh_truck(tp_no, truck_no, ppc_text, rst_date, net_qt, rst_prefix=RST_PRE
 			"qc_datetime": at,
 			"paddy_quality": "Mota",
 			"qc_decision": "Accepted",
-			"driver_name": "Demo Driver",
+			"driver_name": DEMO_DRIVER,
 			"staff_name": "Demo Staff",
 			"unloading_point": "Demo Point",
 			"old_new_bags": [{"old_bags": bags, "new_bags": 0}],
@@ -343,6 +350,12 @@ def _names(doctype, filters):
 
 
 def _delete(doctype, names):
-	for name in names:
+	"""Each delete queues a link clean-up job; wait for the worker when the queue gets long."""
+	queue = get_queue("default")
+	for index, name in enumerate(names):
+		if index and not index % 200:
+			frappe.db.commit()
+			while queue.count > 100:
+				time.sleep(5)
 		if name and frappe.db.exists(doctype, name):
 			frappe.delete_doc(doctype, name, force=True, ignore_permissions=True)

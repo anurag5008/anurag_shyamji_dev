@@ -9,35 +9,32 @@ from frappe.utils import getdate
 from ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy import (
 	build_rows,
 	classify,
+	dcro_kms_year,
 	dcro_release,
 	get_months,
-	grn_receipts,
 	kms_year_label,
 	season_code_from_pass_key,
 	season_master_year,
+	tp_receipts,
 	validate_filters,
 )
 
 FROM_DATE = getdate("2025-11-01")
 
 
-def grn(key, receipt_date, net_weight):
-	return frappe._dict(pass_unique_key=key, receipt_date=receipt_date, net_weight=net_weight)
+def tp(transit_pass_date, quantity):
+	return frappe._dict(transit_pass_date=transit_pass_date, quantity=quantity)
 
 
-# GRNs in receipt order.
-GRNS = [
-	# TP-1 (100 QT): 60 in October (before the period), 50 in November -> fulfilled, counts 100.
-	grn("M1-P(S1)-K25-TP1", "2025-10-20", 60),
-	grn("M1-P(S1)-K25-TP1", "2025-11-03", 50),
-	# TP-2 (80 QT): two trucks in November, 30 + 30 -> short, counts 60.
-	grn("M1-P(S1)-K25-TP2", "2025-11-05", 30),
-	grn("M1-P(S1)-K25-TP2", "2025-11-06", 30),
-	# TP-3 (50 QT): 49.5 in November, 3 more in January -> fulfilled, counts 50.
-	grn("M1-P(S1)-K25-TP3", "2025-11-20", 49.5),
-	grn("M1-P(S1)-K25-TP3", "2026-01-04", 3),
+# Transit passes: each counts its TP quantity in the month of its Transit Pass Date.
+PASSES = [
+	tp("2025-10-20", 60),  # October: before the period, goes to OB
+	tp("2025-11-03", 50),
+	tp("2025-11-05", 30),
+	tp("2025-11-06", 30),
+	tp("2025-11-20", 39.5),
+	tp("2026-01-04", 0.5),
 ]
-TP_QUANTITIES = {"M1-P(S1)-K25-TP1": 100, "M1-P(S1)-K25-TP2": 80, "M1-P(S1)-K25-TP3": 50}
 
 DCRO_ROW = {
 	"RO No.": "RO1",
@@ -52,20 +49,45 @@ SKIP = ["reject", "cancel"]
 
 class TestStockAccountForPaddy(IntegrationTestCase):
 	def get_rows(self):
-		movements = grn_receipts(GRNS, TP_QUANTITIES)
+		movements = tp_receipts(PASSES)
 		movements.append(dcro_release(DCRO_ROW, SKIP))
 		movements.append((getdate("2025-10-25"), "issue_for_milling", 10))
 		opening, by_month = classify(movements, FROM_DATE)
 		return build_rows(get_months(FROM_DATE, getdate("2026-01-31")), opening, by_month)
 
-	def test_pacs_counts_tp_quantity_once_fulfilled(self):
-		receipts = [qty for _date, _column, qty in grn_receipts(GRNS, TP_QUANTITIES)]
-		self.assertEqual(receipts, [60, 40, 30, 30, 49.5, 0.5])
+	def test_pacs_is_tp_quantity_on_transit_pass_date(self):
+		receipts = tp_receipts(PASSES + [tp(None, 99)])  # no date: not counted
+		self.assertEqual(receipts[1], (getdate("2025-11-03"), "pacs", 50))
+		self.assertEqual([qty for _date, _column, qty in receipts], [60, 50, 30, 30, 39.5, 0.5])
+
+	def test_wshg_ppc_goes_to_wshgs(self):
+		# A pass whose PPC is ticked Is WSHG in PPC Master: Receipts - WSHGs, not PACs, same month.
+		wshg = frappe._dict(transit_pass_date="2025-11-10", quantity=25, is_wshg=1)
+		receipts = tp_receipts(PASSES + [wshg])
+		self.assertEqual(receipts[-1], (getdate("2025-11-10"), "wshgs", 25))
+		opening, by_month = classify(receipts, FROM_DATE)
+		november = build_rows(get_months(FROM_DATE, getdate("2025-11-30")), opening, by_month)[0]
+		self.assertEqual((november["pacs"], november["wshgs"]), (149.5, 25))
+		self.assertEqual(november["total_paddy"], round(november["ob"] + 149.5 + 25, 2))
 
 	def test_dcro_release(self):
 		self.assertEqual(dcro_release(DCRO_ROW, SKIP), (getdate("2025-11-15"), "issue_for_milling", 75.5))
 		self.assertIsNone(dcro_release({**DCRO_ROW, "Status of Released Order": "Rejected"}, SKIP))
 		self.assertIsNone(dcro_release({**DCRO_ROW, "Date of Requistion": ""}, SKIP))
+
+	def test_dcro_release_of_one_district(self):
+		row = {
+			**DCRO_ROW,
+			"Quantity of Paddy Released for Milling (Other District)KORAPUT (in Qtl)": "20.00",
+			"Quantity of Paddy Released for Milling (Other District) (in Qtl) 2": "4.00",
+		}
+		districts = {"balangir": "Balangir", "koraput": "Koraput"}
+		release = lambda district, own="Balangir": dcro_release(row, SKIP, district, own, districts)[2]
+		self.assertEqual(release("Balangir"), 70)  # Own District of a Balangir mill
+		self.assertEqual(release("Koraput"), 20)  # header word matched to District Master
+		self.assertEqual(release("Koraput", own="Koraput"), 90)  # a Koraput mill's own + Koraput columns
+		self.assertEqual(release("Balangir", own=None), 0)  # mill without District: own not counted
+		self.assertEqual(dcro_release(row, SKIP)[2], 99.5)  # no district: every column
 
 	def test_months_ob_cb(self):
 		rows = self.get_rows()
@@ -98,9 +120,53 @@ class TestStockAccountForPaddy(IntegrationTestCase):
 		self.assertEqual(total_row["total_paddy"], round(total_row["ob"] + total_row["pacs"], 2))
 		self.assertEqual(total_row["cb"], month_rows[-1]["cb"])
 
+	def test_paddy_released_does_not_change_stock(self):
+		movements = tp_receipts(PASSES) + [
+			(getdate("2025-10-25"), "paddy_released", 40),  # before the period: not in OB
+			(getdate("2025-11-15"), "paddy_released", 75.5),
+			(getdate("2025-11-20"), "issue_for_milling", 30),
+		]
+		opening, by_month = classify(movements, FROM_DATE)
+		rows = build_rows(get_months(FROM_DATE, getdate("2025-12-31")), opening, by_month)
+		november, total_row = rows[0], rows[-1]
+		self.assertEqual(november["ob"], 60)  # October receipt only
+		self.assertEqual(november["paddy_released"], 75.5)
+		self.assertEqual((november["issue_for_milling"], november["total"]), (30, 30))
+		self.assertEqual(november["cb"], round(60 + 149.5 - 30, 2))
+		self.assertEqual(total_row["paddy_released"], 75.5)
+
+	def test_column_order(self):
+		from ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy import get_columns
+
+		fields = [c["fieldname"] for c in get_columns()]
+		self.assertEqual(fields.index("paddy_released") + 1, fields.index("issue_for_milling"))
+
+	def test_dcro_kms_year(self):
+		for text in ("2024-2025", "2024-25", "24-25", " 2024 - 2025 "):
+			self.assertEqual(dcro_kms_year(text), 2024)
+		for text in ("", None, "2024", "Kharif"):
+			self.assertIsNone(dcro_kms_year(text))
+
 	def test_season_code_from_pass_key(self):
 		self.assertEqual(season_code_from_pass_key("M051007-BAKTI(S1050104)-K25-TP45"), "K25")
 		self.assertEqual(season_code_from_pass_key(""), "")
+
+	def test_kms_years_of_mill(self):
+		from ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy import mill_tp_years
+
+		year_of = {"Kharif 2025": 2025, "Rabi 2025": 2025, "Kharif 2024": 2024}
+		rows = [
+			frappe._dict(season="Kharif(2025)", miller="MILL A(M1)", key_mill="M1", key_season="K25"),
+			frappe._dict(season="", miller="", key_mill="M1", key_season="R25"),  # season from the key
+			frappe._dict(season="Kharif(2024)", miller="MILL B(M2)", key_mill="M2", key_season="K24"),
+		]
+		with patch("frappe.db.sql", return_value=rows), patch(
+			"ivri_od.procurement.report.stock_account_for_paddy.stock_account_for_paddy.resolve_season_master_name",
+			side_effect=lambda text: {"Kharif(2025)": "Kharif 2025", "R25": "Rabi 2025", "Kharif(2024)": "Kharif 2024"}.get(text),
+		):
+			self.assertEqual(mill_tp_years("M1", year_of), {2025})  # no 24-25 for M1
+			self.assertEqual(mill_tp_years("M2", year_of), {2024})
+			self.assertEqual(mill_tp_years("M3", year_of), set())
 
 	def test_kms_year(self):
 		self.assertEqual(kms_year_label(2025), "25-26")

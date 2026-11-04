@@ -1,0 +1,172 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.custody-charges {
+		color: #000;
+		font-size: 12px;
+	}
+	.custody-charges .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 14px;
+		margin-bottom: 4px;
+	}
+	.custody-charges .sub-heading {
+		display: flex;
+		justify-content: space-between;
+		font-size: 12px;
+	}
+	.custody-charges table.statement,
+	.custody-charges table.summary {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 10px;
+	}
+	.custody-charges table.statement th,
+	.custody-charges table.statement td,
+	.custody-charges table.summary td {
+		border: 1px solid #000;
+		padding: 4px 6px;
+	}
+	.custody-charges table.statement th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.custody-charges td.qty {
+		text-align: right;
+	}
+	.custody-charges table.statement td.month {
+		background-color: #e6e6e6;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+	.custody-charges tr.total-row td,
+	.custody-charges table.summary tr.payable td {
+		font-weight: bold;
+	}
+	.custody-charges table.summary {
+		width: 60%;
+		margin-left: auto;
+		page-break-inside: avoid;
+	}
+	.custody-charges table.summary td.label {
+		width: 70%;
+	}
+	.custody-charges table.signatures {
+		width: 100%;
+		margin-top: 70px;
+		page-break-inside: avoid;
+	}
+	.custody-charges table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{%
+	var fields = [
+		["ob", 2], ["transfer", 2], ["pacs", 2], ["total", 2], ["issue", 2],
+		["cb", 2], ["ob_cb", 2], ["ob_cb_half", 3]
+	];
+	var kms_label = /^\d{2}-\d{2}$/.test(filters.kms_year || "") ? "20" + filters.kms_year : (filters.kms_year || "");
+	var miller = filters.miller_name || filters.mill || "";
+
+	/* Indian grouping (6,51,314.00), same in the browser and in the PDF. */
+	var indian = function (value, decimals) {
+		return Number(value || 0).toLocaleString("en-IN", {
+			minimumFractionDigits: decimals,
+			maximumFractionDigits: decimals,
+		});
+	};
+	var round_to = function (value, decimals) {
+		var factor = Math.pow(10, decimals);
+		return Math.round((Number(value) || 0) * factor) / factor;
+	};
+
+	/* Summary A to E from the Total row (same rules as get_summary in the .py file). No // comments in
+	   this block: the template is joined into one line, so they would hide the code after them. */
+	var total_row = null;
+	for (var t = 0; t < data.length; t++) { if (data[t].bold) { total_row = data[t]; } }
+	total_row = total_row || {};
+	var rate = 2.40;
+	var a = round_to(total_row.ob_cb_half, 2);
+	var b = round_to((total_row.transfer || 0) + (total_row.pacs || 0), 2);
+	var c = b ? round_to(a / b, 3) : 0;
+	var d = round_to(c * rate, 2);
+	var e = Math.round(d * b);
+%}
+
+<div class="custody-charges">
+	<div class="heading">
+		JOINT CUSTODY &amp; MAINTENANCE CHARGES OF {%= frappe.utils.escape_html(miller.toUpperCase()) %}
+		FOR THE KMS: {%= frappe.utils.escape_html(kms_label) %}
+	</div>
+	<div class="sub-heading">
+		<span>Mill No: {%= frappe.utils.escape_html(filters.mill || "") %}</span>
+		<span>District: {%= frappe.utils.escape_html(filters.district || "") %}</span>
+		<span>Month: {%= frappe.utils.escape_html(filters.from_month ? moment(filters.from_month).format("MMM-YYYY") : "") %}
+			to {%= frappe.utils.escape_html(filters.to_month ? moment(filters.to_month).format("MMM-YYYY") : "") %}</span>
+	</div>
+
+	<table class="statement">
+		<thead>
+			<tr>
+				<th rowspan="2">Month</th>
+				<th rowspan="2">Opening Balance</th>
+				<th colspan="2">Receipt</th>
+				<th rowspan="2">Total</th>
+				<th rowspan="2">Issued for Milling</th>
+				<th rowspan="2">Closing Balance</th>
+				<th rowspan="2">OB+CB</th>
+				<th rowspan="2">OB+CB/2</th>
+			</tr>
+			<tr>
+				<th>Transfer from other Mill</th>
+				<th>PACS</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.bold ? "total-row" : "" %}">
+				<td class="month">{%= frappe.utils.escape_html(row.month || "") %}</td>
+				{% for (var j = 0; j < fields.length; j++) { var value = row[fields[j][0]]; %}
+				<td class="qty">{%= value === null || value === undefined ? "" : indian(value, fields[j][1]) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="summary">
+		<tr>
+			<td class="label">A. Total Average Paddy (Qtl)</td>
+			<td class="qty">{%= indian(a, 2) %}</td>
+		</tr>
+		<tr>
+			<td class="label">B. Total Paddy Received (Qtl)</td>
+			<td class="qty">{%= indian(b, 2) %}</td>
+		</tr>
+		<tr>
+			<td class="label">C. Total Average Period (A / B, months)</td>
+			<td class="qty">{%= indian(c, 3) %}</td>
+		</tr>
+		<tr>
+			<td class="label">D. Custody Maintenance Due per Qtl (C x {%= indian(rate, 2) %})</td>
+			<td class="qty">{%= indian(d, 2) %}</td>
+		</tr>
+		<tr class="payable">
+			<td class="label">E. Joint &amp; Custody Maintenance Payable to Miller (D x B)</td>
+			<td class="qty">&#8377; {%= indian(e, 2) %}</td>
+		</tr>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

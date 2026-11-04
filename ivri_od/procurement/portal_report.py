@@ -16,8 +16,15 @@ from datetime import datetime
 
 import frappe
 from frappe import _
+from frappe.utils import flt
 
-from ivri_od.procurement.portal_sync import NOISE_HEADER, normalize_details, parse_key_columns
+from ivri_od.procurement.portal_sync import (
+	ACCEPTED_DATE_COLUMN,
+	NET_WEIGHT_COLUMN,
+	NOISE_HEADER,
+	normalize_details,
+	parse_key_columns,
+)
 
 MAX_RECORDS = 5000
 
@@ -33,6 +40,8 @@ def section_report(
 	document_columns=None,
 	receipt_columns=None,
 	detail_totals=None,
+	transform=None,
+	row_filter=None,
 ):
 	"""Report of one portal section (each SCMS/DCRO report calls this with its section)."""
 	filters = frappe._dict(filters or {})
@@ -48,6 +57,8 @@ def section_report(
 		document_columns=document_columns,
 		receipt_columns=receipt_columns,
 		detail_totals=detail_totals,
+		transform=transform,
+		row_filter=row_filter,
 	)
 
 
@@ -59,6 +70,8 @@ def execute(
 	document_columns=None,
 	receipt_columns=None,
 	detail_totals=None,
+	transform=None,
+	row_filter=None,
 ):
 	"""``receipt_label`` adds a column with the saved document of each row
 	(e.g. "Challan" for Transit Challan); the DC report has none.
@@ -79,15 +92,23 @@ def execute(
 	or View_FCI), instead of a separate document column; "No_File" stays text.
 	``detail_totals`` add a column per (label, words[, fieldtype]) with the sum of
 	the row's detail rows (e.g. DCRO View DC: "Lots"), always shown, also without
-	"Show Detail Rows". Fieldtype "Int" shows whole numbers; default Float (3 decimals)."""
+	"Show Detail Rows". Fieldtype "Int" shows whole numbers; default Float (3 decimals).
+	``transform(records, cells_by_record)`` returns the cells shown per record, e.g. DCRO
+	Paddy Release: quantities named per district (see dcro_paddy_release.district_cells).
+	``row_filter(record, cells)`` keeps only the records it returns True for, e.g. DCRO DC
+	Transit Challan: the DCs of one season (see dc_transit_challan_from_dcro.season_filter)."""
 	filters = frappe._dict(filters or {})
 	records = _get_records(filters)
+	cells_by_record = {r.name: _load(r.row_data) for r in records}
+	if row_filter:
+		records = [r for r in records if row_filter(r, cells_by_record[r.name])]
 	if not records:
 		return _base_columns(filters, [], [], "", receipt_label), [], None, None, _summary(records, 0)
 
-	cells_by_record = {r.name: _load(r.row_data) for r in records}
 	if date_column:
 		records.sort(key=lambda r: _date_sort_key(cells_by_record[r.name].get(date_column)))
+	if transform:
+		cells_by_record = transform(records, cells_by_record)
 	data_columns = _ordered_headers(cells_by_record.values())
 	if document_columns:
 		# The portal's button columns ("Details", "Acnote Doc") hold only the button
@@ -135,8 +156,11 @@ def execute(
 			"last_seen_on": record.last_seen_on,
 			"entry_source": record.entry_source or "Portal",
 			"mill_id": record.mill_id or "",
+			"district_manual": record.district_manual,  # View DC: District set by hand
 		}
 		cells = cells_by_record[record.name]
+		if ACCEPTED_DATE_COLUMN in cells:
+			_add_ac_note_by_hand(row, record, cells)
 		for idx, header in enumerate(data_columns):
 			row[f"c{idx}"] = cells.get(header, "")
 			if record.receipt_file and header in (receipt_columns or ()) and _has_button(row[f"c{idx}"]):
@@ -186,6 +210,7 @@ def _get_records(filters):
 		filters=conditions,
 		fields=[
 			"name",
+			"site",
 			"section",
 			"row_data",
 			"detail_count",
@@ -196,10 +221,25 @@ def _get_records(filters):
 			"entry_source",
 			"documents",
 			"mill_id",
+			"district_manual",
+			"accepted_date_manual",
+			"net_weight_manual",
 		],
 		order_by="section asc, seen_run desc, row_no asc, last_seen_on desc",
 		limit_page_length=MAX_RECORDS,
 	)
+
+
+def _add_ac_note_by_hand(row, record, cells):
+	"""DC Transit Challan: a row without an AC Note date (blank or set by hand) can be edited
+	(ac_note_by_hand); the values set by hand are passed while no AC Note value has replaced them."""
+	date = record.accepted_date_manual
+	if date and cells.get(ACCEPTED_DATE_COLUMN) == date.strftime("%d-%m-%Y"):
+		row["accepted_date_manual"] = date
+	weight = flt(record.net_weight_manual)
+	if weight and cells.get(NET_WEIGHT_COLUMN) == f"{weight:.5f}":
+		row["net_weight_manual"] = weight
+	row["ac_note_by_hand"] = int(not cells.get(ACCEPTED_DATE_COLUMN) or "accepted_date_manual" in row)
 
 
 def _get_details(record_names):

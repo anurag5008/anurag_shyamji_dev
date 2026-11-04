@@ -130,7 +130,18 @@ def sync_season_mappings_from_allocation(season, ppc_name, mill_name):
 		return
 
 	summary = get_target_allocation_summary(season, ppc_name, mill_name)
+	names = frappe.get_all(
+		"Season Mapping",
+		filters={"season": season, "ppc_name": ppc_name, "mill_name": mill_name},
+		pluck="name",
+	)
 	if not summary:
+		# The last Target Allocation was deleted: its target must not stay on the Season Mapping
+		# (reports such as Abstract Report would still show it).
+		for name in names:
+			frappe.db.set_value(
+				"Season Mapping", name, {"season_quantity": 0, "agent_name": "", "chhatni": 0}, update_modified=True
+			)
 		return
 
 	values = {
@@ -138,11 +149,6 @@ def sync_season_mappings_from_allocation(season, ppc_name, mill_name):
 		"agent_name": summary.get("agent_name") or "",
 		"chhatni": flt(summary.get("chhatni")),
 	}
-	names = frappe.get_all(
-		"Season Mapping",
-		filters={"season": season, "ppc_name": ppc_name, "mill_name": mill_name},
-		pluck="name",
-	)
 	if names:
 		for name in names:
 			frappe.db.set_value("Season Mapping", name, values, update_modified=True)

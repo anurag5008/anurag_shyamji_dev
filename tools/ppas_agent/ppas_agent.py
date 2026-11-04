@@ -104,7 +104,13 @@ def health():
         # 17: Mill ID read from the site's "Mill ID XPath" first (WINGS dashboard header).
         # 18: /portal/notify (message in Chrome after a save); Mill ID only from the XPath on the landing dashboard.
         # 19: only new or changed rows (known_rows fingerprints); row_sig and position sent per row.
-        "portal_version": 20
+        # 21: known rows sent again with only their "recheck_documents" (DCRO DC Transit Challan AC Note Doc).
+        # 22: page_fields: elements read by id ("#id" in Page Filter Columns, DCRO Paddy Release #INTKMS).
+        # 23: login_user_id / expected_login: the User ID typed at login (DCRO #UserName, SCMS #txtUserId)
+        #     must be the Mill No. picked, else nothing is read; login_user sent with every result.
+        # 26: "read_all_pages" in known_rows: no stop at the first known row (DCRO DC Transit Challan
+        #     sends rows with an AC Note as known and skips them; rows without one are read in full).
+        "portal_version": 26
     })
 
 

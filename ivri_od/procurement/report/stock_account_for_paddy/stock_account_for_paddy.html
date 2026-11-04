@@ -50,7 +50,7 @@
 	}
 </style>
 
-{% var qty_fields = ["ob", "pacs", "wshgs", "other_rect", "total_paddy", "issue_for_milling", "driage", "total", "cb"]; %}
+{% var qty_fields = ["ob", "pacs", "wshgs", "other_rect", "total_paddy", "paddy_released", "issue_for_milling", "driage", "total", "cb"]; %}
 {% var kms_label = /^\d{2}-\d{2}$/.test(filters.kms_year || "") ? "20" + filters.kms_year : (filters.kms_year || ""); %}
 
 <div class="paddy-stock-account">
@@ -67,6 +67,7 @@
 				<th rowspan="2">OB</th>
 				<th colspan="3">RECEIPTS</th>
 				<th rowspan="2">Total Paddy</th>
+				<th rowspan="2">Paddy Released</th>
 				<th rowspan="2">Issue for Milling</th>
 				<th rowspan="2">Driage</th>
 				<th rowspan="2">Total</th>

@@ -47,7 +47,7 @@
    "fieldname": "filter_columns",
    "fieldtype": "Small Text",
    "label": "Page Filter Columns",
-   "description": "Search filters saved as columns of every row, one per line as Column Name = words in the filter's label or id. Example: KMS Year = kms. A line with only * saves every filter under its own label."
+   "description": "Search filters saved as columns of every row, one per line as Column Name = words in the filter's label or id. Example: KMS Year = kms. #id takes the element with exactly that id, whatever it is (e.g. KMS Year = #INTKMS). A line with only * saves every filter under its own label."
   },
   {
    "fieldname": "extract_on_click",
@@ -122,7 +122,7 @@
  "index_web_pages_for_search": 0,
  "istable": 1,
  "links": [],
- "modified": "2026-10-19 12:00:00.000000",
+ "modified": "2026-10-27 15:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Portal Site Section",

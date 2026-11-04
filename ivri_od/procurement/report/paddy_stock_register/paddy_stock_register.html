@@ -1,0 +1,95 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.paddy-stock-register {
+		color: #000;
+		font-size: 10px;
+	}
+	.paddy-stock-register .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 13px;
+		margin-bottom: 6px;
+	}
+	.paddy-stock-register table.register {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.paddy-stock-register table.register th,
+	.paddy-stock-register table.register td {
+		border: 1px solid #000;
+		padding: 2px 4px;
+	}
+	.paddy-stock-register table.register th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.paddy-stock-register table.register td.qty {
+		text-align: right;
+	}
+	.paddy-stock-register table.register tr.mismatch td {
+		color: #c00;
+	}
+	.paddy-stock-register table.signatures {
+		width: 100%;
+		margin-top: 60px;
+		page-break-inside: avoid;
+	}
+	.paddy-stock-register table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{% var qty_fields = ["ob", "receipt_pacs", "receipt_shg", "total_stock", "prog_receipt_pacs", "prog_receipt_shg", "prog_receipt_total", "release_order", "prog_release_order", "issue_for_milling", "prog_issue_for_milling", "total_disposal", "cb"]; %}
+{% var blank_when_empty = ["release_order", "issue_for_milling"]; %}
+{% var rows = original_data || data; %}
+
+<div class="paddy-stock-register">
+	<div class="heading">{%= frappe.utils.escape_html(((rows[0] || {}).register_title || "").toUpperCase()) %}</div>
+
+	<table class="register">
+		<thead>
+			<tr>
+				<th rowspan="2">Date</th>
+				<th rowspan="2">O.B.</th>
+				<th colspan="2">RECEIPT</th>
+				<th rowspan="2">Total Stock</th>
+				<th colspan="2">PROG. RECEIPT</th>
+				<th rowspan="2">Total of Prog. Receipt</th>
+				<th rowspan="2">Release Order</th>
+				<th rowspan="2">Prog. Release Order</th>
+				<th rowspan="2">Issue for Milling</th>
+				<th rowspan="2">Prog. Issue for Milling</th>
+				<th rowspan="2">Total Disposal</th>
+				<th rowspan="2">C.B.</th>
+			</tr>
+			<tr>
+				<th>PACS</th>
+				<th>SHG</th>
+				<th>PACS</th>
+				<th>SHG</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < rows.length; i++) { var row = rows[i]; %}
+			<tr class="{%= row.mismatch ? "mismatch" : "" %}">
+				<td>{%= frappe.datetime.str_to_user(row.date) %}</td>
+				{% for (var j = 0; j < qty_fields.length; j++) { var f = qty_fields[j]; %}
+				<td class="qty">{%= (blank_when_empty.includes(f) && row[f] == null) ? "" : format_number(row[f] || 0, null, 2) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

@@ -10,6 +10,7 @@
  "field_order": [
   "miller_code",
   "company",
+  "district",
   "column_break_1",
   "type",
   "is_active"
@@ -37,6 +38,15 @@
    "reqd": 1
   },
   {
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "District",
+   "options": "District Master",
+   "description": "The mill's own district: DCRO Paddy Release \"Own District\" columns are shown and counted under it."
+  },
+  {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
   },
@@ -62,7 +72,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-16 04:10:00.000000",
+ "modified": "2026-10-27 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Mill Master",

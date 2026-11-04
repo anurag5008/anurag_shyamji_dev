@@ -4,12 +4,14 @@
  "doctype": "DocType",
  "editable_grid": 0,
  "engine": "InnoDB",
- "istable": 1,
  "field_order": [
+  "district",
   "agency",
   "season",
   "paddy_received_week",
   "prog_paddy_received",
+  "paddy_released_week",
+  "prog_paddy_released",
   "paddy_milled_week",
   "prog_paddy_milled",
   "book_balance_paddy",
@@ -22,6 +24,7 @@
   "prog_cmr_due",
   "rice_delivered_week_fci",
   "rice_delivered_week_rrc",
+  "rice_delivered_week_total",
   "prog_dc_fci",
   "prog_dc_rrc",
   "prog_dc_total",
@@ -37,56 +40,84 @@
  ],
  "fields": [
   {
-   "fieldname": "agency",
-   "fieldtype": "Data",
-   "label": "Agency",
-   "reqd": 1,
+   "columns": 4,
+   "fieldname": "district",
+   "fieldtype": "Link",
    "in_list_view": 1,
-   "columns": 6
+   "label": "District",
+   "options": "District Master",
+   "reqd": 1
   },
   {
+   "description": "District name, shown as the column heading",
+   "fieldname": "agency",
+   "fieldtype": "Data",
+   "in_list_view": 0,
+   "label": "Column",
+   "read_only": 1,
+   "reqd": 0
+  },
+  {
+   "columns": 3,
    "fieldname": "season",
-   "fieldtype": "Link",
-   "label": "Season",
-   "options": "Season Master",
+   "fieldtype": "Select",
    "in_list_view": 1,
-   "columns": 4
+   "label": "Season",
+   "options": "\nKharif\nRabi",
+   "reqd": 1
   },
   {
    "fieldname": "paddy_received_week",
    "fieldtype": "Float",
    "label": "I. Paddy Procured/Received during the week",
-   "precision": "3"
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_paddy_received",
    "fieldtype": "Float",
    "label": "II. Prog. Paddy Procured/Received till verification date",
-   "precision": "3"
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "paddy_released_week",
+   "fieldtype": "Float",
+   "label": "III. Paddy Released for Milling during the week",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "prog_paddy_released",
+   "fieldtype": "Float",
+   "label": "IV. Prog. Paddy Released for Milling till verification date",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "paddy_milled_week",
    "fieldtype": "Float",
-   "label": "III. Paddy Milled during the week",
+   "label": "V. Paddy Milled during the week",
    "precision": "3"
   },
   {
    "fieldname": "prog_paddy_milled",
    "fieldtype": "Float",
-   "label": "IV. Prog. Paddy Milled till verification date",
-   "precision": "3"
+   "label": "VI. Prog. Paddy Milled till verification date",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "book_balance_paddy",
    "fieldtype": "Float",
-   "label": "V. Book balance of Paddy Stock",
+   "label": "VII. Book balance of Paddy Stock",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "verified_balance_paddy",
    "fieldtype": "Float",
-   "label": "VI. Verified balance of Paddy",
+   "label": "VIII. Verified balance of Paddy",
    "precision": "3",
    "read_only": 1
   },
@@ -100,20 +131,22 @@
   {
    "fieldname": "rice_received_week",
    "fieldtype": "Float",
-   "label": "VII. Rice received from milling till date",
-   "precision": "3"
+   "label": "IX. Rice received from milling till date",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_rice_received",
    "fieldtype": "Float",
-   "label": "VIII. Prog. Rice received from milling till date",
-   "precision": "3"
+   "label": "X. Prog. Rice received from milling till date",
+   "precision": "3",
+   "read_only": 1
   },
   {
+   "default": "1",
    "fieldname": "frk_percent",
    "fieldtype": "Percent",
-   "label": "FRK %",
-   "default": "1"
+   "label": "FRK %"
   },
   {
    "fieldname": "frk_qty",
@@ -131,85 +164,98 @@
   {
    "fieldname": "rice_delivered_week_fci",
    "fieldtype": "Float",
-   "label": "IX. Rice delivered during the week against DC (FCI)",
-   "precision": "3"
+   "label": "XI. Rice delivered during the week against DC (FCI)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "rice_delivered_week_rrc",
    "fieldtype": "Float",
-   "label": "IX. Rice delivered during the week against DC (RRC)",
-   "precision": "3"
+   "label": "XI. Rice delivered during the week against DC (RRC)",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "rice_delivered_week_total",
+   "fieldtype": "Float",
+   "label": "XI. Rice delivered during the week against DC (TOTAL)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_dc_fci",
    "fieldtype": "Float",
-   "label": "X. Prog. DC issued till verification (FCI)",
-   "precision": "3"
+   "label": "XII. Prog. DC issued till verification (FCI)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_dc_rrc",
    "fieldtype": "Float",
-   "label": "X. Prog. DC issued till verification (RRC)",
-   "precision": "3"
+   "label": "XII. Prog. DC issued till verification (RRC)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_dc_total",
    "fieldtype": "Float",
-   "label": "X. Prog. DC issued till verification (TOTAL)",
+   "label": "XII. Prog. DC issued till verification (TOTAL)",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "prog_delivered_fci",
    "fieldtype": "Float",
-   "label": "XI. Prog. Rice delivered against total DC issued (FCI)",
-   "precision": "3"
+   "label": "XIII. Prog. Rice delivered against total DC issued (FCI)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_delivered_rrc",
    "fieldtype": "Float",
-   "label": "XI. Prog. Rice delivered against total DC issued (RRC)",
-   "precision": "3"
+   "label": "XIII. Prog. Rice delivered against total DC issued (RRC)",
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "prog_delivered_total",
    "fieldtype": "Float",
-   "label": "XI. Prog. Rice delivered against total DC issued (TOTAL)",
+   "label": "XIII. Prog. Rice delivered against total DC issued (TOTAL)",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "undelivered_fci",
    "fieldtype": "Float",
-   "label": "XII. Balance Rice remain undelivered against DC (FCI)",
+   "label": "XIV. Balance Rice remain undelivered against DC (FCI)",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "undelivered_rrc",
    "fieldtype": "Float",
-   "label": "XII. Balance Rice remain undelivered against DC (RRC)",
+   "label": "XIV. Balance Rice remain undelivered against DC (RRC)",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "undelivered_total",
    "fieldtype": "Float",
-   "label": "XII. Balance Rice remain undelivered against DC (TOTAL)",
+   "label": "XIV. Balance Rice remain undelivered against DC (TOTAL)",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "book_balance_rice",
    "fieldtype": "Float",
-   "label": "XIII. Book balance of Rice Stock",
+   "label": "XV. Book balance of Rice Stock",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "verified_balance_rice",
    "fieldtype": "Float",
-   "label": "XIV. Verified balance of Rice",
+   "label": "XVI. Verified balance of Rice",
    "precision": "3",
    "read_only": 1
   },
@@ -221,8 +267,9 @@
    "read_only": 1
   }
  ],
+ "istable": 1,
  "links": [],
- "modified": "2026-10-23 18:00:00.000000",
+ "modified": "2026-10-30 08:34:00.922141",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Miller Verification Agency",

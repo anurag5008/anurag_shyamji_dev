@@ -15,6 +15,7 @@
   "agent",
   "column_break_location",
   "is_active",
+  "is_wshg",
   "title"
  ],
  "fields": [
@@ -77,6 +78,13 @@
    "label": "Is Active"
   },
   {
+   "default": "0",
+   "description": "Tick for a Women Self Help Group (WSHG) centre. In Stock Account for Paddy its Transit Passes go to Receipts - WSHGs instead of Receipts - PACs.",
+   "fieldname": "is_wshg",
+   "fieldtype": "Check",
+   "label": "Is WSHG"
+  },
+  {
    "fieldname": "title",
    "fieldtype": "Data",
    "hidden": 1,
@@ -86,7 +94,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-09-15 07:25:00.000000",
+ "modified": "2026-10-30 10:25:19.053554",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "PPC Master",

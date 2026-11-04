@@ -1,0 +1,110 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.rice-stock-account {
+		color: #000;
+		font-size: 11px;
+	}
+	.rice-stock-account .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 14px;
+		margin-bottom: 4px;
+	}
+	.rice-stock-account table.statement {
+		width: 100%;
+		border-collapse: collapse;
+		margin-top: 10px;
+	}
+	.rice-stock-account table.statement th,
+	.rice-stock-account table.statement td {
+		border: 1px solid #000;
+		padding: 4px 5px;
+	}
+	.rice-stock-account table.statement th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.rice-stock-account table.statement td.qty {
+		text-align: right;
+	}
+	.rice-stock-account table.statement td.month {
+		white-space: nowrap;
+		background-color: #e6e6e6;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+	.rice-stock-account table.statement tr.total-row td {
+		font-weight: bold;
+	}
+	.rice-stock-account table.signatures {
+		width: 100%;
+		margin-top: 90px;
+		page-break-inside: avoid;
+	}
+	.rice-stock-account table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{% var depot_label = function (column) { return (column.label || "").replace(/^(FCI|RRC): /, ""); }; %}
+{% var fci = columns.filter(function (c) { return /^fci_\d+$/.test(c.fieldname); }); %}
+{% var rrc = columns.filter(function (c) { return /^rrc_\d+$/.test(c.fieldname); }); %}
+{% var qty_fields = ["ob", "rice_received", "total"]
+	.concat(fci.map(function (c) { return c.fieldname; }), ["fci_total"])
+	.concat(rrc.map(function (c) { return c.fieldname; }), ["rrc_total", "total_delivery", "cb"]); %}
+{% var kms_label = /^\d{2}-\d{2}$/.test(filters.kms_year || "") ? "20" + filters.kms_year : (filters.kms_year || ""); %}
+
+<div class="rice-stock-account">
+	<div class="heading">{%= frappe.utils.escape_html((filters.company || "").toUpperCase()) %}</div>
+	<div class="heading">STOCK ACCOUNT OF RICE FOR KMS {%= frappe.utils.escape_html(kms_label) %}</div>
+	{% if (filters.district) { %}
+	<div class="heading">DISTRICT: {%= frappe.utils.escape_html(filters.district.toUpperCase()) %}</div>
+	{% } %}
+
+	<table class="statement">
+		<thead>
+			<tr>
+				<th rowspan="2">Month</th>
+				<th rowspan="2">OB</th>
+				<th rowspan="2">Rice Received from Milling</th>
+				<th rowspan="2">Total</th>
+				<th colspan="{%= fci.length + 1 %}">FCI DELIVERY</th>
+				<th colspan="{%= rrc.length + 1 %}">RRC DELIVERY</th>
+				<th rowspan="2">Total Delivery</th>
+				<th rowspan="2">CB</th>
+			</tr>
+			<tr>
+				{% for (var f = 0; f < fci.length; f++) { %}
+				<th>{%= frappe.utils.escape_html(depot_label(fci[f])) %}</th>
+				{% } %}
+				<th>FCI Total</th>
+				{% for (var r = 0; r < rrc.length; r++) { %}
+				<th>{%= frappe.utils.escape_html(depot_label(rrc[r])) %}</th>
+				{% } %}
+				<th>RRC Total</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.bold ? "total-row" : "" %}">
+				<td class="month">{%= frappe.utils.escape_html(row.month || "") %}</td>
+				{% for (var j = 0; j < qty_fields.length; j++) { %}
+				<td class="qty">{%= format_number(row[qty_fields[j]] || 0, null, 2) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

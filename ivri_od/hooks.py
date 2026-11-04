@@ -32,6 +32,10 @@ add_to_apps_screen = [
 app_include_js = [
 	"/assets/ivri_od/js/disable_quick_entry.js",
 	"/assets/ivri_od/js/sidebar_logo.js",
+	"/assets/ivri_od/js/report_column_width.js",
+	"/assets/ivri_od/js/report_print.js",
+	"/assets/ivri_od/js/report_edit.js",
+	"/assets/ivri_od/js/stock_register_filters.js",
 	"portal_detail_table.bundle.js",
 ]
 # app_include_css = "/assets/ivri_od/css/ivri_od.css"
@@ -218,9 +222,10 @@ doc_events = {
 # Overriding Methods
 # ------------------------------
 #
-# override_whitelisted_methods = {
-# 	"frappe.desk.doctype.event.event.get_events": "ivri_od.event.get_events"
-# }
+override_whitelisted_methods = {
+	# Export of this app's reports: only the filtered rows, with Sl No 1, 2, 3...
+	"frappe.desk.query_report.export_query": "ivri_od.procurement.report_export.export_query",
+}
 #
 # each overriding function accepts a `data` argument;
 # generated from the base implementation of the doctype dashboard,

@@ -1,0 +1,151 @@
+{
+ "actions": [],
+ "allow_bulk_edit": 1,
+ "allow_rename": 1,
+ "autoname": "format:MPT-{#####}",
+ "creation": "2026-11-04 11:01:32.631030",
+ "description": "Paddy received by a mill from another mill (manual entry). Counted in the Joint Custody and Maintenance Charge Report.",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "transfer_date",
+  "mill",
+  "district",
+  "column_break_1",
+  "from_mill",
+  "quantity",
+  "section_break_1",
+  "remarks",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "default": "Today",
+   "fieldname": "transfer_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Transfer Date",
+   "reqd": 1
+  },
+  {
+   "fieldname": "mill",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Receiving Mill No",
+   "options": "Mill Master",
+   "reqd": 1
+  },
+  {
+   "fetch_from": "mill.district",
+   "fetch_if_empty": 1,
+   "fieldname": "district",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "District",
+   "options": "District Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "from_mill",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "From Mill No",
+   "options": "Mill Master",
+   "reqd": 1
+  },
+  {
+   "fieldname": "quantity",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Quantity (Qtl)",
+   "precision": "2",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "remarks",
+   "fieldtype": "Small Text",
+   "label": "Remarks"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Mill Paddy Transfer",
+   "print_hide": 1,
+   "read_only": 1
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-11-04 11:01:32.631030",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Mill Paddy Transfer",
+ "naming_rule": "Expression (old style)",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "amend": 1,
+   "cancel": 1,
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Stock User",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "search_fields": "mill,from_mill,transfer_date",
+ "sort_field": "transfer_date",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "mill",
+ "track_changes": 1
+}

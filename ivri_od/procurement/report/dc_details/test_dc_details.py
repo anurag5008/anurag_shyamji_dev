@@ -6,7 +6,7 @@ from unittest.mock import patch
 import frappe
 from frappe.tests import IntegrationTestCase
 
-from ivri_od.procurement.report.dc_details.dc_details import _add_pending, _in_season, _line, _total
+from ivri_od.procurement.report.dc_details.dc_details import _add_pending, _dc_lots, _in_season, _line, _total
 
 RAW = frappe._dict(rice_type="Raw", cmr_percentage=67, driage_percentage=0.078)
 BOILED = frappe._dict(rice_type="Boiled", cmr_percentage=68, driage_percentage=0)
@@ -73,6 +73,8 @@ class TestDCDetails(IntegrationTestCase):
 				{"DC Order No": "DCF050748", "Lot No.": "32", "Pending At": "Approved"},
 				{"DC Order No": "DCF050748", "Lot No.": "33", "Pending At": "Assitant Depot"},
 				{"DC Order No": "DCF050748", "Lot No.": "33", "Pending At": "Assitant Depot"},  # read twice
+				# Accepted Date (AC Note, or set by hand): not pending.
+				{"DC Order No": "DCF050748", "Lot No.": "34", "Pending At": "Assitant Depot", "Accepted Date": "20-05-2026"},
 			),
 		}
 		dcs = {"DCR051808": {"dc_no": "DCR051808"}}
@@ -93,3 +95,35 @@ class TestDCDetails(IntegrationTestCase):
 		self.assertEqual((with_pending["fci_pending"], with_pending["rrc_pending"]), (2, 1))
 		for field in ("fci_delivery", "fci_balance", "rrc_balance", "total_delivery", "total_delivery_balance", "delivery_percent"):
 			self.assertEqual(with_pending[field], without[field])
+
+	def test_district_keeps_only_its_dcs(self):
+		def dc(dc_no, kind, issued, delivered):
+			return {"dc_no": dc_no, "mill_id": "M051007", "kms_year": "2025-26", "season": "", "dc_type": kind,
+				"total_lots": issued, "lots": {str(i) for i in range(delivered)}}
+
+		dcs = {
+			"DCF-B1": dc("DCF-B1", "FCI", 10, 4),  # Balangir
+			"DCR-B1": dc("DCR-B1", "RRC", 5, 5),  # Balangir
+			"DCF-K1": dc("DCF-K1", "FCI", 7, 1),  # Koraput
+			"DCF-X1": dc("DCF-X1", "FCI", 3, 0),  # no District in View DC
+		}
+		view_dc = [
+			frappe._dict(row_data=json.dumps({"DC Code(RRC)": "DCF-B1", "District": "Balangir"})),
+			frappe._dict(row_data=json.dumps({"DC Code(RRC)": "DCR-B1", "District": "BALANGIR "})),
+			frappe._dict(row_data=json.dumps({"DC Code(RRC)": "DCF-K1", "District": "Koraput"})),
+			frappe._dict(row_data=json.dumps({"DC Code(RRC)": "DCF-X1", "District": "No District Matched"})),
+		]
+		module = "ivri_od.procurement.report.dc_details.dc_details"
+		kharif_2025 = frappe._dict(crop_season="Kharif", year="2025")
+		with (
+			patch(f"{module}._dcs_from_view_dc", side_effect=lambda: {k: dict(v) for k, v in dcs.items()}),
+			patch(f"{module}._add_deliveries"),
+			patch(f"{module}._add_pending"),
+			patch(f"{module}._records", return_value=view_dc),
+		):
+			balangir, without = _dc_lots(kharif_2025, "Balangir")
+			every, _none = _dc_lots(kharif_2025)
+		mill = balangir["M051007"]
+		self.assertEqual((mill["fci_issue"], mill["fci_delivery"], mill["rrc_issue"], mill["rrc_delivery"]), (10, 4, 5, 5))
+		self.assertEqual(without, 1)  # DCF-X1
+		self.assertEqual(every["M051007"]["fci_issue"], 20)  # every district: 10 + 7 + 3

@@ -1,51 +1,38 @@
 # Copyright (c) 2026, Profezzo and contributors
 
+import json
 from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase
+from frappe.utils import getdate
+
+from ivri_od.procurement.doctype.miller_verification_report import miller_verification_report as mvr
 
 # Reports are built in the test itself: no test records needed for the linked doctypes.
 IGNORE_TEST_RECORD_DEPENDENCIES = ["UOM", "User", "Miller Verification Report", "Mill Master", "Season Master"]
 
-# Season Master records (made in setUpClass when missing).
-KHARIF, RABI = "Kharif 2025", "Rabi 2025"
-
-# Masked sample miller; quantities are the check values of the Annexure-1 sheet.
-AGENCY = {
-	"agency": "Sample Agency Ltd., District A",
-	"season": KHARIF,
-	"prog_paddy_received": 78534.020,
-	"prog_paddy_milled": 44100.000,
-	"verified_balance_paddy": 34434.020,
-	"prog_rice_received": 29988.000,
-	"prog_dc_fci": 17400,
-	"prog_dc_rrc": 8370,
-	"prog_delivered_fci": 15622.244,
-	"prog_delivered_rrc": 6371.232,
-	"verified_balance_rice": 7994.524,
-}
+# Masked sample miller; its District in Mill Master is Balangir.
+MILL = "M999901"
+PRESENT = "2026-09-02"  # no earlier report: the period is everything up to the day before
 
 
-def make_report(agencies=None, submit=False, **values):
+def make_report(columns=None, submit=False, **values):
 	doc = frappe.get_doc(
 		{
 			"doctype": "Miller Verification Report",
 			"miller_name": "Sample Rice Mill Pvt Ltd",
-			"miller_code": "M999901",
+			"miller_code": MILL,
 			"kms": "2025-26",
-			"variety": "Par-Boiled",
-			"present_verification_date": "2026-09-02",
-			"season": KHARIF,
+			"present_verification_date": PRESENT,
 			"meter_reading_last": 8788.65,
 			"meter_reading_present": 8806.56,
 			"meter_multiplier": 900,
 			"certified_no_diversion": 1,
-			"agencies": agencies if agencies is not None else [dict(AGENCY)],
+			"agencies": columns if columns is not None else [{"district": "Balangir", "season": "Kharif"}],
 			**values,
 		}
 	)
-	# The sample miller is not in Mill Master (it needs a Company); seasons are checked in setUpClass.
 	doc.flags.ignore_links = True
 	if submit:
 		doc.insert()
@@ -55,18 +42,26 @@ def make_report(agencies=None, submit=False, **values):
 	return doc
 
 
-# The next week's report of the same agency: only this week's figures are typed in.
-NEXT_WEEK = {
-	"agency": "Sample Agency Ltd., District A",
-	"season": KHARIF,
-	"prog_paddy_received": 80000,
-	"paddy_milled_week": 1000,
-	"rice_received_week": 680,
-	"rice_delivered_week_fci": 500,
-	"rice_delivered_week_rrc": 100,
-	"prog_dc_fci": 17400,
-	"prog_dc_rrc": 8370,
+def view_dc(dc_no, district, lots, date="10-08-2026", season="KHARIF"):
+	cells = {"District": district, "KMS (Year)": "2025-26", "Season": season, "DC Code(RRC)": dc_no, "Generated Date": date}
+	return cells, [{"DC Type": "FCI" if dc_no.startswith("DCF") else "RRC", "Lots": str(lots)}]
+
+
+# Transit Passes (Stock Account for Paddy's reader is mocked): {(District, Season Master): [(date, Qtls)]}.
+PASSES = {
+	("Balangir", "Kharif 2025"): [("2026-08-01", 2000), ("2026-08-30", 300), ("2026-09-05", 999)],
+	("Koraput", "Kharif 2025"): [("2026-08-02", 450)],
 }
+
+
+def fake_transit_passes(filters, seasons, to_date):
+	passes = [
+		frappe._dict(name=f"TP-{i}", transit_pass_date=getdate(day), quantity=qty)
+		for season in seasons
+		for i, (day, qty) in enumerate(PASSES.get((filters.paddy_account, season), []))
+		if getdate(day) <= getdate(to_date)
+	]
+	return passes, [frappe._dict(name="TP-NO-PPC")]
 
 
 class TestMillerVerificationReport(IntegrationTestCase):
@@ -77,158 +72,197 @@ class TestMillerVerificationReport(IntegrationTestCase):
 			if not frappe.db.exists("Season Master", f"{crop} 2025"):
 				frappe.get_doc({"doctype": "Season Master", "crop_season": crop, "year": "2025"}).insert()
 
+	def setUp(self):
+		for district in ("Balangir", "Koraput"):
+			if not frappe.db.exists("District Master", district):
+				frappe.get_doc({"doctype": "District Master", "district_name": district}).insert()
+		if not frappe.db.exists("Mill Master", MILL):
+			mill = frappe.get_doc({"doctype": "Mill Master", "miller_code": MILL, "type": "BOILED"})
+			mill.insert(ignore_mandatory=True)  # no Company needed here
+		frappe.db.set_value("Mill Master", MILL, {"type": "BOILED", "district": "Balangir"})
+		if not frappe.db.exists("Rice Delivery Setup", "Boiled"):
+			frappe.get_doc({"doctype": "Rice Delivery Setup", "rice_type": "Boiled", "cmr_percentage": 68}).insert()
+		frappe.db.set_value("Rice Delivery Setup", "Boiled", "cmr_percentage", 68)
+		frappe.db.set_single_value("Rice Lot Quantity", "lot_quantity", 290)
+
+		self.add("DCRO", "View DC", [
+			view_dc("DCF-1", "Balangir", 2),
+			view_dc("DCR-1", "Balangir", 3),
+			view_dc("DCR-2", "Koraput", 1),
+			view_dc("DCR-3", "No District Matched", 1),
+			view_dc("DCF-9", "Balangir", 5, date="05-09-2026"),  # after the Present Verification Date
+		])
+		self.add("DCRO", "DC Transit Challan", [
+			{"KMS Year": "2025-26", "DC Order No": "DCF-1", "Pending At": "Approved", "Accepted Date": "15-08-2026", "Net Weight": "287.4", "Weight After Moisture Cut": "287.4"},
+			{"KMS Year": "2025-26", "DC Order No": "DCF-1", "Pending At": "Approved", "Accepted Date": "01-09-2026", "Net Weight": "287.5", "Weight After Moisture Cut": "287.5"},
+			{"KMS Year": "2025-26", "DC Order No": "DCF-1", "Pending At": "Approved", "Accepted Date": "", "Net Weight": "287.5", "Weight After Moisture Cut": "287.5"},
+		])
+		self.add("SCMS", "Lot Search", [
+			{"District": "BALANGIR", "KMS Year": "2025-2026", "DC No.": "DCR-1", "Receipt Date": "31/08/2026", "Qty(In Qtl.)": "289.5", "Challan Status": "Accepted"},
+			# Its DC has no District in View DC: the Lot Search page's District counts.
+			{"District": "BALANGIR", "KMS Year": "2025-2026", "DC No.": "DCR-3", "Receipt Date": "20/08/2026", "Qty(In Qtl.)": "289", "Challan Status": "Accepted"},
+			{"District": "KORAPUT", "KMS Year": "2025-2026", "DC No.": "DCR-2", "Receipt Date": "01/09/2026", "Qty(In Qtl.)": "289", "Challan Status": "Accepted"},
+			{"District": "BALANGIR", "KMS Year": "2025-2026", "DC No.": "DCR-9", "Receipt Date": "01/09/2026", "Qty(In Qtl.)": "289", "Challan Status": "Accepted"},
+			{"District": "BALANGIR", "KMS Year": "2025-2026", "DC No.": "DCR-1", "Receipt Date": "01/09/2026", "Qty(In Qtl.)": "289", "Challan Status": "Rejected"},
+		])
+		patcher = patch.object(mvr, "get_transit_passes", side_effect=fake_transit_passes)
+		patcher.start()
+		self.addCleanup(patcher.stop)
+
 	def tearDown(self):
 		frappe.db.rollback()
 
-	def test_book_balance_paddy(self):
-		row = make_report().agencies[0]
-		self.assertEqual(row.book_balance_paddy, 34434.020)
-		self.assertEqual(row.paddy_difference, 0)
+	def add(self, site, section, rows):
+		for i, row in enumerate(rows, 1):
+			cells, details = row if isinstance(row, tuple) else (row, [])
+			frappe.get_doc(
+				{
+					"doctype": "Portal Record",
+					"site": site,
+					"section": section,
+					"mill_id": MILL,
+					"row_no": i,
+					"record_key": f"{section}-{frappe.generate_hash(length=8)}",
+					"row_data": json.dumps(cells),
+					"details": [{"line_no": n, "detail_data": json.dumps(d)} for n, d in enumerate(details, 1)],
+					"detail_count": len(details),
+				}
+			).insert(ignore_permissions=True)
 
-	def test_book_balance_rice(self):
-		row = make_report().agencies[0]
-		self.assertEqual(row.prog_cmr_due, 29988.000)
-		self.assertEqual(row.prog_delivered_total, 21993.476)
-		self.assertEqual(row.book_balance_rice, 7994.524)
-		self.assertEqual(row.rice_difference, 0)
+	def test_figures_from_portal_data(self):
+		doc = make_report([{"district": "Balangir", "season": "Kharif", "paddy_milled_week": 500},
+			{"district": "Koraput", "season": "Kharif"}, {"district": "Balangir", "season": "Rabi", "paddy_milled_week": 700}])
+		balangir, koraput, rabi = doc.agencies
+		self.assertEqual(balangir.agency, "Balangir")  # the column heading
+		self.assertEqual(doc.variety, "Par-Boiled")  # from the mill's Type
+		# I / II: Transit Passes up to the Present date; no earlier report, so the period is all of them.
+		self.assertEqual((balangir.paddy_received_week, balangir.prog_paddy_received), (2300, 2300))
+		# V typed; VI = V with no earlier report.
+		self.assertEqual((balangir.paddy_milled_week, balangir.prog_paddy_milled), (500, 500))
+		self.assertEqual((koraput.paddy_milled_week, koraput.prog_paddy_milled), (0, 0))
+		self.assertEqual((rabi.paddy_milled_week, rabi.prog_paddy_milled), (700, 700))
+		self.assertEqual(balangir.book_balance_paddy, 1800)  # 2300 - 500
+		self.assertEqual(balangir.verified_balance_paddy, 1800)
+		# IX: 68 % of V; X = IX with no earlier report.
+		self.assertEqual((balangir.rice_received_week, balangir.prog_rice_received), (340, 340))
+		# XII: lots x 290 of the District's DCs up to the Present date (DCR-3 by its Lot Search District).
+		self.assertEqual((balangir.prog_dc_fci, balangir.prog_dc_rrc), (580, 1160))
+		self.assertEqual(koraput.prog_dc_rrc, 290)
+		# XI / XIII: FCI by Accepted Date; RRC by Receipt Date (DCR-3 by the Lot Search District).
+		self.assertEqual((balangir.rice_delivered_week_fci, balangir.prog_delivered_fci), (574.9, 574.9))
+		self.assertEqual((balangir.rice_delivered_week_rrc, balangir.prog_delivered_rrc), (578.5, 578.5))
+		self.assertEqual(balangir.rice_delivered_week_total, round(574.9 + 578.5, 3))
+		self.assertEqual((koraput.rice_delivered_week_rrc, koraput.prog_delivered_rrc), (289, 289))
+		self.assertEqual(balangir.undelivered_total, round(580 + 1160 - 574.9 - 578.5, 3))
+		self.assertEqual(balangir.book_balance_rice, round(340 - 574.9 - 578.5, 3))
+		self.assertEqual(doc.total_prog_paddy_milled, 1200)
 
-	def test_dc_totals(self):
-		self.assertEqual(make_report().agencies[0].prog_dc_total, 25770)
+	def test_notes_for_rows_not_counted(self):
+		result = mvr.get_figures(MILL, "2025-26", PRESENT, columns=[{"district": "Balangir", "season": "Kharif"}])
+		notes = " ".join(result["notes"])
+		self.assertNotIn("have no District in View DC", notes)  # DCR-3 takes its Lot Search District
+		self.assertIn("1 Lot Search rows are not counted", notes)  # DCR-9 is not in View DC
+		self.assertIn("1 DC Transit Challan rows are not counted: they have no Accepted Date", notes)
+		self.assertIn("1 Transit Passes are not counted", notes)
+		self.assertIsNone(result["last_verification_date"])
 
-	def test_undelivered_totals(self):
-		row = make_report().agencies[0]
-		self.assertEqual(row.undelivered_fci, 1777.756)
-		self.assertEqual(row.undelivered_rrc, 1998.768)
-		self.assertEqual(row.undelivered_total, 3776.524)
+	def test_week_after_last_report(self):
+		make_report(
+			[{"district": "Balangir", "season": "Kharif", "paddy_milled_week": 1000}],
+			submit=True,
+			present_verification_date="2026-08-29",
+		)
+		doc = make_report([{"district": "Balangir", "season": "Kharif", "paddy_milled_week": 500},
+			{"district": "Koraput", "season": "Kharif", "paddy_milled_week": 100}])
+		self.assertEqual(doc.last_verification_date, getdate("2026-08-29"))
+		row, koraput = doc.agencies
+		self.assertEqual(row.paddy_received_week, 300)  # 30-08
+		self.assertEqual((row.rice_delivered_week_fci, row.rice_delivered_week_rrc), (287.5, 289.5))  # 01-09, 31-08
+		# VI / X: the last report's figures + this week's.
+		self.assertEqual(row.prog_paddy_milled, 1500)  # 1000 + 500
+		self.assertEqual(row.prog_rice_received, 1020)  # 680 + 340
+		self.assertEqual((koraput.prog_paddy_milled, koraput.prog_rice_received), (100, 68))  # not in the last report
 
-	def test_parent_totals(self):
-		second = {"agency": "Sample Agency Ltd., District B", "season": KHARIF, "prog_paddy_received": 15563.950}
-		doc = make_report([dict(AGENCY), second])
-		self.assertEqual(doc.total_prog_paddy_received, 94097.970)
-		self.assertEqual(doc.total_book_balance_paddy, 49997.970)
-		self.assertEqual(doc.total_prog_dc_total, 25770)
-		self.assertEqual(doc.total_undelivered_total, 3776.524)
-		self.assertEqual(doc.total_book_balance_rice, 7994.524)
+	def test_data_up_to_day_before_present_date(self):
+		# 30-08: the Last Verification Date's own day is in this period; 01-09: the Present
+		# Verification Date's own day is not (it is in the next report).
+		make_report(
+			[{"district": "Balangir", "season": "Kharif", "paddy_milled_week": 1000}],
+			submit=True,
+			present_verification_date="2026-08-30",
+		)
+		doc = make_report([{"district": "Balangir", "season": "Kharif"}], present_verification_date="2026-09-01")
+		row = doc.agencies[0]
+		self.assertEqual(row.paddy_received_week, 300)  # 30-08
+		self.assertEqual(row.prog_paddy_received, 2300)  # 01-08 + 30-08
+		self.assertEqual((row.rice_delivered_week_fci, row.rice_delivered_week_rrc), (0, 289.5))  # FCI 01-09 not yet; RRC 31-08
+		self.assertEqual(mvr.data_up_to("2026-09-01"), getdate("2026-08-31"))
+
+	def test_new_report_filled_from_last_report(self):
+		self.assertEqual(mvr.get_last_report(MILL, "2025-26"), {})
+		make_report(
+			[{"district": "Balangir", "season": "Kharif"}, {"district": "Balangir", "season": "Rabi"}],
+			submit=True,
+			address="Sample Address",
+			milling_capacity=24,
+		)
+		last = mvr.get_last_report(MILL, "2025-26")
+		self.assertEqual(last["last_verification_date"], getdate(PRESENT))
+		self.assertEqual(last["meter_reading_last"], 8806.56)
+		self.assertEqual((last["address"], last["milling_capacity"]), ("Sample Address", 24))
+		self.assertEqual([(r.district, r.season) for r in last["agencies"]], [("Balangir", "Kharif"), ("Balangir", "Rabi")])
+		self.assertEqual(mvr.get_last_report(MILL, "2024-25"), {})  # another KMS Year
+
+	def test_paddy_released(self):
+		own, other = "Quantity of Paddy Released for Milling (Own District) (in Qtl)", "Quantity of Paddy Released for Milling (Other District)KORAPUT (in Qtl)"
+		release = {"KMS Year": "2025-2026", "Season": "Kharif", "Status of Released Order": "Approved"}
+		self.add("DCRO", "Paddy Release", [
+			{**release, "Date of Requistion": "10-08-2026", own: "1000.00", other: "200.00"},
+			{**release, "Date of Requistion": "30-08-2026", own: "500.00", other: "0.00"},
+			{**release, "Date of Requistion": "05-09-2026", own: "999.00", other: "0.00"},  # after the Present Verification Date
+			{**release, "Date of Requistion": "20-08-2026", own: "700.00", "Status of Released Order": "Rejected"},
+			{**release, "Season": "Rabi", "Date of Requistion": "15-08-2026", own: "300.00"},
+			{**release, "KMS Year": "2024-2025", "Date of Requistion": "15-08-2026", own: "400.00"},
+		])
+		doc = make_report([{"district": "Balangir", "season": "Kharif"}, {"district": "Koraput", "season": "Kharif"},
+			{"district": "Balangir", "season": "Rabi"}], last_verification_date="2026-08-20")
+		balangir, koraput, rabi = doc.agencies
+		self.assertEqual((balangir.paddy_released_week, balangir.prog_paddy_released), (500, 1500))  # 30-08; 10-08 + 30-08
+		self.assertEqual((koraput.paddy_released_week, koraput.prog_paddy_released), (0, 200))
+		self.assertEqual((rabi.paddy_released_week, rabi.prog_paddy_released), (0, 300))
+		self.assertEqual((doc.total_paddy_released_week, doc.total_prog_paddy_released), (500, 2000))
+		self.assertIn({"district": "Balangir", "season": "Rabi"}, mvr.get_data_columns(MILL, "2025-26"))
+
+	def test_data_columns(self):
+		# View DC: Balangir and Koraput Kharif; DCR-3 has no District, its Lot Search row says BALANGIR.
+		columns = [("Balangir", "Kharif"), ("Koraput", "Kharif")]
+		self.assertEqual([(c["district"], c["season"]) for c in mvr.get_data_columns(MILL, "2025-26")], columns)
+		self.add("DCRO", "View DC", [view_dc("DCF-R1", "BALANGIR", 1, season="RABI")])
+		columns.insert(1, ("Balangir", "Rabi"))
+		self.assertEqual([(c["district"], c["season"]) for c in mvr.get_data_columns(MILL, "2025-26")], columns)
+		self.assertEqual(mvr.get_data_columns(MILL, "2024-25"), [])  # another KMS Year
+
+	def test_column_checks(self):
+		with self.assertRaises(frappe.ValidationError):
+			make_report([])
+		with self.assertRaises(frappe.ValidationError):  # the same District and Season twice
+			make_report([{"district": "Balangir", "season": "Kharif"}, {"district": "Balangir", "season": "Kharif"}])
+		with self.assertRaises(frappe.ValidationError):
+			make_report(kms="2025")
+
+	def test_frk_typed_and_not_negative(self):
+		row = make_report([{"district": "Balangir", "season": "Kharif", "frk_percent": 1, "frk_qty": 10.2}]).agencies[0]
+		self.assertEqual((row.frk_percent, row.frk_qty), (1, 10.2))
+		with self.assertRaises(frappe.ValidationError):
+			make_report([{"district": "Balangir", "season": "Kharif", "frk_qty": -1}])
+		with self.assertRaises(frappe.ValidationError):
+			make_report([{"district": "Balangir", "season": "Kharif", "paddy_milled_week": -1}])
 
 	def test_units_consumed(self):
 		# (8806.56 - 8788.65) x 900 = 16119 (the sheet shows 16120 rounded).
 		self.assertEqual(make_report().total_units_consumed, 16119.0)
 		self.assertEqual(make_report(meter_multiplier=None).total_units_consumed, 17.91)
-
-	def test_present_reading_below_last(self):
 		with self.assertRaises(frappe.ValidationError):
 			make_report(meter_reading_present=8000)
-
-	def test_negative_value_error(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_report([dict(AGENCY, prog_paddy_milled=-5)])
-		# Milled more than received: Book balance of paddy below 0.
-		with self.assertRaises(frappe.ValidationError):
-			make_report([dict(AGENCY, prog_paddy_milled=80000)])
 		with self.assertRaises(frappe.ValidationError):
 			make_report(contract_load=-1)
-
-	def test_verified_balances_follow_book_balances(self):
-		row = make_report([dict(AGENCY, verified_balance_paddy=1, verified_balance_rice=1)]).agencies[0]
-		self.assertEqual(row.verified_balance_paddy, row.book_balance_paddy)
-		self.assertEqual(row.verified_balance_rice, row.book_balance_rice)
-
-	def test_first_report_keeps_opening_progressive_figures(self):
-		row = make_report().agencies[0]
-		self.assertEqual((row.prog_paddy_milled, row.prog_rice_received), (44100, 29988))
-		self.assertEqual((row.prog_delivered_fci, row.prog_delivered_rrc), (15622.244, 6371.232))
-
-	def test_progressive_from_previous_report(self):
-		first = make_report(submit=True)
-		second = make_report([dict(NEXT_WEEK)], present_verification_date="2026-09-09")
-		row = second.agencies[0]
-		self.assertEqual(row.prog_paddy_milled, 45100)  # 44100 + 1000
-		self.assertEqual(row.book_balance_paddy, 34900)  # 80000 - 45100
-		self.assertEqual(row.verified_balance_paddy, 34900)
-		self.assertEqual(row.prog_rice_received, 30668)  # 29988 + 680
-		self.assertEqual(row.prog_cmr_due, 30668)
-		self.assertEqual(row.prog_delivered_fci, 16122.244)  # 15622.244 + 500
-		self.assertEqual(row.prog_delivered_rrc, 6471.232)  # 6371.232 + 100
-		self.assertEqual(row.undelivered_fci, 1277.756)  # 17400 - 16122.244
-		self.assertEqual(row.undelivered_rrc, 1898.768)  # 8370 - 6471.232
-		self.assertEqual(row.book_balance_rice, 8074.524)  # 30668 - 22593.476
-		self.assertEqual(row.verified_balance_rice, 8074.524)
-		# Another miller or KMS does not carry on from it.
-		other = make_report([dict(NEXT_WEEK, prog_paddy_milled=5)], kms="2024-25").agencies[0]
-		self.assertEqual(other.prog_paddy_milled, 5)
-		self.assertTrue(first.name)
-
-	def test_rice_received_from_fci_rice_percent(self):
-		percent = frappe.db.get_value("Rice Delivery Setup", "Boiled", "cmr_percentage")
-		if percent is None:
-			frappe.get_doc({"doctype": "Rice Delivery Setup", "rice_type": "Boiled", "cmr_percentage": 68}).insert()
-			percent = 68
-		row = make_report([dict(AGENCY, paddy_milled_week=2600)]).agencies[0]
-		self.assertEqual(row.rice_received_week, round(2600 * percent / 100, 3))
-		# Typed in by hand: kept.
-		row = make_report([dict(AGENCY, paddy_milled_week=2600, rice_received_week=1768)]).agencies[0]
-		self.assertEqual(row.rice_received_week, 1768)
-		# Raw mill: typed in.
-		row = make_report([dict(AGENCY, paddy_milled_week=2600)], variety="Raw").agencies[0]
-		self.assertFalse(row.rice_received_week)
-
-	def test_dc_issued_from_dc_lots(self):
-		frappe.db.set_single_value("Rice Lot Quantity", "lot_quantity", 290)
-		lots = {"M999901": {"fci_issue": 60, "rrc_issue": 30}}
-		with patch("ivri_od.procurement.report.dc_details.dc_details._dc_lots", return_value=lots):
-			second_kharif = dict(AGENCY, agency="Sample Agency Ltd., District B")
-			doc = make_report([dict(AGENCY), second_kharif])
-		self.assertEqual((doc.agencies[0].prog_dc_fci, doc.agencies[0].prog_dc_rrc), (17400, 8700))  # 60 / 30 lots x 290
-		# Only the first row of the season gets the DCs; the next keeps what was typed.
-		self.assertEqual((doc.agencies[1].prog_dc_fci, doc.agencies[1].prog_dc_rrc), (17400, 8370))
-
-	def test_paddy_received_from_target_allocation(self):
-		# Two PPCs allotted to the sample mill for Kharif; Rabi has none (II stays as typed).
-		for qty in (50000, 28534.02):
-			frappe.get_doc(
-				{"doctype": "Target Allocation", "season": KHARIF, "mill_name": "M999901",
-				 "ppc_name": "Sample PPC", "target_quantity": qty}
-			).db_insert()
-		second = dict(AGENCY, agency="Sample Agency Ltd., District B", prog_paddy_received=0, prog_paddy_milled=0)
-		doc = make_report([dict(AGENCY, prog_paddy_received=1), second])
-		self.assertEqual(doc.agencies[0].prog_paddy_received, 78534.02)  # 50000 + 28534.02
-		self.assertEqual(doc.agencies[0].book_balance_paddy, 34434.02)  # 78534.02 - 44100
-		# Only the first agency gets it, so the mill's paddy is not counted twice.
-		self.assertEqual(doc.agencies[1].prog_paddy_received, 0)
-		self.assertEqual(doc.total_prog_paddy_received, 78534.02)
-		# A season without Target Allocation: II stays as typed.
-		rabi = make_report([dict(AGENCY, season=RABI, prog_paddy_received=15563.95, prog_paddy_milled=5000)], season=RABI)
-		self.assertEqual(rabi.agencies[0].prog_paddy_received, 15563.95)
-
-	def test_first_report_starts_from_zero(self):
-		week = {"agency": "Sample Agency Ltd., District A", "season": KHARIF, "prog_paddy_received": 78534.02,
-		        "paddy_milled_week": 1000, "rice_received_week": 680, "rice_delivered_week_fci": 400, "rice_delivered_week_rrc": 200,
-		        "prog_dc_fci": 17400, "prog_dc_rrc": 8370}
-		row = make_report([week]).agencies[0]
-		self.assertEqual((row.prog_paddy_milled, row.prog_rice_received), (1000, 680))
-		self.assertEqual((row.prog_delivered_fci, row.prog_delivered_rrc), (400, 200))
-		self.assertEqual(row.book_balance_rice, 80)  # 680 - 600
-
-	def test_new_report_filled_from_last_report(self):
-		from ivri_od.procurement.doctype.miller_verification_report.miller_verification_report import get_last_report
-
-		self.assertEqual(get_last_report("M999901", KHARIF), {"kms": "2025-26"})  # none yet: only the KMS
-		make_report(submit=True, season=KHARIF, address="Sample Address", milling_capacity=24, contract_load=500)
-		last = get_last_report("M999901", KHARIF)
-		self.assertEqual(last["last_verification_date"], frappe.utils.getdate("2026-09-02"))  # its present date
-		self.assertEqual(last["meter_reading_last"], 8806.56)  # its present reading
-		self.assertEqual((last["address"], last["milling_capacity"], last["contract_load"]), ("Sample Address", 24, 500))
-		self.assertEqual((last["kms"], last["variety"], last["meter_multiplier"]), ("2025-26", "Par-Boiled", 900))
-		self.assertEqual([(r.agency, r.season) for r in last["agencies"]], [(AGENCY["agency"], KHARIF)])
-		# Another season of the same mill has its own chain.
-		self.assertEqual(get_last_report("M999901", RABI), {"kms": "2025-26"})
-
-	def test_rows_and_kms_take_the_report_season(self):
-		doc = make_report([dict(AGENCY, season=None), dict(AGENCY, agency="B", season=RABI)], season=KHARIF, kms=None)
-		# A row without a season gets the report's; one given its own season keeps it.
-		self.assertEqual([r.season for r in doc.agencies], [KHARIF, RABI])
-		self.assertEqual(doc.kms, "2025-26")
-
-	def test_agency_needed(self):
-		with self.assertRaises(frappe.ValidationError):
-			make_report([])

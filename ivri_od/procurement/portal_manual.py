@@ -20,14 +20,27 @@ import re
 
 import frappe
 from frappe import _
-from frappe.utils import cint, now_datetime
+from frappe.utils import cint, flt, getdate, now_datetime
 
 from ivri_od.procurement.portal_sync import (
+	ACCEPTED_DATE_COLUMN,
+	DISTRICT_COLUMN,
+	DISTRICT_SECTIONS,
+	NET_WEIGHT_COLUMN,
+	NET_WEIGHT_SECTIONS,
+	NO_DISTRICT,
+	_load_json,
+	_master_district,
+	_saved_file,
 	_set_details,
+	ac_note_accepted_date,
+	ac_note_net_weight,
+	add_net_weight,
 	build_details_hash,
 	build_record_key,
 	build_row_hash,
 	build_summary,
+	dc_district,
 	fix_section_cells,
 	mill_label_keys,
 	normalize_cells,
@@ -36,6 +49,8 @@ from ivri_od.procurement.portal_sync import (
 	parse_key_columns,
 	resolve_record_name,
 	row_mill_id,
+	with_district,
+	without_net_weight,
 )
 
 SITE = "SCMS"
@@ -376,7 +391,7 @@ def _save_manual_row(site, section, key_columns, cells, row_no, seen_run, keys_d
 	if missing:
 		frappe.throw(_("fill {0}").format(", ".join(missing)))
 
-	record_key = build_record_key(cells, key_columns)
+	record_key = build_record_key(without_net_weight(site, section.section_name, cells), key_columns)
 	shown_key = build_summary(cells, key_columns)
 	if record_key in keys_done:
 		return ("skipped", _("{0} is pasted twice; the first row is kept").format(shown_key))
@@ -385,6 +400,8 @@ def _save_manual_row(site, section, key_columns, cells, row_no, seen_run, keys_d
 	mill = mill or frappe._dict(mill_id="", label_keys=mill_label_keys(None))
 	mill_id = row_mill_id(cells, mill.label_keys, mill.mill_id)
 	name = resolve_record_name(site, section.section_name, record_key, mill_id)
+	if not cells.get(NET_WEIGHT_COLUMN):
+		cells = add_net_weight(site, section.section_name, cells, {}, name)
 	values = {
 		"mill_id": mill_id,
 		"row_data": json.dumps(cells, ensure_ascii=False),
@@ -493,3 +510,107 @@ def _parse_common(common, section) -> dict:
 	common = frappe.parse_json(common) if isinstance(common, str) else (common or {})
 	names = _common_fields(section)
 	return {name: str(common.get(name) or "").strip() for name in names if str(common.get(name) or "").strip()}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_dc_district(record: str, district: str | None = None) -> str:
+	"""DCRO View DC report: set the District of one DC by hand (e.g. its PDF could not be
+	downloaded). The typed name is matched with District Master ignoring capitals, small letters
+	and spaces, and saved as spelt there. It is kept when the DC is read again. An empty District
+	drops the hand entry: the District is read again from the saved DC PDF. Returns the District saved."""
+	_check_access()
+	doc = frappe.get_doc("Portal Record", record)
+	doc.check_permission("read")
+	if (doc.site, doc.section) not in DISTRICT_SECTIONS:
+		frappe.throw(_("The District can be set only on a View DC row"))
+	typed = (district or "").strip()
+	district = _master_district(typed)
+	if typed and not district:
+		frappe.throw(_("District {0} is not available in District Master").format(frappe.bold(typed)))
+
+	doc.district_manual = 1 if district else 0
+	if not district:
+		district = dc_district(_saved_file(doc.receipt_file)) or NO_DISTRICT
+	cells = with_district(_load_json(doc.row_data), district)
+	doc.row_data = json.dumps(cells, ensure_ascii=False)
+	doc.row_hash = build_row_hash(cells)
+	doc.save(ignore_permissions=True)
+	return cells[DISTRICT_COLUMN]
+
+
+@frappe.whitelist(methods=["POST"])
+def read_ac_note(file_url: str) -> dict:
+	"""DCRO DC Transit Challan report: Accepted Date (yyyy-mm-dd) and Net Weight read from an AC Note
+	the user has just uploaded, to fill the Edit pop-up; "" / 0 for what cannot be read (e.g. a scan)."""
+	_check_access()
+	content = _saved_file(_uploaded_file(file_url).file_url)
+	date = ac_note_accepted_date(content)
+	return {
+		"accepted_date": str(getdate(date, parse_day_first=True)) if date else "",
+		"net_weight": flt(ac_note_net_weight(content)),
+	}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_ac_note_values(
+	record: str, accepted_date: str | None = None, net_weight: float | None = None, file_url: str | None = None
+) -> dict:
+	"""DCRO DC Transit Challan report: for one row whose AC Note gives no Accepted Date, attach
+	the AC Note by hand (``file_url``, a file this user has just uploaded) and/or set the Accepted
+	Date and Net Weight by hand. Values the AC Note gives are read from it (they come first and
+	cannot be changed); the others are kept as set by hand when the row is read again. A later
+	download from the portal replaces the attached AC Note. An empty value drops the hand entry
+	(Net Weight: back to the master's Net Quantity). Returns the values saved, as shown."""
+	_check_access()
+	doc = frappe.get_doc("Portal Record", record)
+	doc.check_permission("read")
+	label = NET_WEIGHT_SECTIONS.get((doc.site, doc.section))
+	if not label:
+		frappe.throw(_("The AC Note values can be set only on a DC Transit Challan row"))
+	saved = _load_json(doc.documents)
+	if file_url:
+		if ac_note_accepted_date(_saved_file(saved.get(label))):
+			frappe.throw(_("This row already has an AC Note with its Accepted Date"))
+		file_doc = _uploaded_file(file_url)
+		file_doc.attached_to_doctype = "Portal Record"
+		file_doc.attached_to_name = doc.name
+		file_doc.save(ignore_permissions=True)
+		saved[label] = file_doc.file_url
+
+	ac_note = _saved_file(saved.get(label))
+	note_date, note_weight = ac_note_accepted_date(ac_note), flt(ac_note_net_weight(ac_note))
+	accepted_date = getdate(accepted_date) if accepted_date else None
+	if note_date and accepted_date and accepted_date != getdate(note_date, parse_day_first=True):
+		frappe.throw(_("The Accepted Date of this row is read from its AC Note and cannot be changed"))
+	if note_weight and flt(net_weight) and flt(net_weight) != note_weight:
+		frappe.throw(_("The Net Weight of this row is read from its AC Note and cannot be changed"))
+	if flt(net_weight) < 0:
+		frappe.throw(_("Net Weight cannot be negative"))
+
+	# Saved first: add_net_weight reads the AC Note and the hand values back from the record.
+	doc.db_set(
+		{
+			"documents": json.dumps(saved, ensure_ascii=False),
+			"accepted_date_manual": None if note_date else accepted_date,
+			"net_weight_manual": 0 if note_weight else flt(net_weight),
+		},
+		update_modified=False,
+	)
+	cells = add_net_weight(doc.site, doc.section, _load_json(doc.row_data), {}, doc.name)
+	doc.row_data = json.dumps(cells, ensure_ascii=False)
+	doc.row_hash = build_row_hash(cells)
+	doc.save(ignore_permissions=True)
+	return {NET_WEIGHT_COLUMN: cells[NET_WEIGHT_COLUMN], ACCEPTED_DATE_COLUMN: cells[ACCEPTED_DATE_COLUMN]}
+
+
+def _uploaded_file(file_url: str):
+	"""File this user has just uploaded: not someone else's, not attached to anything yet."""
+	name = file_url and frappe.db.get_value(
+		"File",
+		{"file_url": file_url, "owner": frappe.session.user, "is_folder": 0, "attached_to_name": ["is", "not set"]},
+		"name",
+		order_by="creation desc",
+	)
+	if not name:
+		frappe.throw(_("Upload the AC Note first"))
+	return frappe.get_doc("File", name)
