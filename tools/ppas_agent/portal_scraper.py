@@ -162,6 +162,61 @@ var text = (document.body && document.body.innerText) || '';
 return {password: false, logout: /log ?out|sign ?out/i.test(text)};
 """
 
+# The User ID typed on the login page (box by id, e.g. DCRO UserName, SCMS txtUserId). Kept in
+# the tab's sessionStorage on every change and on submit, so it is still known after the login
+# page posts back and the dashboard opens (the box is gone by then).
+# With arguments[1] (the Mill No. picked in the ERP): while the User ID is typed, a note under
+# the box says at once whether it is that Mill No. (green) or not (red). While it is not, the
+# login form's submit (Login button or Enter) is stopped, so the portal never gets the wrong login.
+JS_LOGIN_USER = r"""
+var id = arguments[0], expected = (arguments[1] || '').trim(), key = 'pdeLoginUser';
+function kept() { try { return sessionStorage.getItem(key) || ''; } catch (e) { return ''; } }
+function keep(v) { try { if (v) { sessionStorage.setItem(key, v); } } catch (e) {} }
+var el = document.getElementById(id);
+if (!el) { return kept(); }
+var read = function () { keep((el.value || '').trim()); };
+if (!el.getAttribute('data-pde-login')) {
+    el.setAttribute('data-pde-login', '1');
+    ['input', 'change', 'blur'].forEach(function (t) { el.addEventListener(t, read, true); });
+    if (el.form) { el.form.addEventListener('submit', read, true); }
+}
+var typed = function () { return (el.value || '').trim(); };
+var matches = function () { return !!expected && typed().toUpperCase() === expected.toUpperCase(); };
+var show = function (force) {
+    var n = document.getElementById('pde-login-note');
+    if (!typed() && !force) {
+        if (n) { n.remove(); }
+        el.style.outline = '';
+        return;
+    }
+    if (!n) {
+        n = document.createElement('div');
+        n.id = 'pde-login-note';
+        n.style.cssText = 'color:#fff;padding:6px 8px;margin:6px 0;font:bold 13px Arial;border-radius:3px;';
+        el.parentNode.insertBefore(n, el.nextSibling);
+    }
+    var ok = matches(), color = ok ? '#1e8449' : '#c0392b';
+    n.style.background = color;
+    el.style.outline = '3px solid ' + color;
+    n.textContent = ok
+        ? 'User ID matches Mill No. ' + expected + '.'
+        : (typed() ? 'User ID ' + typed() + ' is not ' : 'Type User ID ') + expected +
+          ' (Mill No. picked in the ERP). Login is stopped.';
+};
+if (expected && !el.getAttribute('data-pde-check')) {
+    el.setAttribute('data-pde-check', '1');
+    el.addEventListener('input', function () { show(false); }, true);
+    var stop = function (e) { if (!matches()) { e.preventDefault(); e.stopImmediatePropagation(); show(true); } };
+    if (el.form) {
+        el.form.addEventListener('submit', stop, true);
+        el.form.addEventListener('keydown', function (e) { if (e.key === 'Enter') { stop(e); } }, true);
+    }
+    show(false);
+}
+read();
+return (el.value || '').trim() || kept();
+"""
+
 # Shared helpers for the table scripts below.
 JS_TABLE_HELPERS = r"""
 function pdeText(el) { return (el.innerText || el.textContent || '').replace(/\s+/g, ' ').trim(); }
@@ -367,6 +422,33 @@ return {url: location.href, title: (document.title || '').trim(), heading: headi
         table_id: info.table_id, table_title: info.table_title, table_ids: info.table_ids,
         active_tab: pdeActiveTab(), filters: filters};
 """
+
+# Elements read by id (section "Page Filter Columns" "#id", e.g. DCRO Paddy Release #INTKMS):
+# a drop-down's chosen text, a box's value (also hidden or read-only), else the element's text.
+JS_PAGE_FIELDS = r"""
+var out = [];
+(arguments[0] || []).forEach(function (id) {
+    var el = document.getElementById(id);
+    if (!el) { return; }
+    var value = el.tagName === 'SELECT'
+        ? (el.selectedIndex >= 0 ? el.options[el.selectedIndex].text : '')
+        : (/^(INPUT|TEXTAREA)$/.test(el.tagName) ? el.value : (el.innerText || el.textContent || ''));
+    value = (value || '').replace(/\s+/g, ' ').trim();
+    if (value) { out.push({label: id, id: id, value: value.slice(0, 140)}); }
+});
+return out;
+"""
+
+
+def page_field_ids_for(page_fields, url):
+    """Element ids to read on this page (see JS_PAGE_FIELDS)."""
+    url = (url or "").lower()
+    ids = []
+    for item in page_fields or []:
+        match = (item.get("page_match") or "").strip().lower()
+        if match and match in url:
+            ids += [i for i in item.get("ids") or [] if i and i not in ids]
+    return ids
 
 # Expands jQuery DataTables (client-side paging) to show all rows.
 JS_SHOW_ALL_DATATABLE = r"""
@@ -1298,9 +1380,7 @@ def newest_first(rows):
     return len(dates) > 1 and dates[0] > dates[-1]
 
 
-def known_rows_for(known_rows, url, table_match=""):
-    """Fingerprints of rows already in the ERP for the table read (section by page and
-    Table Match), or None when the section reads every row ("Read Only New Rows" off)."""
+def _known_item(known_rows, url, table_match=""):
     url = (url or "").lower()
     fallback = None
     for item in known_rows or []:
@@ -1309,10 +1389,36 @@ def known_rows_for(known_rows, url, table_match=""):
             continue
         item_table = re.sub(r"[^a-z0-9]", "", (item.get("table_match") or "").lower())
         if item_table and item_table == table_match:
-            return set(item.get("sigs") or [])
+            return item
         if not item_table and fallback is None:
-            fallback = set(item.get("sigs") or [])
+            fallback = item
     return fallback
+
+
+def known_rows_for(known_rows, url, table_match=""):
+    """Fingerprints of rows already in the ERP for the table read (section by page and
+    Table Match), or None when the section reads every row ("Read Only New Rows" off)."""
+    item = _known_item(known_rows, url, table_match)
+    return None if item is None else set(item.get("sigs") or [])
+
+
+def recheck_documents_for(known_rows, url, table_match=""):
+    """Documents saved again for a known row (e.g. DCRO DC Transit Challan "AC Note Doc",
+    which the portal may change later); [] when known rows are only skipped."""
+    item = _known_item(known_rows, url, table_match) or {}
+    return [_squash(d) for d in item.get("recheck_documents") or [] if _squash(d)]
+
+
+def read_all_pages_for(known_rows, url, table_match=""):
+    """True when reading must not stop at the first known row (DCRO DC Transit Challan:
+    an older row may still have no AC Note saved, so it is not known and must be read)."""
+    return bool((_known_item(known_rows, url, table_match) or {}).get("read_all_pages"))
+
+
+def login_matches(expected, login_user):
+    """True when the User ID typed at login is the Mill No. picked in the ERP (capitals and spaces ignored)."""
+    expected, login_user = (expected or "").strip().upper(), (login_user or "").strip().upper()
+    return bool(expected and login_user and expected == login_user)
 
 
 def _int(value):
@@ -1364,9 +1470,12 @@ class PortalSession:
         self.click_triggers = config.get("click_triggers") or []
         # Pages read as soon as they open, without a Search click (e.g. WINGS e_tec).
         self.open_reads = config.get("open_reads") or []
+        # Elements read by id on a page, besides its search filters (e.g. #INTKMS).
+        self.page_fields = config.get("page_fields") or []
         # Rows already in the ERP, per section: only new or changed rows are read (see _read_all_pages).
         self.known_rows = config.get("known_rows") or []
         self._skipped_known = 0
+        self._rechecked = 0
         self._opened_key = ""
         # The logged-in mill (dashboard or page), sent with every result (see JS_FIND_MILL_ID).
         self.mill_labels, self.mill_keys = mill_label_keys(
@@ -1374,6 +1483,13 @@ class PortalSession:
         )
         self.mill_xpath = (config.get("mill_id_xpath") or "").strip()
         self.mill_id = ""
+        # The User ID box on the login page (e.g. UserName) and the Mill No. picked in the ERP:
+        # on such a site nothing is read until the User ID used to log in is that Mill No.
+        self.login_user_id = (config.get("login_user_id") or "").strip().lstrip("#")
+        self.expected_login = (config.get("expected_login") or "").strip()
+        self.login_user = ""
+        self._typed_login = ""
+        self.login_ok = not self.login_user_id
         self._landing_url, self._mill_tries = "", 0
         self.toasts = []  # messages to show in Chrome; shown by the agent's own thread
         self._only_table = None
@@ -1457,6 +1573,7 @@ class PortalSession:
                 # Every result in order: one Search can give several (one per table of the page).
                 "result_ids": list(self.result_ids),
                 "mill_id": self.mill_id,
+                "login_user": self.login_user,
                 "rows": len(latest["rows"]) if latest else 0,
                 "pages": latest["pages"] if latest else 0,
             }
@@ -1504,6 +1621,7 @@ class PortalSession:
             "table_ids": result["page"].get("table_ids", ""),
             "active_tab": result["page"].get("active_tab", ""),
             "mill_id": result.get("mill_id", ""),
+            "login_user": result.get("login_user", ""),
             # Search filters on the page ([{label, id, value}]); the ERP keeps the ones it needs (KMS Year, Depot).
             "page_filters": result["page"].get("filters") or [],
             "total": len(result["rows"]),
@@ -1611,6 +1729,10 @@ class PortalSession:
             driver.current_url != self._login_page_url or login.get("logout")
         )
         if not logged_in:
+            if self.login_user_id:
+                # Logged out (or not yet in): the next login is checked again.
+                self.login_ok, self.login_user = False, ""
+                self._typed_login = self._read_login_user() or self._typed_login
             if self.state != "waiting_login":
                 self._set("waiting_login", f"Please log in to {self.site} in the Chrome window.")
             time.sleep(POLL_SECONDS)
@@ -1620,8 +1742,15 @@ class PortalSession:
             # The agent never opens pages itself: deep links end the portal session.
             self._wait_ready(PAGE_WAIT_SECONDS)
             self._landing_url, self._mill_tries = driver.current_url, 0
+            if self.login_user_id and not self._check_login_user():
+                return
             self._read_mill_id(from_dashboard=True)
             self._say_logged_in()
+        elif not self.login_ok:
+            # Logged in with another mill's User ID: read nothing until the user logs out.
+            self._show_toasts()
+            time.sleep(POLL_SECONDS)
+            return
         elif self.mill_xpath and not self.mill_id and driver.current_url == self._landing_url and self._mill_tries < 20:
             # The dashboard may fill in after it loads: keep looking while it is open.
             self._read_mill_id(from_dashboard=True)
@@ -1654,6 +1783,36 @@ class PortalSession:
                 return
 
         time.sleep(POLL_SECONDS)
+
+    def _read_login_user(self):
+        try:
+            return (
+                self.driver.execute_script(JS_LOGIN_USER, self.login_user_id, self.expected_login) or ""
+            ).strip()
+        except Exception:
+            return ""
+
+    def _check_login_user(self):
+        """Right after login, before any page is read: the User ID typed on the login page
+        must be the Mill No. picked in the ERP, so one mill's data never goes under another."""
+        self.login_user = self._read_login_user() or self._typed_login
+        self.login_ok = login_matches(self.expected_login, self.login_user)
+        if self.login_ok:
+            return True
+        if not self.login_user:
+            message = (
+                f"The User ID typed on the {self.site} login page was not read, so it cannot be checked "
+                f"against Mill No. {self.expected_login}. Nothing will be read. Log out and log in again in this Chrome window."
+            )
+        else:
+            message = (
+                f"Logged in to {self.site} with User ID {self.login_user}, but this extraction is for "
+                f"Mill No. {self.expected_login}. Nothing will be read. Log out and log in with User ID {self.expected_login}."
+            )
+        self._set("wrong_login", message)
+        self.notify(message, "red")
+        self._show_toasts()
+        return False
 
     def _say_waiting_for_trigger(self):
         # Page's own trigger, e.g. View DC: click "Show"; DC Transit Challan: Search box + Enter.
@@ -1820,11 +1979,22 @@ class PortalSession:
             page = self.driver.execute_script(JS_PAGE_INFO) or {}
         except Exception:
             page = {}
+        ids = page_field_ids_for(self.page_fields, self.driver.current_url)
+        if ids:
+            try:
+                fields = self.driver.execute_script(JS_PAGE_FIELDS, ids) or []
+            except Exception:
+                fields = []
+            # Same id as a filter already read: the element read by id wins.
+            taken = {f.get("id") for f in fields}
+            page["filters"] = fields + [f for f in page.get("filters") or [] if f.get("id") not in taken]
         table_match = table_match_for(self.grid_matches, self.driver.current_url, page)
         self._page_no_margins = any(p in (self.driver.current_url or "").lower() for p in NO_MARGIN_PAGES)
         self._new_tab_documents = any(p in (self.driver.current_url or "").lower() for p in NEW_TAB_DOCUMENT_PAGES)
         section_receipts, receipt_text = receipt_config_for(self.receipt_links, self.driver.current_url, table_match)
         known = known_rows_for(self.known_rows, self.driver.current_url, table_match)
+        recheck = recheck_documents_for(self.known_rows, self.driver.current_url, table_match)
+        read_all = read_all_pages_for(self.known_rows, self.driver.current_url, table_match)
 
         self._session_lost = False
         self._chrome_closed = False
@@ -1833,7 +2003,8 @@ class PortalSession:
         broke_off = ""
         try:
             columns, rows, pages = self._read_all_pages(
-                signature, detail_text, self.download_receipts or section_receipts, receipt_text, section_receipts, known
+                signature, detail_text, self.download_receipts or section_receipts, receipt_text, section_receipts, known,
+                recheck, read_all,
             )
         except Exception as e:
             # Chrome closed or crashed, or the portal stopped answering, part way through:
@@ -1855,7 +2026,7 @@ class PortalSession:
         if self._chrome_closed and not broke_off:
             broke_off = " Chrome was closed part way: the rows read till then are kept."
         if not rows:
-            if self._skipped_known:
+            if self._skipped_known and not self._rechecked:
                 return f"No new rows: all {self._skipped_known} row(s) read are already in the ERP."
             return ""
 
@@ -1863,6 +2034,7 @@ class PortalSession:
         with self.lock:
             self.results[result_id] = {
                 "columns": columns, "rows": rows, "pages": pages, "page": page, "mill_id": self.mill_id,
+                "login_user": self.login_user,
             }
             for old in list(self.results)[:-KEEP_RESULTS]:
                 self.results.pop(old, None)
@@ -1889,15 +2061,26 @@ class PortalSession:
             if self._skipped_known
             else ""
         )
-        return f"Extracted {len(rows)} new/changed rows from {pages} page(s), {receipts} receipt(s){detail_note}.{known_note}{stop_note}{lost_note}{broke_off}"
+        recheck_note = (
+            f" {self._rechecked} row(s) already in the ERP: {', '.join(recheck)} saved again to check for changes."
+            if self._rechecked
+            else ""
+        )
+        new_rows = len(rows) - self._rechecked
+        return f"Extracted {new_rows} new/changed rows from {pages} page(s), {receipts} receipt(s){detail_note}.{known_note}{recheck_note}{stop_note}{lost_note}{broke_off}"
 
     def _read_all_pages(
-        self, signature, detail_text="", receipts=False, receipt_text="", receipt_required=False, known=None
+        self, signature, detail_text="", receipts=False, receipt_text="", receipt_required=False, known=None,
+        recheck=None, read_all=False,
     ):
         """Read every page of the marked table. With ``known`` (fingerprints of rows
         already in the ERP) only new or changed rows are kept: a known row gets no
         details or documents and is not sent. When the table lists newest dates first,
-        reading stops at the first known row (all below it are older and saved)."""
+        reading stops at the first known row (all below it are older and saved).
+        With ``recheck`` (document labels, e.g. "AC Note Doc") a known row is sent with
+        only those documents, so a document changed on the portal is saved again;
+        every row is then read (no stop at the first known row). ``read_all`` also reads
+        every page, but known rows are only skipped (nothing downloaded again)."""
         columns = None
         rows = []
         seen = {signature}
@@ -1908,6 +2091,11 @@ class PortalSession:
         self._stopped_at_limit = False
         self._stopped_at_known = False
         self._skipped_known = 0
+        self._rechecked = 0
+        recheck_keys = {re.sub(r"[^a-z0-9]", "", d.lower()) for d in recheck or []}
+        recheck_steps = [
+            step for step in document_steps(receipt_text) if re.sub(r"[^a-z0-9]", "", step[0].lower()) in recheck_keys
+        ] if receipts else []
 
         while pages < MAX_PAGES and not self.stop_event.is_set() and not self.finish_event.is_set():
             pages += 1
@@ -1928,7 +2116,7 @@ class PortalSession:
                     col = link.get("col")
                     link["column"] = columns[col] if isinstance(col, int) and col < len(columns) else ""
 
-            if known and order_newest is None:
+            if known and order_newest is None and not recheck_steps and not read_all:
                 order_newest = newest_first(page_cells)
             for idx, (cells, raw) in enumerate(zip(page_cells, data)):
                 if self.finish_event.is_set():
@@ -1936,6 +2124,12 @@ class PortalSession:
                 position += 1
                 row = {"cells": cells, "row_sig": row_signature(cells), "position": position}
                 if known and row["row_sig"] in known:
+                    if recheck_steps and not (self._session_lost or self._chrome_closed):
+                        # Known row: only its changeable documents (e.g. AC Note Doc) again.
+                        self._collect_documents(row, raw, recheck_steps, pages, idx, len(page_cells), detail_text, receipt_required, cells)
+                        self._rechecked += 1
+                        rows.append(row)
+                        continue
                     self._skipped_known += 1
                     if order_newest:
                         self._stopped_at_known = True
@@ -1957,29 +2151,9 @@ class PortalSession:
                     row["receipt_error"] = "not saved: the portal ended the login earlier in this run"
                 elif receipts and len(document_steps(receipt_text)) > 1:
                     # Several documents per row (e.g. DCRO DC Transit Challan: Details > Print, AC Note Doc).
-                    row["documents"] = []
-                    for n, (label, print_text) in enumerate(document_steps(receipt_text), start=1):
-                        if self._session_lost or self._chrome_closed:
-                            reason = "Chrome was closed" if self._chrome_closed else "the portal ended the login"
-                            row["documents"].append({"label": label, "error": f"not saved: {reason}"})
-                            continue
-                        self._set(
-                            "extracting",
-                            f"Page {pages}: saving '{label}' of row {idx + 1} of {len(page_cells)}...",
-                        )
-                        got = {}
-                        self._collect_receipt(
-                            got, raw.get("links"), f"p{pages}_r{idx + 1}_d{n}", detail_text, label,
-                            receipt_required, print_text, row_tokens(cells),
-                        )
-                        row["documents"].append(
-                            {
-                                "label": label,
-                                "path": got.get("receipt_path"),
-                                "source": got.get("receipt_source") or "",
-                                "error": got.get("receipt_error") or "",
-                            }
-                        )
+                    self._collect_documents(
+                        row, raw, document_steps(receipt_text), pages, idx, len(page_cells), detail_text, receipt_required, cells
+                    )
                 elif receipts:
                     self._set(
                         "extracting",
@@ -1994,7 +2168,7 @@ class PortalSession:
 
             if self.finish_event.is_set() or self._stopped_at_known:
                 break
-            if self.row_limit and len(rows) >= self.row_limit and not oldest_first([r["cells"] for r in rows]):
+            if self.row_limit and len(rows) - self._rechecked >= self.row_limit and not oldest_first([r["cells"] for r in rows]):
                 # Newest rows come first (or no dates): the rows needed are already read.
                 self._stopped_at_limit = True
                 break
@@ -2009,6 +2183,29 @@ class PortalSession:
             seen.add(signature)
 
         return columns or [], rows, pages
+
+    def _collect_documents(self, row, raw, steps, pages, idx, total, detail_text, receipt_required, cells):
+        """Save the row's documents, one per (label, print step), into row["documents"]."""
+        row["documents"] = []
+        for n, (label, print_text) in enumerate(steps, start=1):
+            if self._session_lost or self._chrome_closed:
+                reason = "Chrome was closed" if self._chrome_closed else "the portal ended the login"
+                row["documents"].append({"label": label, "error": f"not saved: {reason}"})
+                continue
+            self._set("extracting", f"Page {pages}: saving '{label}' of row {idx + 1} of {total}...")
+            got = {}
+            self._collect_receipt(
+                got, raw.get("links"), f"p{pages}_r{idx + 1}_d{n}", detail_text, label,
+                receipt_required, print_text, row_tokens(cells),
+            )
+            row["documents"].append(
+                {
+                    "label": label,
+                    "path": got.get("receipt_path"),
+                    "source": got.get("receipt_source") or "",
+                    "error": got.get("receipt_error") or "",
+                }
+            )
 
     # ---------------- row details (e.g. DC Monitoring -> View -> lots) ----------------
 

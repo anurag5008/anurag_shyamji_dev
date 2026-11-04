@@ -11,6 +11,7 @@
   "enabled",
   "mill_id_labels",
   "mill_id_xpath",
+  "login_user_id",
   "sections_section",
   "sections"
  ],
@@ -57,6 +58,12 @@
    "description": "XPath of the element that shows the mill's ID on the portal (dashboard header), e.g. //*[@id=\"layout-wrapper\"]/div[2]/div[1]/div/p[2]. Read from the landing dashboard after login and kept for the session; it wins over the rows' own mill columns. When set, Mill ID Labels pick the value inside that element (e.g. WINGS: State Code), else its last number is used."
   },
   {
+   "description": "id of the User ID box on the portal's login page, e.g. UserName (DCRO), txtUserId (SCMS). When set, the User ID typed at login must be the Mill No. picked on Portal Data Extraction: otherwise the agent reads nothing and the ERP saves nothing, so the data of two mills is never mixed. Empty: not checked (e.g. WINGS).",
+   "fieldname": "login_user_id",
+   "fieldtype": "Data",
+   "label": "Login User ID Element"
+  },
+  {
    "fieldname": "sections_section",
    "fieldtype": "Section Break",
    "label": "Sections"
@@ -70,7 +77,7 @@
  ],
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-15 19:00:00.000000",
+ "modified": "2026-10-30 10:11:43.792148",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Portal Site",

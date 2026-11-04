@@ -89,8 +89,17 @@ def get_session_config(name: str) -> dict:
 		"open_reads": [row.page_match for row in site.sections if row.enabled and row.page_match and row.read_on_open],
 		# Words before the mill's ID on the dashboard or page (e.g. Mill ID, Miller Code).
 		"mill_id_labels": site.get("mill_id_labels") or portal_sync.DEFAULT_MILL_LABELS,
-		# Rows already in the ERP: the agent reads only new or changed rows ("Read Only New Rows").
-		"known_rows": [] if cint(doc.read_full_table) else _known_rows(site),
+		# Elements read by id besides the search filters ("#id" in Page Filter Columns, e.g. #INTKMS).
+		"page_fields": [
+			{"page_match": row.page_match, "ids": portal_sync.page_field_ids(row.filter_columns)}
+			for row in site.sections
+			if row.enabled and row.page_match and portal_sync.page_field_ids(row.filter_columns)
+		],
+		# Rows already in the ERP for this mill: the agent reads only new or changed rows ("Read Only New Rows").
+		"known_rows": [] if cint(doc.read_full_table) else _known_rows(site, doc.mill),
+		# The User ID box on the login page (e.g. #UserName): what is typed there must be this Mill No.
+		"login_user_id": (site.get("login_user_id") or "").strip().lstrip("#"),
+		"expected_login": doc.mill,
 		# Element showing the mill's ID (e.g. WINGS dashboard header); tried first.
 		"mill_id_xpath": site.get("mill_id_xpath") or "",
 		# Pages (or tabs, by Table Match) whose row document (e.g. Transit Challan, Lot Search Print) is always saved as PDF.
@@ -124,25 +133,62 @@ def _check_portal_mill(doc, found: str):
 		)
 
 
-def _known_rows(site) -> list[dict]:
-	"""Per section with "Read Only New Rows": fingerprints of the rows read from the portal."""
+def _check_login_user(doc, login_user: str):
+	"""On a site with a Login User ID Element (DCRO, SCMS) the portal account is the mill:
+	the User ID typed at login must be the Mill No. picked, so no row of one mill is saved
+	under another. Checked here too, not only by the agent."""
+	element = (frappe.get_cached_value("Portal Site", doc.site, "login_user_id") or "").strip()
+	if not element:
+		return
+	login_user = (login_user or "").strip()
+	if not login_user:
+		frappe.throw(
+			_("The User ID used to log in to {0} was not read (box #{1} on the login page), so it cannot be checked against Mill No. {2}. Nothing was saved. Close the session, connect again and log in in the Chrome window the agent opens. If this keeps happening, install the latest agent.").format(
+				doc.site, element.lstrip("#"), doc.mill
+			)
+		)
+	if login_user.upper() != doc.mill.upper():
+		frappe.throw(
+			_("{0} is logged in with User ID {1}, but Mill No. {2} is picked on this form. Nothing was saved. Log out, then log in with the User ID of {2}, or make a new extraction for {1}.").format(
+				doc.site, login_user, doc.mill
+			)
+		)
+
+
+def _known_rows(site, mill: str) -> list[dict]:
+	"""Per section with "Read Only New Rows": fingerprints of the mill's rows read from the portal.
+	DCRO DC Transit Challan (portal_sync.NET_WEIGHT_SECTIONS): a row with no AC Note saved
+	yet is not known, so it is read again in full; a row with its AC Note saved is skipped
+	(its AC Note is not downloaded again). ``read_all_pages`` asks the agent (version 26)
+	not to stop at the first known row, as an older row may still be waiting for its AC Note."""
 	out = []
 	for row in site.sections:
 		if not (row.enabled and row.page_match and row.read_new_only):
 			continue
-		sigs = frappe.get_all(
+		records = frappe.get_all(
 			"Portal Record",
 			filters={
 				"site": site.name,
 				"section": row.section_name,
+				"mill_id": mill,
 				"entry_source": "Portal",
 				"portal_row_sig": ["is", "set"],
 			},
-			pluck="portal_row_sig",
+			fields=["portal_row_sig", "documents"],
 			order_by="last_seen_on desc",
 			limit=MAX_KNOWN_ROWS,
 		)
-		out.append({"page_match": row.page_match, "table_match": row.table_match or "", "sigs": sigs})
+		ac_note = portal_sync.NET_WEIGHT_SECTIONS.get((site.name, row.section_name))
+		if ac_note:
+			records = [r for r in records if portal_sync._load_json(r.documents).get(ac_note)]
+		known = {
+			"page_match": row.page_match,
+			"table_match": row.table_match or "",
+			"sigs": [r.portal_row_sig for r in records],
+		}
+		if ac_note:
+			known["read_all_pages"] = True
+		out.append(known)
 	return out
 
 
@@ -172,6 +218,8 @@ def begin_run(
 	mill_id: str | None = None,
 	rows_kept: int | None = None,
 	kept_note: str | None = None,
+	login_user: str | None = None,
+	agent_checks_login=None,
 ) -> dict:
 	"""Start a run for one Search: name its section from the page (and, on pages
 	with several tables or tabs, from the table read) and add a run row.
@@ -179,6 +227,9 @@ def begin_run(
 	the ones named in the section's "Page Filter Columns" are saved with every row."""
 	doc = _get_writable(name)
 	_require_mill(doc)
+	if cint(agent_checks_login):
+		# Only an agent from version 23 reads the login User ID; an older one is still allowed.
+		_check_login_user(doc, login_user)
 	_check_portal_mill(doc, mill_id)
 	site = frappe.get_cached_doc("Portal Site", doc.site)
 	table_info = {"table_id": table_id, "table_title": table_title, "active_tab": active_tab, "table_ids": table_ids}
@@ -270,6 +321,11 @@ def import_rows(name: str, run: str, rows):
 		mill_id=run_row.mill_id or "",
 	)
 
+	if result.get("new_rows"):
+		# Named in one notification when the run finishes (rows come in several batches).
+		key = _new_rows_key(run)
+		frappe.cache.set_value(key, (frappe.cache.get_value(key) or []) + result["new_rows"], expires_in_sec=86400)
+
 	doc.reload()
 	run_row = doc.get_run(run)
 	for field, key in RUN_COUNTS.items():
@@ -304,4 +360,44 @@ def finish_run(name: str, run: str, status: str, message: str | None = None):
 		),
 	)
 	doc.save()
+	notify_new_rows(doc, run_row)
 	return {"section": run_row.section, "status": status}
+
+
+# Most row names written in the notification subject; all of them are in its message.
+NOTIFY_NAMES = 10
+
+
+def _new_rows_key(run: str) -> str:
+	return f"ivri_od:portal_new_rows:{run}"
+
+
+def notify_new_rows(doc, run_row):
+	"""Bell notification to the user who read the page: the new rows saved by this run, of every
+	section (View DC: DC numbers; DC Transit Challan and Lot Search: DC / Lot numbers; others: the
+	row's summary). Nothing when the run saved no new row."""
+	key = _new_rows_key(run_row.name)
+	names = frappe.cache.get_value(key) or []
+	frappe.cache.delete_value(key)
+	if not names:
+		return
+	section = run_row.section
+	if section == "View DC":
+		what = _("new DC generated") if len(names) == 1 else _("new DCs generated")
+	elif section == "DC Transit Challan":
+		what = _("new DC Transit Challan") if len(names) == 1 else _("new DC Transit Challans")
+	else:
+		what = _("new {0} row").format(section) if len(names) == 1 else _("new {0} rows").format(section)
+	shown = ", ".join(names[:NOTIFY_NAMES]) + (_(" and {0} more").format(len(names) - NOTIFY_NAMES) if len(names) > NOTIFY_NAMES else "")
+	subject = _("{0} {1}: {2} {3}: {4}").format(doc.site, doc.mill or "", len(names), what, shown)
+	frappe.get_doc(
+		{
+			"doctype": "Notification Log",
+			"for_user": frappe.session.user,
+			"type": "Alert",
+			"document_type": doc.doctype,
+			"document_name": doc.name,
+			"subject": subject,
+			"email_content": "<br>".join(frappe.utils.escape_html(name) for name in names),
+		}
+	).insert(ignore_permissions=True)

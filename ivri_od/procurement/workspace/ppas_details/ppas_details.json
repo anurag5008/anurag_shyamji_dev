@@ -1,0 +1,45 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"5358570f62\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>PPAS Details</b></span>\", \"col\": 12}}, {\"id\": \"0013e07c47\", \"type\": \"paragraph\", \"data\": {\"text\": \"Transit passes read from the PPAS portal with <b>PPAS Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"145ba0d2df\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"PPAS Manual Entry\", \"col\": 12}}, {\"id\": \"73a2e749db\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"PPAS Transit Pass\", \"col\": 4}}]",
+ "creation": "2026-10-24 20:17:09.207767",
+ "custom_blocks": [
+  {
+   "custom_block_name": "PPAS Manual Entry",
+   "label": "PPAS Manual Entry"
+  }
+ ],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "file-text",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "PPAS Details",
+ "link_type": "DocType",
+ "links": [],
+ "modified": "2026-11-04 13:40:28.354713",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "PPAS Details",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Procurement",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Cyan",
+   "doc_view": "",
+   "icon": "file-text",
+   "label": "PPAS Transit Pass",
+   "link_to": "PPAS Transit Pass",
+   "type": "DocType"
+  }
+ ],
+ "title": "PPAS Details",
+ "type": "Workspace"
+}

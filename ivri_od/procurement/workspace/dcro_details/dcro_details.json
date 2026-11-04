@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"16d97acc51\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>DCRO Details</b></span>\", \"col\": 12}}, {\"id\": \"c1645f1188\", \"type\": \"paragraph\", \"data\": {\"text\": \"Paddy release data read from the DCRO portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"40fbf45c62\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"DCRO Manual Entry\", \"col\": 12}}, {\"id\": \"6dcc69aee7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Paddy Release from DCRO\", \"col\": 4}}, {\"id\": \"21a1cf16fd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"View DC from DCRO\", \"col\": 4}}, {\"id\": \"84ff8b3bc7\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Transit Challan from DCRO\", \"col\": 4}}, {\"id\": \"cec5ef3ddd\", \"type\": \"card\", \"data\": {\"card_name\": \"DCRO reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"3ec23743f5\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>DCRO Details</b></span>\", \"col\": 12}}, {\"id\": \"455ca74f77\", \"type\": \"paragraph\", \"data\": {\"text\": \"Paddy release data read from the DCRO portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"823ae8e1e0\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"DCRO Manual Entry\", \"col\": 12}}, {\"id\": \"56be3b7dfd\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Paddy Release from DCRO\", \"col\": 4}}, {\"id\": \"f3f96dc689\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"View DC from DCRO\", \"col\": 4}}, {\"id\": \"d3134e676f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"DC Transit Challan from DCRO\", \"col\": 4}}, {\"id\": \"79322b2af0\", \"type\": \"card\", \"data\": {\"card_name\": \"DCRO reports\", \"col\": 4}}]",
  "creation": "2026-10-14 18:29:21.612039",
  "custom_blocks": [
   {
@@ -59,7 +59,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-21 11:53:39.647833",
+ "modified": "2026-11-04 13:40:28.256649",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "DCRO Details",

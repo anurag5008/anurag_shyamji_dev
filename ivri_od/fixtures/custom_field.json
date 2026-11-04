@@ -1765,5 +1765,130 @@
   "insert_after": "invoice_final_section",
   "read_only": 1,
   "options": "currency"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-paddy_details_section",
+  "dt": "Purchase Receipt",
+  "module": "Procurement",
+  "fieldname": "paddy_details_section",
+  "label": "Paddy Details",
+  "fieldtype": "Section Break",
+  "insert_after": "return_against",
+  "collapsible": 0
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-kms_season",
+  "dt": "Purchase Receipt",
+  "module": "Procurement",
+  "fieldname": "kms_season",
+  "label": "KMS Season",
+  "fieldtype": "Link",
+  "options": "Season Master",
+  "insert_after": "paddy_details_section",
+  "search_index": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-paddy_account",
+  "dt": "Purchase Receipt",
+  "module": "Procurement",
+  "fieldname": "paddy_account",
+  "label": "Paddy Account",
+  "fieldtype": "Link",
+  "options": "District Master",
+  "insert_after": "kms_season",
+  "search_index": 1,
+  "description": "District / agency account the paddy belongs to"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-paddy_details_cb",
+  "dt": "Purchase Receipt",
+  "module": "Procurement",
+  "fieldname": "paddy_details_cb",
+  "fieldtype": "Column Break",
+  "insert_after": "paddy_account"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Purchase Receipt-paddy_source",
+  "dt": "Purchase Receipt",
+  "module": "Procurement",
+  "fieldname": "paddy_source",
+  "label": "Paddy Source",
+  "fieldtype": "Select",
+  "options": "\nPACS\nWSHG\nOther",
+  "insert_after": "paddy_details_cb"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-paddy_details_section",
+  "dt": "Stock Entry",
+  "module": "Procurement",
+  "fieldname": "paddy_details_section",
+  "label": "Paddy Details",
+  "fieldtype": "Section Break",
+  "insert_after": "target_address_display",
+  "collapsible": 0
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-kms_season",
+  "dt": "Stock Entry",
+  "module": "Procurement",
+  "fieldname": "kms_season",
+  "label": "KMS Season",
+  "fieldtype": "Link",
+  "options": "Season Master",
+  "insert_after": "paddy_details_section",
+  "search_index": 1
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-paddy_account",
+  "dt": "Stock Entry",
+  "module": "Procurement",
+  "fieldname": "paddy_account",
+  "label": "Paddy Account",
+  "fieldtype": "Link",
+  "options": "District Master",
+  "insert_after": "kms_season",
+  "search_index": 1,
+  "description": "District / agency account the paddy belongs to"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-paddy_details_cb",
+  "dt": "Stock Entry",
+  "module": "Procurement",
+  "fieldname": "paddy_details_cb",
+  "fieldtype": "Column Break",
+  "insert_after": "paddy_account"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry-paddy_source",
+  "dt": "Stock Entry",
+  "module": "Procurement",
+  "fieldname": "paddy_source",
+  "label": "Paddy Source",
+  "fieldtype": "Select",
+  "options": "\nPACS\nWSHG\nOther",
+  "insert_after": "paddy_details_cb",
+  "description": "Only for paddy received through this entry"
+ },
+ {
+  "doctype": "Custom Field",
+  "name": "Stock Entry Type-paddy_movement",
+  "dt": "Stock Entry Type",
+  "module": "Procurement",
+  "fieldname": "paddy_movement",
+  "label": "Paddy Movement",
+  "fieldtype": "Select",
+  "options": "\nIssue for Milling\nDriage",
+  "insert_after": "purpose",
+  "description": "Paddy issued by entries of this type is shown in this column of the Stock Account for Paddy report"
  }
 ]

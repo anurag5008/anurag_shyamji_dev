@@ -3,7 +3,9 @@
 
 """DC Details: rice due, DCs issued and lots delivered, one line per mill for a season.
 
-- Paddy Received: sum of Target Quantity in Target Allocation (all PPCs of the mill) for the season.
+- Paddy Received: sum of Quantity of every PPAS Transit Pass (TP) of the mill for the season.
+  The TP season text ("Kharif(2025)") is matched to the Season Master and the mill code is read
+  from the TP miller text ("SHREE SHYAMJI ...(M051007)").
 - Driage: Raw mills only, Paddy Received x Driage % (Rice Delivery Setup "Raw").
 - CMR Due: Paddy After Driage x CMR % of the mill's type (Mill Master Type -> Rice Delivery Setup).
 - Total Lot: CMR Due / Lot Quantity (Rice Lot Quantity, same for all mills), rounded.
@@ -12,12 +14,18 @@
   A DC is in the season when its KMS Year starts with the season year (2025-26 for
   Kharif 2025) and its season, when read, is the crop season.
 - FCI Pending: lots of the DC in DCRO DC Transit Challan whose "Pending At" is not
-  "Approved" (e.g. "Assitant Depot"). Still counted in FCI Delivery.
+  "Approved" (e.g. "Assitant Depot") and that have no Accepted Date (read from the AC Note,
+  or set by hand in the DC Transit Challan report). Still counted in FCI Delivery.
 - RRC Pending: lots of the DC in SCMS Transit Challan RRC that are not in SCMS Lot Search yet
   (sent to the RRC, not received).
   Both are shown only: no balance, total or Delivery % uses them.
 - VR Pending: not read yet, always 0.
-- Delivery %: rice delivered (Total Delivery x Lot Quantity) against CMR Due."""
+- Delivery %: rice delivered (Total Delivery x Lot Quantity) against CMR Due.
+- District (optional filter; blank = every district): a mill gets separate DCs for each district.
+  DCs: the District column of the DC's View DC from DCRO row (read from the DC PDF or set by hand);
+  a DC with no District there is not counted (the message says how many).
+  Paddy Received: only TPs whose PPC is in the District in PPC Master.
+  Only mills with paddy or DCs in the District are shown."""
 
 import math
 
@@ -25,6 +33,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
+from ivri_od.procurement.portal_sync import DISTRICT_COLUMN, NO_DISTRICT, _match_key
 from ivri_od.procurement.report.dc_track.dc_track import (
 	DC_NO,
 	LOT_NO,
@@ -39,7 +49,9 @@ from ivri_od.procurement.report.dc_track.dc_track import (
 	_load,
 	_records,
 )
+from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name, resolve_ppc_master_name
 
+VIEW_DC = ("DCRO", "View DC")
 # (site, section) of the rows read for the pending lots.
 FCI_CHALLAN = ("DCRO", "DC Transit Challan")
 RRC_CHALLAN = ("SCMS", "Transit Challan RRC")
@@ -78,8 +90,8 @@ def execute(filters=None):
 		row.rice_type.upper(): row
 		for row in frappe.get_all("Rice Delivery Setup", fields=["rice_type", "cmr_percentage", "driage_percentage"])
 	}
-	paddy = _paddy_received(filters.season)
-	lots = _dc_lots(season)
+	paddy = _paddy_received(filters.season, filters.district)
+	lots, dcs_without_district = _dc_lots(season, filters.district)
 
 	data, missing = [], set()
 	for mill in _mills(filters, paddy, lots):
@@ -90,35 +102,63 @@ def execute(filters=None):
 	if data:
 		data.append(_total(data))
 
-	message = None
+	messages = []
 	if missing:
-		message = _("Rice Delivery Setup missing for: {0}. CMR Due is 0 for these mills.").format(
-			", ".join(sorted(missing))
+		messages.append(
+			_("Rice Delivery Setup missing for: {0}. CMR Due is 0 for these mills.").format(", ".join(sorted(missing)))
 		)
-	return _columns(), data, message
+	if dcs_without_district:
+		messages.append(
+			_(
+				"{0} DCs of the season have no District in View DC from DCRO, so they are not counted for {1}. "
+				"Set their District in that report."
+			).format(dcs_without_district, filters.district)
+		)
+	return _columns(), data, " ".join(messages) or None
 
 
-def _paddy_received(season) -> dict:
-	"""{mill: paddy (Qtl)}: Target Quantity of every PPC allotted to the mill."""
+def _paddy_received(season, district=None) -> dict:
+	"""{mill: paddy (Qtl)}: Quantity of every TP of the mill in the season; with ``district``, only
+	the TPs whose PPC is in that District in PPC Master."""
 	rows = frappe.get_all(
-		"Target Allocation",
-		filters={"season": season},
-		fields=["mill_name", {"SUM": "target_quantity", "as": "qty"}],
-		group_by="mill_name",
+		"PPAS Transit Pass",
+		fields=["season", "miller", "ppc", {"SUM": "quantity", "as": "qty"}],
+		group_by="season, miller, ppc",
 	)
-	return {r.mill_name: flt(r.qty) for r in rows if r.mill_name}
+	paddy, district_of = {}, {}
+	for r in rows:
+		if resolve_season_master_name(r.season) != season:
+			continue
+		if district:
+			if r.ppc not in district_of:
+				ppc = resolve_ppc_master_name(r.ppc)
+				district_of[r.ppc] = ppc and frappe.db.get_value("PPC Master", ppc, "district")
+			if district_of[r.ppc] != district:
+				continue
+		mill = resolve_mill_master_name(miller=r.miller)
+		if mill:
+			paddy[mill] = paddy.get(mill, 0) + flt(r.qty)
+	return paddy
 
 
-def _dc_lots(season) -> dict:
-	"""{MILL CODE: {fci_issue, fci_delivery, fci_pending, rrc_issue, rrc_delivery, rrc_pending}}
-	from the season's DCs."""
+def _dc_lots(season, district=None):
+	"""({MILL CODE: {fci_issue, fci_delivery, fci_pending, rrc_issue, rrc_delivery, rrc_pending}},
+	DCs of the season with no District) from the season's DCs; with ``district``, only its DCs."""
 	dcs = _dcs_from_view_dc()
 	_add_deliveries(dcs)
 	_add_pending(dcs)
-	lots = {}
-	for dc in dcs.values():
+	district_of = _dc_districts() if district else {}
+	lots, without_district = {}, 0
+	for dc_no, dc in dcs.items():
 		if not dc["mill_id"] or not _in_season(dc, season):
 			continue
+		if district:
+			dc_district = district_of.get(dc_no)
+			if not dc_district:
+				without_district += 1
+				continue
+			if dc_district != _match_key(district):
+				continue
 		kind = dc["dc_type"].lower()
 		if kind not in ("fci", "rrc"):
 			continue
@@ -126,12 +166,25 @@ def _dc_lots(season) -> dict:
 		mill[f"{kind}_issue"] = mill.get(f"{kind}_issue", 0) + (dc["total_lots"] or 0)
 		mill[f"{kind}_delivery"] = mill.get(f"{kind}_delivery", 0) + len(dc["lots"])
 		mill[f"{kind}_pending"] = mill.get(f"{kind}_pending", 0) + len(dc.get("pending") or ())
-	return lots
+	return lots, without_district
+
+
+def _dc_districts() -> dict:
+	"""{DC No.: District (match key)} from the District column of View DC from DCRO
+	("No District Matched" or blank: not in the result)."""
+	districts = {}
+	for record in _records(*VIEW_DC):
+		cells = _load(record.row_data)
+		dc_no = _dc_no(_cell(cells, DC_NO))
+		district = (cells.get(DISTRICT_COLUMN) or "").strip()
+		if dc_no and district and district != NO_DISTRICT:
+			districts[dc_no] = _match_key(district)
+	return districts
 
 
 def _add_pending(dcs: dict):
 	"""Put each DC's pending lots in dc["pending"] (a set of Lot No.).
-	FCI: DCRO Transit Challan rows whose Pending At is not Approved.
+	FCI: DCRO Transit Challan rows whose Pending At is not Approved and with no Accepted Date.
 	RRC: SCMS Transit Challan RRC lots not in SCMS Lot Search (any status: it reached the RRC)."""
 	received = set()
 	for record in _records(*RRC_RECEIVED):
@@ -147,6 +200,8 @@ def _add_pending(dcs: dict):
 			if source == FCI_CHALLAN:
 				pending_at = _cell(cells, ["pendingat"])
 				if not pending_at or pending_at.casefold() == "approved" or NOT_DELIVERED.search(pending_at):
+					continue
+				if _cell(cells, ["accepteddate"]):  # accepted by FCI (AC Note, or set by hand)
 					continue
 			elif (dc_no, lot) in received or NOT_DELIVERED.search(_cell(cells, CHALLAN_STATUS)):
 				continue
@@ -188,7 +243,8 @@ def _mills(filters, paddy, lots):
 		m
 		for m in mills
 		if (not filters.mill or m.name == filters.mill)
-		and (m.is_active or m.name in paddy or m.name.upper() in lots)
+		# With a District: only mills with paddy or DCs there.
+		and ((m.is_active and not filters.district) or m.name in paddy or m.name.upper() in lots)
 	]
 
 

@@ -1,0 +1,95 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.rice-stock-register {
+		color: #000;
+		font-size: 10px;
+	}
+	.rice-stock-register .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 13px;
+		margin-bottom: 6px;
+	}
+	.rice-stock-register table.register {
+		width: 100%;
+		border-collapse: collapse;
+	}
+	.rice-stock-register table.register th,
+	.rice-stock-register table.register td {
+		border: 1px solid #000;
+		padding: 2px 4px;
+	}
+	.rice-stock-register table.register th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.rice-stock-register table.register td.qty {
+		text-align: right;
+	}
+	.rice-stock-register table.register tr.mismatch td {
+		color: #c00;
+	}
+	.rice-stock-register table.signatures {
+		width: 100%;
+		margin-top: 60px;
+		page-break-inside: avoid;
+	}
+	.rice-stock-register table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+	}
+</style>
+
+{% var qty_fields = ["ob", "receipt_from_milling", "total_stock", "prog_receipt", "delivery_fci", "delivery_rrc", "prog_delivery_fci", "prog_delivery_rrc", "total_prog_delivery", "cb"]; %}
+{% var rows = original_data || data; %}
+
+<div class="rice-stock-register">
+	<div class="heading">{%= frappe.utils.escape_html(((rows[0] || {}).register_title || "").toUpperCase()) %}</div>
+
+	<table class="register">
+		<thead>
+			<tr>
+				<th rowspan="2">Date</th>
+				<th>O.B.</th>
+				<th rowspan="2">Receipt from Milling</th>
+				<th>Total Stock</th>
+				<th>Prog. Receipt</th>
+				<th colspan="2">NORMAL RICE DELIVERY</th>
+				<th colspan="2">PROG. DELIVERY</th>
+				<th rowspan="2">Total Prog FCI+RRC</th>
+				<th>C.B.</th>
+			</tr>
+			<tr>
+				<th>CMR</th>
+				<th>CMR</th>
+				<th>CMR</th>
+				<th>FCI</th>
+				<th>RRC</th>
+				<th>FCI</th>
+				<th>RRC</th>
+				<th>CMR</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < rows.length; i++) { var row = rows[i]; %}
+			<tr class="{%= row.mismatch ? "mismatch" : "" %}">
+				<td>{%= frappe.datetime.str_to_user(row.date) %}</td>
+				{% for (var j = 0; j < qty_fields.length; j++) { %}
+				<td class="qty">{%= format_number(row[qty_fields[j]] || 0, null, 4) %}</td>
+				{% } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF MILLER</td>
+			<td style="text-align: right">SIGNATURE OF AUTHORISED OFFICER</td>
+		</tr>
+	</table>
+</div>

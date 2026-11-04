@@ -17,7 +17,8 @@
     "extract_on_click": "Save, dvmillerhistory",
     "key_columns": "RO No.",
     "enabled": 1,
-    "read_new_only": 1
+    "read_new_only": 1,
+    "filter_columns": "KMS Year = #INTKMS\nSeason = #ddlseason"
    },
    {
     "doctype": "Portal Site Section",
@@ -48,13 +49,14 @@
     "extract_only_on_click": 1,
     "download_receipt": 1,
     "receipt_link_text": "Details > printIcon, AC Note Doc",
-    "key_columns": "",
+    "key_columns": "DC Order No, Lot No.",
     "enabled": 1,
     "read_new_only": 1
    }
   ],
   "mill_id_labels": "Mill ID, Mill Code, Miller Code, Miller ID",
-  "mill_id_xpath": ""
+  "mill_id_xpath": "",
+  "login_user_id": ""
  },
  {
   "doctype": "Portal Site",
@@ -113,7 +115,8 @@
     "download_receipt": 1,
     "receipt_link_text": "Miller > printer",
     "enabled": 1,
-    "read_new_only": 1
+    "read_new_only": 1,
+    "filter_columns": "District = #ddlDistrict"
    },
    {
     "doctype": "Portal Site Section",
@@ -170,7 +173,8 @@
    }
   ],
   "mill_id_labels": "Mill ID, Mill Code, Miller Code, Miller ID",
-  "mill_id_xpath": ""
+  "mill_id_xpath": "",
+  "login_user_id": ""
  },
  {
   "doctype": "Portal Site",

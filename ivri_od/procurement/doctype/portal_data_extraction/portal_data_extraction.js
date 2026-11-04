@@ -11,7 +11,12 @@ const PORTAL_AGENT_PROTOCOL = "ppasagent://start";
 const PORTAL_METHOD = "ivri_od.procurement.doctype.portal_data_extraction.portal_data_extraction";
 const PORTAL_POLL_MS = 2000;
 // Oldest agent whose portal data is right (see "portal_version" in ppas_agent.py /health).
-const PORTAL_AGENT_MIN_VERSION = 19;
+const PORTAL_AGENT_MIN_VERSION = 25;
+// From this agent on, the User ID typed on the login page is read and checked against the Mill No.;
+// an older agent still works (the mill shown on the portal is checked, as before).
+const PORTAL_AGENT_LOGIN_CHECK_VERSION = 23;
+// portal_version of the running agent (from /health).
+let portal_agent_version = 0;
 const PORTAL_PAGE_SIZE = 50;
 const PORTAL_BATCH_PLAIN = 25;
 const PORTAL_BATCH_WITH_RECEIPTS = 5;
@@ -128,10 +133,11 @@ async function ensure_portal_agent(frm) {
 	if (!health) {
 		throw new Error(__("The local agent is not running. Please install the agent on this computer."));
 	}
-	if (health.portal && (health.portal_version || 1) < PORTAL_AGENT_MIN_VERSION) {
+	portal_agent_version = health.portal_version || 1;
+	if (health.portal && portal_agent_version < PORTAL_AGENT_MIN_VERSION) {
 		throw new Error(
 			__(
-				"The installed agent is an old version (it cannot skip rows already in the ERP). Please close it and install the latest agent."
+				"The installed agent is an old version (it does not stop a login with another mill's User ID). Please close it and install the latest agent."
 			)
 		);
 	}
@@ -269,7 +275,8 @@ async function poll_agent(frm, name) {
 		return;
 	}
 
-	const colors = { ready: "green", error: "red", closed: "red", extracting: "orange" };
+	// wrong_login: the User ID used to log in is not the Mill No.; the agent reads nothing.
+	const colors = { ready: "green", error: "red", closed: "red", extracting: "orange", wrong_login: "red" };
 	if (!session.closing) {
 		show_portal_message(frm, status.message, colors[status.state] || "blue");
 	}
@@ -358,6 +365,9 @@ async function import_result(frm, session, status) {
 			active_tab: first.active_tab || "",
 			table_ids: first.table_ids || "",
 			mill_id: first.mill_id || status.mill_id || "",
+			// User ID typed on the portal's login page: the server checks it is the Mill No.
+			login_user: first.login_user || status.login_user || "",
+			agent_checks_login: portal_agent_version >= PORTAL_AGENT_LOGIN_CHECK_VERSION ? 1 : 0,
 			page_filters: first.page_filters || [],
 			rows_kept: picked.rows.length,
 			kept_note: picked.note,

@@ -3,12 +3,21 @@
 Run: python -m unittest test_portal_scraper  (from this folder)
 """
 
+import threading
 import unittest
 
-from portal_scraper import trigger_hint, waits_for_own_trigger, only_clicks_for, click_starts_read, page_columns, lots_from_column, grid_matches_for, grid_to_table, looks_like_login, receipt_config_for, split_total_rows, table_match_for, click_triggers_for, oldest_first, date_column, detail_link, known_rows_for, newest_first, row_signature, mill_label_keys, open_read_for, document_labels, document_steps, file_extension, page_matches_row, row_tokens, pick_receipt_link, rows_to_cells, unique_headers
+from portal_scraper import JS_READ_GRID, PortalSession
+from portal_scraper import login_matches, trigger_hint, waits_for_own_trigger, only_clicks_for, click_starts_read, page_columns, lots_from_column, grid_matches_for, grid_to_table, looks_like_login, receipt_config_for, split_total_rows, table_match_for, click_triggers_for, oldest_first, date_column, detail_link, known_rows_for, page_field_ids_for, recheck_documents_for, read_all_pages_for, newest_first, row_signature, mill_label_keys, open_read_for, document_labels, document_steps, file_extension, page_matches_row, row_tokens, pick_receipt_link, rows_to_cells, unique_headers
 
 
 class TestPortalScraperHelpers(unittest.TestCase):
+    def test_login_matches(self):
+        self.assertTrue(login_matches("M051007", "M051007"))
+        self.assertTrue(login_matches("M051007", " m051007 "))
+        self.assertFalse(login_matches("M051007", "M050414"))
+        self.assertFalse(login_matches("M051007", ""))
+        self.assertFalse(login_matches("", "M051007"))
+
     def test_unique_headers(self):
         self.assertEqual(
             unique_headers(["Sl No", "", "Qty", "qty", "  Lot\n No "]),
@@ -257,6 +266,68 @@ class TestPortalScraperHelpers(unittest.TestCase):
         self.assertEqual(known_rows_for(known, "https://x/Mill/e_tec?cyear=1", "datatablestable1"), {"b"})
         self.assertEqual(known_rows_for(known, "https://x/ETec/miller_tec_report", "reportdiv"), {"c"})
         self.assertIsNone(known_rows_for(known, "https://x/Mill/tagging", ""))
+
+    def test_page_field_ids_for_page(self):
+        fields = [{"page_match": "MillerRoPDS", "ids": ["INTKMS"]}, {"page_match": "ViewDC", "ids": ["ddlKMS"]}]
+        self.assertEqual(page_field_ids_for(fields, "https://x/DeliveryCertificate/MillerRoPDS.aspx"), ["INTKMS"])
+        self.assertEqual(page_field_ids_for(fields, "https://x/Other.aspx"), [])
+        self.assertEqual(page_field_ids_for(None, "https://x/MillerRoPDS"), [])
+
+    def test_recheck_documents_of_known_rows(self):
+        known = [
+            {"page_match": "DCTransitChalanView", "table_match": "gvDCDetails", "sigs": ["a"], "recheck_documents": ["AC Note Doc"]},
+            {"page_match": "e_tec", "table_match": "", "sigs": ["b"]},
+        ]
+        url = "https://x/ACNoteBill/DCTransitChalanView.aspx"
+        self.assertEqual(recheck_documents_for(known, url, "gvdcdetails"), ["AC Note Doc"])
+        self.assertEqual(recheck_documents_for(known, "https://x/Mill/e_tec", ""), [])
+        self.assertEqual(recheck_documents_for(known, "https://x/other", ""), [])
+
+    def test_known_row_sends_only_its_ac_note_again(self):
+        # DCRO DC Transit Challan: a new row gets Details and AC Note Doc; a known
+        # row only its AC Note Doc (the portal may change it); no stop at the known row.
+        session = PortalSession.__new__(PortalSession)
+        session.stop_event, session.finish_event = threading.Event(), threading.Event()
+        session.row_limit, session._chrome_closed, session._session_lost = 0, False, False
+        session._set = session._find_grid = lambda *a, **k: None
+        saved = []
+
+        def collect(got, links, name, detail_text, label, *rest):
+            saved.append((name, label))
+            got["receipt_path"] = f"{name}.pdf"
+
+        session._collect_receipt = collect
+        raw = [
+            {"cells": [th("DC Order No"), th("Date"), th("Lot No.")]},
+            {"cells": [td("DCF1"), td("05/10/2026"), td("2")]},
+            {"cells": [td("DCF1"), td("04/10/2026"), td("1")]},
+        ]
+
+        class Driver:
+            def execute_script(self, script, *args):
+                return {"rows": raw} if script == JS_READ_GRID else False
+
+        session.driver = Driver()
+        known = {row_signature({"DC Order No": "DCF1", "Date": "05/10/2026", "Lot No.": "2"})}
+        _columns, rows, _pages = session._read_all_pages(
+            "sig", "", True, "Details > printIcon, AC Note Doc", True, known, ["AC Note Doc"]
+        )
+        self.assertEqual([[d["label"] for d in r["documents"]] for r in rows], [["AC Note Doc"], ["Details", "AC Note Doc"]])
+        self.assertEqual((session._rechecked, session._skipped_known), (1, 0))
+        # Without recheck the known row is skipped and reading stops there (newest first).
+        _columns, rows, _pages = session._read_all_pages("sig", "", True, "Details > printIcon, AC Note Doc", True, known)
+        self.assertEqual((rows, session._skipped_known, session._stopped_at_known), ([], 1, True))
+        # read_all (version 26): the known row is skipped (no AC Note again), the next row is read.
+        _columns, rows, _pages = session._read_all_pages(
+            "sig", "", True, "Details > printIcon, AC Note Doc", True, known, None, True
+        )
+        self.assertEqual([[d["label"] for d in r["documents"]] for r in rows], [["Details", "AC Note Doc"]])
+        self.assertEqual((session._skipped_known, session._stopped_at_known, session._rechecked), (1, False, 0))
+
+    def test_read_all_pages_for(self):
+        known = [{"page_match": "DCTransitChalanView", "table_match": "", "sigs": ["a"], "read_all_pages": True}]
+        self.assertTrue(read_all_pages_for(known, "https://x/ACNoteBill/DCTransitChalanView.aspx", ""))
+        self.assertFalse(read_all_pages_for(known, "https://x/other", ""))
 
     def test_grid_matches_for_page(self):
         config = [

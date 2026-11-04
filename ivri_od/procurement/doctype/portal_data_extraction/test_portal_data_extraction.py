@@ -4,6 +4,7 @@
 import base64
 import json
 from io import BytesIO
+from unittest.mock import patch
 
 import frappe
 from frappe.tests import IntegrationTestCase, UnitTestCase
@@ -47,7 +48,66 @@ def make_pdf() -> bytes:
 	return out.getvalue()
 
 
+def make_text_pdf(text: str) -> bytes:
+	"""A one-page PDF with a line of text (e.g. an AC Note's "Net Weight : 287.41811")."""
+	from pypdf import PdfWriter
+	from pypdf.generic import DecodedStreamObject, DictionaryObject, NameObject
+
+	writer = PdfWriter()
+	page = writer.add_blank_page(width=300, height=100)
+	font = DictionaryObject(
+		{
+			NameObject("/Type"): NameObject("/Font"),
+			NameObject("/Subtype"): NameObject("/Type1"),
+			NameObject("/BaseFont"): NameObject("/Helvetica"),
+		}
+	)
+	page[NameObject("/Resources")] = DictionaryObject(
+		{NameObject("/Font"): DictionaryObject({NameObject("/F1"): writer._add_object(font)})}
+	)
+	stream = DecodedStreamObject()
+	stream.set_data(f"BT /F1 10 Tf 10 50 Td ({text}) Tj ET".encode())
+	page[NameObject("/Contents")] = writer._add_object(stream)
+	out = BytesIO()
+	writer.write(out)
+	return out.getvalue()
+
+
 class UnitTestPortalSync(UnitTestCase):
+	def test_new_row_label_names_new_dcs_and_lots(self):
+		def doc(cells):
+			return frappe._dict(row_data=json.dumps(cells))
+
+		self.assertEqual(portal_sync.new_row_label("DCRO", "View DC", doc({"DC Code(RRC)": "DCF050231"})), "DCF050231")
+		self.assertEqual(
+			portal_sync.new_row_label("DCRO", "DC Transit Challan", doc({"DC Order No": "DCF051889", "Lot No.": "97"})),
+			"DCF051889 / Lot 97",
+		)
+		self.assertEqual(
+			portal_sync.new_row_label("SCMS", "Lot Search", doc({"DC No.": "DCR050483", "Lot No.": "1"})), "DCR050483 / Lot 1"
+		)
+		# Other sections are notified too, named by the row's summary.
+		paddy_release = frappe._dict(row_data="{}", summary="RO260500492", name="PR-1")
+		self.assertEqual(portal_sync.new_row_label("DCRO", "Paddy Release", paddy_release), "RO260500492")
+		self.assertEqual(portal_sync.new_row_label("SCMS", "Gunny Stock Register Details", frappe._dict(name="PR-2")), "PR-2")
+
+	def test_ac_note_net_weight_read_from_pdf(self):
+		# Net Weight is the Purchase Weight; the AC Note's own "Net Weight" is the Weight After Moisture Cut.
+		pdf = make_text_pdf("Acceptance Note - 208 Purchase Weight (Quintal/Kg) including 20 kg deduction : 289.73600 Net Weight : 287.41811 DC No. : DCF050231")
+		self.assertEqual(portal_sync.ac_note_net_weight(pdf), "289.73600")
+		text = portal_sync.ac_note_text(pdf)
+		self.assertEqual(portal_sync._net_weight_in(text), "287.41811")
+		self.assertEqual(portal_sync._acceptance_note_in(text), "208")
+		self.assertEqual(portal_sync.ac_note_net_weight(make_pdf()), "")  # no Net Weight on it
+		self.assertEqual(portal_sync.ac_note_net_weight(b"\xff\xd8\xff scan"), "")  # a scanned image
+		self.assertEqual(portal_sync.ac_note_net_weight(None), "")
+
+	def test_ac_note_accepted_date_read_from_pdf(self):
+		pdf = make_text_pdf("4 Date of Acceptance 11-May-2026 5 Stack Name 3C03 Net Weight : 287.41811")
+		self.assertEqual(portal_sync.ac_note_accepted_date(pdf), "11-05-2026")
+		self.assertEqual(portal_sync.ac_note_accepted_date(make_pdf()), "")
+		self.assertEqual(portal_sync.ac_note_accepted_date(None), "")
+
 	def test_normalize_cells_squashes_spaces_and_drops_blank_headers(self):
 		cells = portal_sync.normalize_cells({" Challan  No ": " TC/01 ", "": "x", "Qty": 12})
 		self.assertEqual(cells, {"Challan No": "TC/01", "Qty": "12"})
@@ -64,6 +124,19 @@ class UnitTestPortalSync(UnitTestCase):
 		cells = {"Challan No": "", "Qty": "12"}
 		key = portal_sync.build_record_key(cells, ["Challan No"])
 		self.assertEqual(json.loads(key), cells)
+
+	def test_dc_transit_challan_one_record_per_lot(self):
+		# DCRO DC Transit Challan: a lot whose Pending At (and Sl#) changed on the portal is the
+		# same record, not a new one (DCF051889 lot 97 was saved twice without Key Columns).
+		fixture = frappe.get_app_path("ivri_od", "fixtures", "portal_site.json")
+		with open(fixture) as f:
+			sections = {(site["name"], s["section_name"]): s for site in json.load(f) for s in site["sections"]}
+		key_columns = portal_sync.parse_key_columns(sections[("DCRO", "DC Transit Challan")]["key_columns"])
+		self.assertEqual(key_columns, ["DC Order No", "Lot No."])
+		before = {"Sl#": "78", "DC Order No": "DCF051889", "Lot No.": "97", "Pending At": "Manager QC Digital Sign"}
+		after = {**before, "Sl#": "200", "Pending At": "Approved"}
+		self.assertEqual(portal_sync.build_record_key(before, key_columns), "DCF051889 | 97")
+		self.assertEqual(portal_sync.build_record_key(after, key_columns), "DCF051889 | 97")
 
 	def test_view_dc_kms_year_from_season_year(self):
 		self.assertEqual(portal_sync.kms_year_from_season_year("2026"), "2025-26")
@@ -107,6 +180,17 @@ class UnitTestPortalSync(UnitTestCase):
 		)
 		self.assertEqual([f["id"] for f in portal_sync.safe_page_filters(page_filters)][-1], "ddlMiller")
 
+	def test_filter_by_element_id(self):
+		# DCRO Paddy Release: KMS Year from the element id="INTKMS" (exact id, not words in a label).
+		columns = "KMS Year = #INTKMS"
+		page_filters = [
+			{"label": "KMS Year Old", "id": "INTKMS_OLD", "value": "2024-2025"},
+			{"label": "INTKMS", "id": "INTKMS", "value": "2025-2026"},
+		]
+		self.assertEqual(portal_sync.page_field_ids(columns + "\nDepot = depot"), ["INTKMS"])
+		self.assertEqual(portal_sync.filter_cells(columns, page_filters), {"KMS Year": "2025-2026"})
+		self.assertEqual(portal_sync.filter_cells(columns, page_filters[:1]), {})
+
 	def test_safe_pdf_name(self):
 		self.assertEqual(portal_sync._safe_pdf_name("../../etc/pass wd.PDF", "PR-1"), "etc_pass_wd.pdf")
 		self.assertEqual(portal_sync._safe_pdf_name("", "PR-1"), "PR-1.pdf")
@@ -135,6 +219,58 @@ class IntegrationTestPortalDataExtraction(IntegrationTestCase):
 
 	def tearDown(self):
 		frappe.db.rollback()
+
+	def test_bell_notification_for_new_rows_of_any_section(self):
+		def notifications():
+			return frappe.get_all(
+				"Notification Log",
+				filters={"document_name": self.extraction.name, "for_user": frappe.session.user},
+				fields=["subject", "email_content"],
+			)
+
+		rows = [{"cells": {"Challan No": "TC/01", "Qty": "10"}}, {"cells": {"Challan No": "TC/02", "Qty": "20"}}]
+		started = begin_run(self.extraction.name, total_rows=2, page_url=self.PAGE_URL)
+		import_rows(self.extraction.name, started["run"], json.dumps(rows[:1]))
+		import_rows(self.extraction.name, started["run"], json.dumps(rows[1:]))  # second batch, same run
+		finish_run(self.extraction.name, started["run"], "Completed")
+		[note] = notifications()
+		self.assertIn(f"2 new {TEST_SECTION} rows: TC/01, TC/02", note.subject)
+
+		# Read again, nothing new: no second notification.
+		started = begin_run(self.extraction.name, total_rows=2, page_url=self.PAGE_URL)
+		import_rows(self.extraction.name, started["run"], json.dumps(rows))
+		finish_run(self.extraction.name, started["run"], "Completed")
+		self.assertEqual(len(notifications()), 1)
+
+	def test_login_user_must_be_mill_no(self):
+		from ivri_od.procurement.doctype.portal_data_extraction.portal_data_extraction import get_session_config
+
+		# Site without a Login User ID Element (e.g. WINGS): not checked.
+		begin_run(self.extraction.name, total_rows=1, page_url=self.PAGE_URL)
+
+		frappe.db.set_value("Portal Site", TEST_SITE, "login_user_id", "UserName")
+		frappe.clear_document_cache("Portal Site", TEST_SITE)
+		config = get_session_config(self.extraction.name)
+		self.assertEqual((config["login_user_id"], config["expected_login"]), ("UserName", TEST_MILL))
+
+		# Agent older than 23 does not read the User ID: still allowed (portal mill check only).
+		begin_run(self.extraction.name, total_rows=1, page_url=self.PAGE_URL, agent_checks_login=0)
+
+		# New agent, User ID not read or another mill's User ID: nothing is started or saved.
+		for login_user in (None, "", OTHER_MILL):
+			with self.assertRaises(frappe.ValidationError):
+				begin_run(
+					self.extraction.name, total_rows=1, page_url=self.PAGE_URL, login_user=login_user, agent_checks_login=1
+				)
+		# The mill's own User ID (capitals and spaces ignored).
+		started = begin_run(
+			self.extraction.name,
+			total_rows=1,
+			page_url=self.PAGE_URL,
+			login_user=f" {TEST_MILL.lower()} ",
+			agent_checks_login=1,
+		)
+		self.assertTrue(started["run"])
 
 	def _import(self, rows, page_url=None):
 		started = begin_run(
@@ -570,36 +706,73 @@ class IntegrationTestDcroReports(IntegrationTestCase):
 	def test_paddy_release_remaining_balance(self):
 		from ivri_od.procurement.report.paddy_release_from_dcro import paddy_release_from_dcro as report
 
+		for district in ("Testown", "Testkor"):
+			if not frappe.db.exists("District Master", district):
+				frappe.get_doc({"doctype": "District Master", "district_name": district}).insert()
+		frappe.db.set_value("Mill Master", TEST_MILL, "district", "Testown")
+
 		url = "https://portal.pdsodisha.gov.in/DeliveryCertificate/MillerRoPDS/Add"
 		lifted, released = "Paddy Lifted (Own District) (in Qtl)", "Quantity of Paddy Released for Milling (Own District) (in Qtl)"
-		other = "Quantity of Paddy Released for Milling (Other District) (in Qtl)"
+		kor_lifted = "Paddy Lifted (Other District)TESTKOR (in Qtl)"
+		kor_released = "Quantity of Paddy Released for Milling (Other District)TESTKOR (in Qtl)"
 		rows = [  # portal order is not date order; Paddy Lifted is a running total on the portal
-			{"RO No.": "RO-2", "Date of Requistion": "10-01-2025", lifted: "56,484.91", released: "6000.00", other: "100", "Status of Released Order": "Approved"},
-			{"RO No.": "RO-1", "Date of Requistion": "07-01-2025", lifted: "49579.05", released: "5100.00", other: "0.00", "Status of Released Order": "Approved"},
-			{"RO No.": "RO-3", "Date of Requistion": "17-01-2025", lifted: "65451.23", released: "6000.00", other: "0", "Status of Released Order": "Rejected"},
+			{"RO No.": "RO-2", "Date of Requistion": "10-01-2025", lifted: "56,484.91", released: "6000.00", kor_lifted: "300", kor_released: "100", "Status of Released Order": "Approved"},
+			{"RO No.": "RO-1", "Date of Requistion": "07-01-2025", lifted: "49579.05", released: "5100.00", kor_lifted: "300", kor_released: "0.00", "Status of Released Order": "Approved"},
+			{"RO No.": "RO-3", "Date of Requistion": "17-01-2025", lifted: "65451.23", released: "6000.00", kor_lifted: "300", kor_released: "50", "Status of Released Order": "Rejected"},
 		]
+		for row in rows:
+			row["Season"] = "KHARIF"
+		# Rabi has its own lifting: its release never lowers the Kharif balance, nor the other way.
+		rows.append(
+			{"Season": "RABI", "RO No.": "RO-4", "Date of Requistion": "09-01-2025", lifted: "1000", released: "400", kor_lifted: "0", kor_released: "0", "Status of Released Order": "Approved"}
+		)
+		for row in rows:
+			row["KMS Year"] = "2024-2025"
+		# Kharif of another KMS Year has its own lifting too.
+		rows.append(
+			{"KMS Year": "2023-2024", "Season": "KHARIF", "RO No.": "RO-5", "Date of Requistion": "08-01-2025", lifted: "2000", released: "300", kor_lifted: "0", kor_released: "0", "Status of Released Order": "Approved"}
+		)
 		self.assertEqual(self._scrape(url, rows), "Paddy Release")
 		# Another mill's release (its own account) does not lower this mill's balance.
 		other_mill = make_extraction(self.SITE, OTHER_MILL)
 		self._scrape(
 			url,
-			[{"RO No.": "RO-9", "Date of Requistion": "08-01-2025", lifted: "900", released: "500", other: "0", "Status of Released Order": "Approved"}],
+			[{"RO No.": "RO-9", "Date of Requistion": "08-01-2025", lifted: "900", released: "500", "Status of Released Order": "Approved"}],
 			extraction=other_mill,
 		)
 		with patch_site(report, self.SITE):
 			columns, data, *_ = report.execute({"mill_id": TEST_MILL})
-			# Filtered to one order: the released total still counts the earlier ones.
+			# Filtered to one order: the released totals still count the earlier ones.
 			_columns, filtered, *_ = report.execute({"search": "RO-2"})
 			_columns, other_data, *_ = report.execute({"mill_id": OTHER_MILL})
 		labels = [c["label"] for c in columns]
-		self.assertEqual(labels.index("Remaining Balance"), labels.index(other) + 1)
-		ro_no = columns[labels.index("RO No.")]["fieldname"]
-		by_ro = {d[ro_no]: d["x0"] for d in data}
-		# 49579.05 - 5100; 56484.91 - (5100 + 6000 + 100); rejected RO-3 releases nothing.
-		self.assertEqual(by_ro, {"RO-1": 44479.05, "RO-2": 45284.91, "RO-3": 54251.23})
-		self.assertEqual([d["x0"] for d in filtered], [45284.91])
-		self.assertEqual([d["x0"] for d in other_data], [400.0])
-		self.assertEqual([d[ro_no] for d in data], ["RO-1", "RO-2", "RO-3"])  # date order
+		# Own District under the mill's District; KORAPUT-like header words matched to District Master.
+		self.assertEqual(
+			labels[labels.index("Date of Requistion") + 1 : labels.index("Status of Released Order")],
+			[
+				"Paddy Lifted Testown", "Paddy Released Testown", "Remaining Balance Testown",
+				"Paddy Lifted Testkor", "Paddy Released Testkor", "Remaining Balance Testkor",
+			],
+		)
+		field = {c["label"]: c["fieldname"] for c in columns}
+		by_ro = {d[field["RO No."]]: (d[field["Remaining Balance Testown"]], d[field["Remaining Balance Testkor"]]) for d in data}
+		# 49579.05 - 5100; 56484.91 - (5100 + 6000); rejected RO-3 releases nothing. Testkor: 300 - 100.
+		self.assertEqual(
+			by_ro,
+			{
+				"RO-1": ("44479.05", "300.00"),
+				"RO-2": ("45384.91", "200.00"),
+				"RO-3": ("54351.23", "200.00"),
+				"RO-4": ("600.00", "0.00"),  # Rabi: 1000 - 400
+				"RO-5": ("1700.00", "0.00"),  # Kharif 2023-2024: 2000 - 300
+			},
+		)
+		self.assertEqual([d[field["Remaining Balance Testown"]] for d in filtered], ["45384.91"])
+		# The other mill has no District: its Own District columns keep the portal words.
+		other_field = {c["label"]: c["fieldname"] for c in _columns}
+		self.assertEqual([d[other_field["Remaining Balance (Own District)"]] for d in other_data], ["400.00"])
+		self.assertEqual([d[field["RO No."]] for d in data], ["RO-1", "RO-5", "RO-4", "RO-2", "RO-3"])  # date order
+		self.assertEqual({d[field["RO No."]]: d[field["Season"]] for d in data}["RO-4"], "RABI")
 
 	def test_view_dc_keeps_every_filter_and_manual_columns(self):
 		filters = [
@@ -675,6 +848,222 @@ class IntegrationTestDcroReports(IntegrationTestCase):
 		first = next(d for d in data if d["c0"] == "DC-9")
 		self.assertTrue(first["doc0"].endswith(".pdf") and first["doc1"].endswith(".jpg"))
 		self.assertEqual(next(d for d in data if d["c0"] == "DC-10")["doc0"], "")
+
+	def test_view_dc_quantity_is_lots_times_lot_quantity(self):
+		from ivri_od.procurement.report.view_dc_from_dcro.view_dc_from_dcro import add_quantity
+
+		frappe.db.set_single_value("Rice Lot Quantity", "lot_quantity", 290)
+		columns = [{"fieldname": "c0", "label": "DC Code(RRC)"}, {"fieldname": "t0", "label": "Lots"}, {"fieldname": "last_seen_on"}]
+		data = [{"c0": "DCF-1", "t0": 12}, {"c0": "DCR-1", "t0": None}]  # lots not read yet
+		add_quantity(columns, data)
+		self.assertEqual([c["fieldname"] for c in columns], ["c0", "t0", "qty", "last_seen_on"])
+		self.assertEqual([d["qty"] for d in data], [3480, None])
+
+	def test_view_dc_district_read_from_pdf(self):
+		for district in ("Balangir", "Kalahandi"):
+			if not frappe.db.exists("District Master", district):
+				frappe.get_doc({"doctype": "District Master", "district_name": district}).insert()
+
+		def dc_pdf(district):
+			text = f"Miller Code M051007 agreed for Custom Milling of paddy on behalf of OSCSC({district})for KHARIF season"
+			return {"filename": "dc.pdf", "content_b64": base64.b64encode(make_text_pdf(text)).decode()}
+
+		rows = [
+			{"cells": {"DC Code(RRC)": "DCR-1"}, "receipt": dc_pdf("BALANGIR")},
+			{"cells": {"DC Code(RRC)": "DCR-2"}, "receipt": dc_pdf(" kala handi ")},  # case and spaces differ
+			{"cells": {"DC Code(RRC)": "DCR-3"}, "receipt": dc_pdf("NOWHERE")},  # not in the master
+			{"cells": {"DC Code(RRC)": "DCR-4"}},  # no PDF
+		]
+		started = begin_run(self.extraction.name, total_rows=4, page_url="https://x.invalid/DCRO/ViewDC")
+		sections = {(self.SITE, started["section"])}
+
+		def districts():
+			records = frappe.get_all("Portal Record", filters={"site": self.SITE, "section": started["section"]}, pluck="row_data")
+			return {json.loads(r)["DC Code(RRC)"]: json.loads(r).get("District") for r in records}
+
+		with (
+			patch.object(portal_sync, "DISTRICT_SECTIONS", sections),
+			patch.object(self.manual, "DISTRICT_SECTIONS", sections),
+		):
+			result = import_rows(self.extraction.name, started["run"], json.dumps(rows))
+			self.assertEqual(result["inserted"], 4, result["errors"])
+			self.assertEqual(districts(), {
+					"DCR-1": "Balangir",
+					"DCR-2": "Kalahandi",
+					"DCR-3": portal_sync.NO_DISTRICT,
+					"DCR-4": portal_sync.NO_DISTRICT,
+				})
+
+			# Read again without the PDF: the saved PDF is read; no new record.
+			result = import_rows(self.extraction.name, started["run"], json.dumps([{"cells": rows[0]["cells"]}]))
+			self.assertEqual(result["unchanged"], 1, result)
+			self.assertEqual(districts()["DCR-1"], "Balangir")
+
+			# Set by hand in the report: kept when the DC is read again, even with a PDF.
+			set_dc_district = self.manual.set_dc_district
+			record = frappe.db.get_value(
+				"Portal Record", {"site": self.SITE, "section": started["section"], "summary": ["like", "%DCR-3%"]}
+			)
+			self.assertEqual(set_dc_district(record, " KALA handi "), "Kalahandi")  # saved as in the master
+			self.assertTrue(frappe.db.get_value("Portal Record", record, "district_manual"))
+			import_rows(self.extraction.name, started["run"], json.dumps([rows[2]]))
+			self.assertEqual(districts()["DCR-3"], "Kalahandi")
+			self.assertRaises(frappe.ValidationError, set_dc_district, record, "Nowhere")
+			# Cleared: read again from the saved PDF (not in the master).
+			self.assertEqual(set_dc_district(record, ""), portal_sync.NO_DISTRICT)
+			self.assertFalse(frappe.db.get_value("Portal Record", record, "district_manual"))
+
+	def test_dc_transit_challan_net_weight(self):
+		ac_note = base64.b64encode(make_text_pdf("Acceptance Note - 208 Date of Acceptance 11-May-2026 Purchase Weight (Quintal/Kg) including 20 kg deduction : 289.73600 Value Cut : 2.31789 Net Weight : 287.41811")).decode()
+		rows = [
+			{"cells": {"DC No": "DC-21", "Qty": "290"}, "documents": [{"label": "AC Note Doc", "content_b64": ac_note}]},
+			{"cells": {"DC No": "DC-22", "Qty": "290"}, "documents": [{"label": "AC Note Doc", "error": "no button"}]},
+		]
+		started = begin_run(self.extraction.name, total_rows=2, page_url="https://x.invalid/ACNoteBill/DCTransitChalanView")
+		sections = {(self.SITE, started["section"]): "AC Note Doc"}
+		frappe.db.set_single_value(portal_sync.NET_WEIGHT_MASTER, "net_quantity", 287.5)
+
+		def weights():
+			records = frappe.get_all("Portal Record", filters={"site": self.SITE, "section": started["section"]}, pluck="row_data")
+			return sorted((json.loads(r)["DC No"], json.loads(r)["Net Weight"]) for r in records)
+
+		with patch.dict(portal_sync.NET_WEIGHT_SECTIONS, sections):
+			result = import_rows(self.extraction.name, started["run"], json.dumps(rows))
+			self.assertEqual(result["inserted"], 2, result["errors"])
+			self.assertEqual(weights(), [("DC-21", "289.73600"), ("DC-22", "287.50000")])
+			dates = {
+				json.loads(r)["DC No"]: json.loads(r)["Accepted Date"]
+				for r in frappe.get_all("Portal Record", filters={"site": self.SITE, "section": started["section"]}, pluck="row_data")
+			}
+			self.assertEqual(dates, {"DC-21": "11-05-2026", "DC-22": ""})  # no AC Note: no date
+			ac_values = {
+				json.loads(r)["DC No"]: (json.loads(r)["Acceptance Note No"], json.loads(r)["Weight After Moisture Cut"])
+				for r in frappe.get_all("Portal Record", filters={"site": self.SITE, "section": started["section"]}, pluck="row_data")
+			}
+			# No AC Note: no Acceptance Note No; both weights are the master's Net Quantity.
+			self.assertEqual(ac_values, {"DC-21": ("208", "287.41811"), "DC-22": ("", "287.50000")})
+
+			# Read again without the file: the saved AC Note is read; no new record.
+			result = import_rows(self.extraction.name, started["run"], json.dumps([{"cells": rows[0]["cells"]}]))
+			self.assertEqual(result["unchanged"], 1, result)
+			# The master's Net Quantity is used when there is no AC Note.
+			frappe.db.set_single_value(portal_sync.NET_WEIGHT_MASTER, "net_quantity", 290)
+			import_rows(self.extraction.name, started["run"], json.dumps([{"cells": rows[1]["cells"]}]))
+			self.assertEqual(weights(), [("DC-21", "289.73600"), ("DC-22", "290.00000")])
+
+			name = frappe.get_all("Portal Record", filters={"site": self.SITE, "section": started["section"]}, pluck="name")
+			cells = json.loads(frappe.db.get_value("Portal Record", name[0], "row_data"))
+			key = portal_sync.build_record_key(portal_sync.without_net_weight(self.SITE, started["section"], cells), [])
+			self.assertNotIn("Net Weight", key)
+			self.assertNotIn("Weight After Moisture Cut", key)
+			self.assertNotIn("Acceptance Note No", key)
+			self.assertNotIn("Accepted Date", key)
+
+			# Daily read: the row without an AC Note is read again in full; a row with its AC Note is skipped.
+			from ivri_od.procurement.doctype.portal_data_extraction.portal_data_extraction import _known_rows
+
+			for name, sig in (("DC-21", "sig-21"), ("DC-22", "sig-22")):
+				record = next(
+					r.name
+					for r in frappe.get_all(
+						"Portal Record", filters={"site": self.SITE, "section": started["section"]}, fields=["name", "row_data"]
+					)
+					if json.loads(r.row_data)["DC No"] == name
+				)
+				frappe.db.set_value("Portal Record", record, "portal_row_sig", sig)
+			section = frappe._dict(enabled=1, page_match="DCTransitChalanView", table_match="", read_new_only=1)
+			section.section_name = started["section"]
+			[known] = _known_rows(frappe._dict(name=self.SITE, sections=[section]), TEST_MILL)
+			self.assertEqual(known["sigs"], ["sig-21"])
+			self.assertNotIn("recheck_documents", known)
+			self.assertTrue(known["read_all_pages"])
+			# Another mill's account never gets this mill's rows as "already read".
+			[other] = _known_rows(frappe._dict(name=self.SITE, sections=[section]), OTHER_MILL)
+			self.assertEqual(other["sigs"], [])
+
+	def test_dc_transit_challan_values_by_hand(self):
+		ac_note = base64.b64encode(make_text_pdf("Acceptance Note - 208 Date of Acceptance 11-May-2026 Purchase Weight (Quintal/Kg) including 20 kg deduction : 289.73600 Value Cut : 2.31789 Net Weight : 287.41811")).decode()
+		rows = [
+			{"cells": {"DC No": "DC-31", "Qty": "290"}, "documents": [{"label": "AC Note Doc", "content_b64": ac_note}]},
+			{"cells": {"DC No": "DC-32", "Qty": "290"}, "documents": [{"label": "AC Note Doc", "error": "no button"}]},
+		]
+		started = begin_run(self.extraction.name, total_rows=2, page_url="https://x.invalid/ACNoteBill/DCTransitChalanView")
+		sections = {(self.SITE, started["section"]): "AC Note Doc"}
+		frappe.db.set_single_value(portal_sync.NET_WEIGHT_MASTER, "net_quantity", 287.5)
+
+		def record_of(dc_no):
+			return next(
+				r.name
+				for r in frappe.get_all(
+					"Portal Record", filters={"site": self.SITE, "section": started["section"]}, fields=["name", "row_data"]
+				)
+				if json.loads(r.row_data)["DC No"] == dc_no
+			)
+
+		def values(dc_no):
+			cells = json.loads(frappe.db.get_value("Portal Record", record_of(dc_no), "row_data"))
+			return cells["Accepted Date"], cells["Net Weight"]
+
+		with patch.dict(portal_sync.NET_WEIGHT_SECTIONS, sections):
+			import_rows(self.extraction.name, started["run"], json.dumps(rows))
+			set_values = self.manual.set_ac_note_values
+
+			# Read from the AC Note: cannot be set by hand.
+			self.assertRaises(frappe.ValidationError, set_values, record_of("DC-31"), "2026-05-20")
+			self.assertRaises(frappe.ValidationError, set_values, record_of("DC-31"), "", 290)
+
+			# No AC Note: set by hand, kept when the row is read again without one.
+			self.assertEqual(
+				set_values(record_of("DC-32"), "2026-05-20", 288.1),
+				{"Net Weight": "288.10000", "Accepted Date": "20-05-2026"},
+			)
+			import_rows(self.extraction.name, started["run"], json.dumps([rows[1]]))
+			self.assertEqual(values("DC-32"), ("20-05-2026", "288.10000"))
+
+			# An AC Note with the values read later comes first.
+			import_rows(
+				self.extraction.name,
+				started["run"],
+				json.dumps([{**rows[1], "documents": [{"label": "AC Note Doc", "content_b64": ac_note}]}]),
+			)
+			self.assertEqual(values("DC-32"), ("11-05-2026", "289.73600"))
+
+			# Cleared: no date, the master's Net Quantity.
+			record = record_of("DC-31")
+			frappe.db.set_value("Portal Record", record, "documents", "{}")
+			set_values(record, "2026-05-21", 289)
+			self.assertEqual(set_values(record, "", 0), {"Net Weight": "287.50000", "Accepted Date": ""})
+			self.assertFalse(frappe.db.get_value("Portal Record", record, "accepted_date_manual"))
+			self.assertFalse(frappe.db.get_value("Portal Record", record, "net_weight_manual"))
+
+			# AC Note uploaded in the pop-up: read to fill it, then put on the row on Save; its values
+			# come first (the same values sent back are fine); no second one on that row.
+			def upload(text):
+				return frappe.get_doc(
+					{"doctype": "File", "file_name": "ac_note.pdf", "is_private": 1, "content": make_text_pdf(text)}
+				).insert(ignore_permissions=True)
+
+			uploaded = upload("Date of Acceptance 12-May-2026 Purchase Weight : 289.2 Net Weight : 286.9")
+			read = self.manual.read_ac_note(uploaded.file_url)
+			self.assertEqual(read, {"accepted_date": "2026-05-12", "net_weight": 289.2})
+			self.assertEqual(
+				set_values(record, read["accepted_date"], read["net_weight"], uploaded.file_url),
+				{"Net Weight": "289.2", "Accepted Date": "12-05-2026"},
+			)
+			self.assertEqual(frappe.db.get_value("File", uploaded.name, "attached_to_name"), record)
+			self.assertFalse(frappe.db.get_value("Portal Record", record, "accepted_date_manual"))
+			self.assertRaises(frappe.ValidationError, set_values, record, "", 0, upload("x").file_url)
+			self.assertRaises(frappe.ValidationError, set_values, record_of("DC-32"), "", 0, "/private/files/none.pdf")
+
+			# A scan: nothing read; the values are typed in.
+			scan = upload("no text here")
+			self.assertEqual(self.manual.read_ac_note(scan.file_url), {"accepted_date": "", "net_weight": 0})
+			other = record_of("DC-32")
+			frappe.db.set_value("Portal Record", other, "documents", "{}")
+			self.assertEqual(
+				set_values(other, "2026-05-25", 288, scan.file_url),
+				{"Net Weight": "288.00000", "Accepted Date": "25-05-2026"},
+			)
 
 
 def patch_site(report_module, site):
@@ -916,3 +1305,65 @@ class IntegrationTestWings(IntegrationTestCase):
 		site.save()
 		pages = [k["page_match"] for k in get_session_config(self.extraction.name)["known_rows"]]
 		self.assertNotIn("ETec/miller_tec_report", pages)
+
+
+class IntegrationTestScmsLotSearch(IntegrationTestCase):
+	"""SCMS Lot Search: the page's District (element id ddlDistrict) is a column of every row."""
+
+	SITE = "_Test SCMS"
+
+	def setUp(self):
+		if not frappe.db.exists("Portal Site", self.SITE):
+			frappe.get_doc(
+				{
+					"doctype": "Portal Site",
+					"site_name": self.SITE,
+					"login_url": "https://example.invalid/",
+					"sections": [
+						{"section_name": "Pending Lot In for RRC", "page_match": "LotSearch.aspx", "table_match": "Pending Lot"},
+						{
+							"section_name": "Lot Search",
+							"page_match": "LotSearch.aspx",
+							"table_match": "Lot Search",
+							"key_columns": "DC No., Lot No.",
+							"filter_columns": "District = #ddlDistrict",
+						},
+					],
+				}
+			).insert()
+		self.extraction = make_extraction(self.SITE)
+
+	def tearDown(self):
+		frappe.db.rollback()
+
+	def _scrape(self, tab, rows):
+		name = self.extraction.name
+		page_filters = [{"label": "District", "id": "ddlDistrict", "value": "BALANGIR"}]
+		started = begin_run(
+			name,
+			total_rows=len(rows),
+			page_url="https://scms.example.invalid/LotSearch.aspx",
+			active_tab=tab,
+			page_filters=json.dumps(page_filters),
+		)
+		import_rows(name, started["run"], json.dumps([{"cells": r, "row_no": i} for i, r in enumerate(rows, 1)]))
+		finish_run(name, started["run"], "Completed")
+		return started["section"]
+
+	def test_lot_search_district_column(self):
+		from ivri_od.procurement.doctype.portal_data_extraction.portal_data_extraction import get_session_config
+		from ivri_od.procurement.report.lot_search_from_scms import lot_search_from_scms as report
+
+		self.assertIn(
+			{"page_match": "LotSearch.aspx", "ids": ["ddlDistrict"]}, get_session_config(self.extraction.name)["page_fields"]
+		)
+		self.assertEqual(self._scrape("Lot Search", [{"DC No.": "DC-1", "Lot No.": "L-1", "Quantity": "290"}]), "Lot Search")
+		# Another tab of the same page keeps its own columns.
+		self.assertEqual(self._scrape("Pending Lot", [{"Lot No.": "L-2"}]), "Pending Lot In for RRC")
+
+		with patch_site(report, self.SITE):
+			columns, data, *_ = report.execute({})
+		field = {c["label"]: c["fieldname"] for c in columns}
+		self.assertEqual([(d[field["Lot No."]], d[field["District"]]) for d in data], [("L-1", "BALANGIR")])
+		pending = frappe.get_all("Portal Record", filters={"site": self.SITE, "section": "Pending Lot In for RRC"}, pluck="row_data")
+		self.assertNotIn("District", json.loads(pending[0]))

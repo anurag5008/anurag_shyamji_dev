@@ -1,0 +1,101 @@
+<style>
+	@page {
+		size: A4 landscape;
+	}
+	.nbt-gunny-account {
+		color: #000;
+		font-size: 10px;
+	}
+	.nbt-gunny-account .heading {
+		font-weight: bold;
+		text-align: center;
+		font-size: 13px;
+		margin-bottom: 3px;
+	}
+	.nbt-gunny-account table.statement {
+		width: 100%;
+		border-collapse: collapse;
+		table-layout: fixed;
+		margin-top: 8px;
+	}
+	.nbt-gunny-account table.statement th,
+	.nbt-gunny-account table.statement td {
+		border: 1px solid #000;
+		padding: 2px 3px;
+	}
+	.nbt-gunny-account table.statement th {
+		text-align: center;
+		vertical-align: middle;
+		font-weight: bold;
+	}
+	.nbt-gunny-account table.statement td.qty {
+		text-align: right;
+	}
+	.nbt-gunny-account table.statement td.month {
+		background-color: #e6e6e6;
+		-webkit-print-color-adjust: exact;
+		print-color-adjust: exact;
+	}
+	.nbt-gunny-account table.statement tr.total-row td {
+		font-weight: bold;
+	}
+	.nbt-gunny-account table.signatures {
+		width: 100%;
+		/* Room to sign, yet the signatures stay on page 1 with up to 16 months (A4 landscape). */
+		margin-top: 30px;
+		page-break-inside: avoid;
+	}
+	.nbt-gunny-account table.signatures td {
+		width: 50%;
+		font-weight: bold;
+		border: none;
+		vertical-align: bottom;
+	}
+</style>
+
+{% /* One group per OSCSC column (OB, Receipts, Other, Total Receipts, one Issue per District, Total Issue, CB). */ %}
+{% var groups = []; for (var c = 0; c < columns.length; c++) { var fieldname = columns[c].fieldname || ""; if (/_oscsc$/.test(fieldname)) { groups.push([fieldname.replace(/_oscsc$/, ""), (columns[c].label || "").replace(/ - OSCSC$/, "")]); } } %}
+{% var bag_types = ["oscsc", "pp"]; %}
+{% var kms_label = /^\d{2}-\d{2}$/.test(filters.kms_year || "") ? "20" + filters.kms_year : (filters.kms_year || ""); %}
+{% var company = frappe.utils.escape_html((filters.company || "").toUpperCase()); %}
+
+<div class="nbt-gunny-account">
+	<div class="heading">{%= company %}</div>
+	<div class="heading">
+		NEW NBT GUNNY ACCOUNT FOR KMS {%= frappe.utils.escape_html(kms_label) %}
+	</div>
+
+	<table class="statement">
+		<thead>
+			<tr>
+				<th rowspan="2" style="width: 6%">Month</th>
+				{% for (var g = 0; g < groups.length; g++) { %}
+				<th colspan="2">{%= frappe.utils.escape_html(groups[g][1]) %}</th>
+				{% } %}
+			</tr>
+			<tr>
+				{% for (var g = 0; g < groups.length; g++) { %}
+				<th>OSCSC</th>
+				<th>PP</th>
+				{% } %}
+			</tr>
+		</thead>
+		<tbody>
+			{% for (var i = 0; i < data.length; i++) { var row = data[i]; %}
+			<tr class="{%= row.bold ? "total-row" : "" %}">
+				<td class="month">{%= frappe.utils.escape_html(row.month || "") %}</td>
+				{% for (var g = 0; g < groups.length; g++) { for (var b = 0; b < bag_types.length; b++) { var value = row[groups[g][0] + "_" + bag_types[b]]; %}
+				<td class="qty">{%= value == null ? "" : format_number(value, null, 0) %}</td>
+				{% } } %}
+			</tr>
+			{% } %}
+		</tbody>
+	</table>
+
+	<table class="signatures">
+		<tr>
+			<td style="text-align: left">SIGNATURE OF AUTHORISED OFFICER</td>
+			<td style="text-align: right">{%= company %}<br><br><br>SIGNATURE OF MILLER<br>Director</td>
+		</tr>
+	</table>
+</div>

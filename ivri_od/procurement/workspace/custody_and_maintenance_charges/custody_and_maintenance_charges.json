@@ -1,0 +1,69 @@
+{
+ "app": "ivri_od",
+ "charts": [],
+ "content": "[{\"id\": \"e462a512f8\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>Custody and Maintenance Charges</b></span>\", \"col\": 12}}, {\"id\": \"cae858b373\", \"type\": \"paragraph\", \"data\": {\"text\": \"Joint custody and maintenance charges payable to the miller for a KMS Year (1 Nov to 31 Oct), from the average paddy stock held each month.\", \"col\": 12}}, {\"id\": \"b92e98e9b6\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Joint Custody and Maintenance Charge Report\", \"col\": 4}}, {\"id\": \"87f4298ff7\", \"type\": \"card\", \"data\": {\"card_name\": \"Custody charge reports\", \"col\": 4}}, {\"id\": \"7ef1c88187\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Mill Paddy Transfer\", \"col\": 4}}]",
+ "creation": "2026-11-04 10:44:20.059825",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "hide_custom": 0,
+ "icon": "file-text",
+ "idx": 0,
+ "indicator_color": "green",
+ "is_hidden": 0,
+ "label": "Custody and Maintenance Charges",
+ "link_type": "DocType",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Custody charge reports",
+   "link_count": 1,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Joint Custody and Maintenance Charge Report",
+   "link_count": 0,
+   "link_to": "Joint Custody and Maintenance Charge Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2026-11-04 13:40:28.464263",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Custody and Maintenance Charges",
+ "number_cards": [],
+ "owner": "Administrator",
+ "parent_page": "Procurement",
+ "public": 1,
+ "quick_lists": [],
+ "roles": [],
+ "sequence_id": 0.0,
+ "shortcuts": [
+  {
+   "color": "Orange",
+   "doc_view": "",
+   "icon": "file-text",
+   "label": "Joint Custody and Maintenance Charge Report",
+   "link_to": "Joint Custody and Maintenance Charge Report",
+   "report_ref_doctype": "Stock Ledger Entry",
+   "type": "Report"
+  },
+  {
+   "color": "Blue",
+   "doc_view": "",
+   "icon": "repeat",
+   "label": "Mill Paddy Transfer",
+   "link_to": "Mill Paddy Transfer",
+   "type": "DocType"
+  }
+ ],
+ "title": "Custody and Maintenance Charges",
+ "type": "Workspace"
+}

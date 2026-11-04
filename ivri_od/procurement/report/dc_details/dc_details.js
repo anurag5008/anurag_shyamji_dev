@@ -11,6 +11,14 @@ frappe.query_reports["DC Details"] = {
 	filters: [
 		{ fieldname: "season", label: __("Season"), fieldtype: "Link", options: "Season Master", reqd: 1 },
 		{ fieldname: "mill", label: __("Mill No."), fieldtype: "Link", options: "Mill Master" },
+		{
+			fieldname: "district",
+			label: __("District"),
+			fieldtype: "Link",
+			options: "District Master",
+			get_query: () => ({ filters: { is_active: 1 } }),
+			description: __("DCs by District in View DC from DCRO; paddy by PPC's District. Empty: every district."),
+		},
 	],
 	onload(report) {
 		// Open on the latest season.
