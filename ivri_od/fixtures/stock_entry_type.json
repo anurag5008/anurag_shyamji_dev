@@ -1,0 +1,10 @@
+[
+ {
+  "doctype": "Stock Entry Type",
+  "name": "Driage",
+  "purpose": "Material Issue",
+  "paddy_movement": "Driage",
+  "add_to_transit": 0,
+  "is_standard": 0
+ }
+]

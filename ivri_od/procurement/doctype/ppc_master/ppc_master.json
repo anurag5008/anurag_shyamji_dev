@@ -16,6 +16,7 @@
   "agent",
   "column_break_location",
   "is_active",
+  "is_wshg",
   "title"
  ],
  "fields": [
@@ -84,6 +85,13 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Is Active"
+  },
+  {
+   "default": "0",
+   "description": "Tick for a Women Self Help Group (WSHG) centre. In Stock Account for Paddy its Transit Passes go to Receipts - WSHGs instead of Receipts - PACs.",
+   "fieldname": "is_wshg",
+   "fieldtype": "Check",
+   "label": "Is WSHG"
   },
   {
    "fieldname": "title",

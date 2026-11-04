@@ -3,16 +3,15 @@
  "allow_import": 1,
  "autoname": "naming_series:",
  "creation": "2026-10-22 18:00:00.000000",
+ "default_print_format": "Annexure-1 Verification Report",
  "doctype": "DocType",
  "engine": "InnoDB",
- "is_submittable": 1,
  "field_order": [
   "miller_details_section",
   "naming_series",
   "miller_name",
   "address",
   "miller_code",
-  "season",
   "miller_cb1",
   "milling_capacity",
   "milling_capacity_uom",
@@ -36,6 +35,8 @@
   "totals_section",
   "total_paddy_received_week",
   "total_prog_paddy_received",
+  "total_paddy_released_week",
+  "total_prog_paddy_released",
   "total_paddy_milled_week",
   "total_prog_paddy_milled",
   "total_book_balance_paddy",
@@ -48,6 +49,7 @@
   "total_prog_cmr_due",
   "total_rice_delivered_week_fci",
   "total_rice_delivered_week_rrc",
+  "total_rice_delivered_week_total",
   "total_prog_dc_fci",
   "total_prog_dc_rrc",
   "total_prog_dc_total",
@@ -77,24 +79,24 @@
    "label": "Miller Details"
   },
   {
+   "default": "MVR-.YYYY.-.#####",
    "fieldname": "naming_series",
    "fieldtype": "Select",
+   "hidden": 1,
    "label": "Series",
    "options": "MVR-.YYYY.-.#####",
-   "default": "MVR-.YYYY.-.#####",
-   "reqd": 1,
-   "hidden": 1,
-   "print_hide": 1
+   "print_hide": 1,
+   "reqd": 1
   },
   {
+   "fetch_from": "miller_code.company",
    "fieldname": "miller_name",
    "fieldtype": "Data",
-   "label": "1a. Miller Name",
-   "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "fetch_from": "miller_code.company",
-   "read_only": 1
+   "label": "1a. Miller Name",
+   "read_only": 1,
+   "reqd": 1
   },
   {
    "fieldname": "address",
@@ -104,17 +106,10 @@
   {
    "fieldname": "miller_code",
    "fieldtype": "Link",
-   "label": "1c. Miller Code",
-   "reqd": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "options": "Mill Master"
-  },
-  {
-   "fieldname": "season",
-   "fieldtype": "Link",
-   "label": "Season",
-   "options": "Season Master",
+   "label": "1c. Miller Code",
+   "options": "Mill Master",
    "reqd": 1
   },
   {
@@ -127,23 +122,24 @@
    "label": "1d. Milling Capacity"
   },
   {
+   "default": "Tonne",
+   "description": "Tonne is printed as M.T.",
    "fieldname": "milling_capacity_uom",
    "fieldtype": "Link",
    "label": "Milling Capacity UOM",
-   "options": "UOM",
-   "default": "Tonne",
-   "description": "Tonne is printed as M.T."
+   "options": "UOM"
   },
   {
+   "description": "e.g. 2025-26 (Kharif 2025 and Rabi 2025)",
    "fieldname": "kms",
-   "fieldtype": "Data",
-   "label": "2a. KMS",
-   "reqd": 1,
+   "fieldtype": "Autocomplete",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "description": "Kharif Marketing Season, e.g. 2025-26"
+   "label": "2a. KMS Year",
+   "reqd": 1
   },
   {
+   "description": "Filled from the Type of the mill in Mill Master",
    "fieldname": "variety",
    "fieldtype": "Select",
    "label": "2b. Variety",
@@ -155,16 +151,18 @@
    "fieldtype": "Column Break"
   },
   {
+   "description": "The last submitted report of the mill and KMS Year. \"During the week\" figures are for the period after this date up to the Present Verification Date. Empty: the period is everything up to the Present Verification Date.",
    "fieldname": "last_verification_date",
    "fieldtype": "Date",
    "label": "3a. Last Verification Date"
   },
   {
+   "description": "All Annexure-1 figures are worked out up to this date from the portal data.",
    "fieldname": "present_verification_date",
    "fieldtype": "Date",
+   "in_list_view": 1,
    "label": "3b. Present Verification Date",
-   "reqd": 1,
-   "in_list_view": 1
+   "reqd": 1
   },
   {
    "fieldname": "electricity_section",
@@ -177,11 +175,11 @@
    "label": "4a. Electricity Contract Load"
   },
   {
+   "default": "KVA",
    "fieldname": "contract_load_unit",
    "fieldtype": "Select",
    "label": "Contract Load Unit",
-   "options": "KVA\nKW",
-   "default": "KVA"
+   "options": "KVA\nKW"
   },
   {
    "fieldname": "electricity_cb1",
@@ -204,41 +202,41 @@
    "fieldtype": "Column Break"
   },
   {
+   "default": "1",
+   "description": "Multiplying factor of the meter",
    "fieldname": "meter_multiplier",
    "fieldtype": "Float",
-   "label": "Meter Multiplier (MF)",
-   "default": "1",
-   "description": "Multiplying factor of the meter"
+   "label": "Meter Multiplier (MF)"
   },
   {
    "fieldname": "total_units_consumed",
    "fieldtype": "Float",
    "label": "4d. Total Units consumed",
-   "read_only": 1,
-   "precision": "3"
+   "precision": "3",
+   "read_only": 1
   },
   {
    "fieldname": "agency_section",
    "fieldtype": "Section Break",
-   "label": "Annexure-1"
+   "label": "Annexure-1 (District and Season)"
   },
   {
    "fieldname": "agencies",
    "fieldtype": "Table",
+   "hidden": 1,
    "label": "Agencies",
    "options": "Miller Verification Agency",
-   "reqd": 0,
-   "hidden": 1
+   "reqd": 0
   },
   {
    "fieldname": "annexure_entry",
    "fieldtype": "HTML"
   },
   {
+   "collapsible": 1,
    "fieldname": "totals_section",
    "fieldtype": "Section Break",
-   "label": "Totals",
-   "collapsible": 1
+   "label": "Totals"
   },
   {
    "fieldname": "total_paddy_received_week",
@@ -255,30 +253,44 @@
    "read_only": 1
   },
   {
+   "fieldname": "total_paddy_released_week",
+   "fieldtype": "Float",
+   "label": "Total III. Paddy Released for Milling during the week",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_prog_paddy_released",
+   "fieldtype": "Float",
+   "label": "Total IV. Prog. Paddy Released for Milling till verification date",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
    "fieldname": "total_paddy_milled_week",
    "fieldtype": "Float",
-   "label": "Total III. Paddy Milled during the week",
+   "label": "Total V. Paddy Milled during the week",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_paddy_milled",
    "fieldtype": "Float",
-   "label": "Total IV. Prog. Paddy Milled till verification date",
+   "label": "Total VI. Prog. Paddy Milled till verification date",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_book_balance_paddy",
    "fieldtype": "Float",
-   "label": "Total V. Book balance of Paddy Stock",
+   "label": "Total VII. Book balance of Paddy Stock",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_verified_balance_paddy",
    "fieldtype": "Float",
-   "label": "Total VI. Verified balance of Paddy",
+   "label": "Total VIII. Verified balance of Paddy",
    "precision": "3",
    "read_only": 1
   },
@@ -292,14 +304,14 @@
   {
    "fieldname": "total_rice_received_week",
    "fieldtype": "Float",
-   "label": "Total VII. Rice received from milling till date",
+   "label": "Total IX. Rice received from milling till date",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_rice_received",
    "fieldtype": "Float",
-   "label": "Total VIII. Prog. Rice received from milling till date",
+   "label": "Total X. Prog. Rice received from milling till date",
    "precision": "3",
    "read_only": 1
   },
@@ -324,49 +336,56 @@
   {
    "fieldname": "total_rice_delivered_week_fci",
    "fieldtype": "Float",
-   "label": "Total IX. FCI",
+   "label": "Total XI. FCI",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_rice_delivered_week_rrc",
    "fieldtype": "Float",
-   "label": "Total IX. RRC",
+   "label": "Total XI. RRC",
+   "precision": "3",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_rice_delivered_week_total",
+   "fieldtype": "Float",
+   "label": "Total XI. Total",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_dc_fci",
    "fieldtype": "Float",
-   "label": "Total X. FCI",
+   "label": "Total XII. FCI",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_dc_rrc",
    "fieldtype": "Float",
-   "label": "Total X. RRC",
+   "label": "Total XII. RRC",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_dc_total",
    "fieldtype": "Float",
-   "label": "Total X. Total",
+   "label": "Total XII. Total",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_delivered_fci",
    "fieldtype": "Float",
-   "label": "Total XI. FCI",
+   "label": "Total XIII. FCI",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_prog_delivered_rrc",
    "fieldtype": "Float",
-   "label": "Total XI. RRC",
+   "label": "Total XIII. RRC",
    "precision": "3",
    "read_only": 1
   },
@@ -377,42 +396,42 @@
   {
    "fieldname": "total_prog_delivered_total",
    "fieldtype": "Float",
-   "label": "Total XI. Total",
+   "label": "Total XIII. Total",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_undelivered_fci",
    "fieldtype": "Float",
-   "label": "Total XII. FCI",
+   "label": "Total XIV. FCI",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_undelivered_rrc",
    "fieldtype": "Float",
-   "label": "Total XII. RRC",
+   "label": "Total XIV. RRC",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_undelivered_total",
    "fieldtype": "Float",
-   "label": "Total XII. Total",
+   "label": "Total XIV. Total",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_book_balance_rice",
    "fieldtype": "Float",
-   "label": "Total XIII. Book balance of Rice Stock",
+   "label": "Total XV. Book balance of Rice Stock",
    "precision": "3",
    "read_only": 1
   },
   {
    "fieldname": "total_verified_balance_rice",
    "fieldtype": "Float",
-   "label": "Total XIV. Verified balance of Rice",
+   "label": "Total XVI. Verified balance of Rice",
    "precision": "3",
    "read_only": 1
   },
@@ -464,15 +483,16 @@
    "fieldname": "amended_from",
    "fieldtype": "Link",
    "label": "Amended From",
-   "options": "Miller Verification Report",
    "no_copy": 1,
+   "options": "Miller Verification Report",
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
   }
  ],
+ "is_submittable": 1,
  "links": [],
- "modified": "2026-10-23 18:30:00.000000",
+ "modified": "2026-10-30 08:34:00.922141",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Miller Verification Report",
@@ -480,6 +500,8 @@
  "owner": "Administrator",
  "permissions": [
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -489,12 +511,12 @@
    "report": 1,
    "role": "System Manager",
    "share": 1,
-   "write": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   },
   {
+   "amend": 1,
+   "cancel": 1,
    "create": 1,
    "delete": 1,
    "email": 1,
@@ -504,19 +526,16 @@
    "report": 1,
    "role": "Desk User",
    "share": 1,
-   "write": 1,
    "submit": 1,
-   "cancel": 1,
-   "amend": 1
+   "write": 1
   }
  ],
  "row_format": "Dynamic",
  "search_fields": "miller_name,miller_code,kms",
  "show_title_field_in_link": 1,
- "title_field": "miller_name",
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "track_changes": 1,
- "default_print_format": "Annexure-1 Verification Report"
+ "title_field": "miller_name",
+ "track_changes": 1
 }

@@ -105,12 +105,154 @@ ivri_od.portal.show_details = function (record) {
 		});
 };
 
+const NO_DISTRICT = "No District Matched";
+
+// View DC: set the District of one DC by hand (procurement/portal_manual.set_dc_district).
+ivri_od.portal.edit_district = async function (record) {
+	const report = frappe.query_report;
+	const districts = (
+		await frappe.db.get_list("District Master", {
+			fields: ["name"],
+			filters: { is_active: 1 },
+			order_by: "name asc",
+			limit: 500,
+		})
+	).map((d) => d.name);
+	const row = (report?.data || []).find((d) => d.record === record) || {};
+	const column = (report?.columns || []).find((c) => c.label === "District");
+	const current = column ? row[column.fieldname] : "";
+	const dialog = new frappe.ui.Dialog({
+		title: __("Edit District"),
+		fields: [
+			{
+				fieldname: "district",
+				label: __("District"),
+				// The District Master list; a typed name not in it is refused by the server
+				// (matched ignoring capitals and spaces).
+				fieldtype: "Autocomplete",
+				options: districts,
+				ignore_validation: 1,
+				default: current && current !== NO_DISTRICT ? current : "",
+				description: __(
+					"Pick from District Master. Kept when the DC is read again. Leave empty to read the District from the DC PDF again."
+				),
+			},
+		],
+		primary_action_label: __("Save"),
+		primary_action: ({ district }) => {
+			frappe
+				.xcall("ivri_od.procurement.portal_manual.set_dc_district", { record, district: district || "" })
+				.then((saved) => {
+					dialog.hide();
+					frappe.show_alert({ message: __("District saved: {0}", [saved]), indicator: "green" });
+					report?.refresh();
+				});
+		},
+	});
+	dialog.show();
+};
+
+// DC Transit Challan: for a row whose AC Note gives no Accepted Date, attach the AC Note and/or
+// set the Accepted Date and Net Weight by hand (procurement/portal_manual.set_ac_note_values).
+// An uploaded PDF is read at once and fills both fields; what it does not give is typed in.
+const PORTAL_MANUAL_AC_NOTE = "ivri_od.procurement.portal_manual";
+ivri_od.portal.edit_ac_note_values = function (record) {
+	const report = frappe.query_report;
+	const row = (report?.data || []).find((d) => d.record === record) || {};
+	const dialog = new frappe.ui.Dialog({
+		title: __("AC Note: Accepted Date and Net Weight"),
+		fields: [
+			{
+				fieldname: "file_url",
+				label: __("AC Note"),
+				fieldtype: "Attach",
+				// Uploaded as a private file; put on the row on Save.
+				options: { restrictions: { allowed_file_types: [".pdf", ".png", ".jpg", ".jpeg"] } },
+				description: __("Upload the AC Note PDF: Accepted Date and Net Weight are read from it."),
+				change: () => ivri_od.portal.fill_from_ac_note(dialog),
+			},
+			{
+				fieldname: "accepted_date",
+				label: __("Accepted Date"),
+				fieldtype: "Date",
+				default: row.accepted_date_manual || "",
+			},
+			{
+				fieldname: "net_weight",
+				label: __("Net Weight"),
+				fieldtype: "Float",
+				precision: 5,
+				default: row.net_weight_manual || "",
+				description: __("Empty: the Net Quantity of If FCI AC Not Available."),
+			},
+			{ fieldname: "read_status", fieldtype: "HTML" },
+		],
+		primary_action_label: __("Save"),
+		primary_action: ({ file_url, accepted_date, net_weight }) => {
+			frappe
+				.xcall(`${PORTAL_MANUAL_AC_NOTE}.set_ac_note_values`, {
+					record,
+					accepted_date: accepted_date || "",
+					net_weight: net_weight || 0,
+					file_url: file_url || "",
+				})
+				.then((r) => {
+					dialog.hide();
+					frappe.show_alert({
+						message: __("Saved. Accepted Date {0}, Net Weight {1}", [
+							r["Accepted Date"] || __("empty"),
+							r["Net Weight"],
+						]),
+						indicator: "green",
+					});
+					report?.refresh();
+				});
+		},
+	});
+	dialog.show();
+};
+
+// Edit pop-up: read the uploaded AC Note and fill the Accepted Date and Net Weight.
+ivri_od.portal.fill_from_ac_note = function (dialog) {
+	const file_url = dialog.get_value("file_url");
+	const status = dialog.fields_dict.read_status.$wrapper;
+	if (!file_url) {
+		status.empty();
+		return;
+	}
+	status.html(`<p class="text-muted small">${__("Reading the AC Note...")}</p>`);
+	frappe.xcall(`${PORTAL_MANUAL_AC_NOTE}.read_ac_note`, { file_url }).then((r) => {
+		if (r.accepted_date) {
+			dialog.set_value("accepted_date", r.accepted_date);
+		}
+		if (r.net_weight) {
+			dialog.set_value("net_weight", r.net_weight);
+		}
+		const missing = [
+			...(r.accepted_date ? [] : [__("Accepted Date")]),
+			...(r.net_weight ? [] : [__("Net Weight")]),
+		];
+		status.html(
+			missing.length
+				? `<p class="text-warning small">${__("Could not read {0} from this file (e.g. a scan): enter it by hand.", [
+						missing.join(", "),
+				  ])}</p>`
+				: `<p class="text-success small">${__("Read from the AC Note. Check and press Save.")}</p>`
+		);
+	});
+};
+
 // Settings of an SCMS section report (procurement/portal_report.py).
 // opts.details: "Show Detail Rows" filter (DC lots); opts.document_label: the
 // column holding the PDF saved from the row's Action button (e.g. Challan);
 // opts.print_documents: that column says "Print" and opens the PDF to print;
 // opts.portal_layout: show the rows as the portal table (grouped headers,
 // "Total" at the bottom) instead of the grid, with a "Grid View" filter to switch.
+// opts.edit_district: the "District" cell can be edited after pressing Edit on top (View DC; see edit_district).
+// opts.edit_ac_note_values: on a row without an AC Note date, the "Accepted Date" and "Net Weight"
+// cells (and an attach button in "AC Note Doc"), after pressing Edit on top, open the same
+// pop-up (DC Transit Challan; see edit_ac_note_values). AC Note values cannot be edited.
+// opts.season_filter: "Mill" and "Season" (Kharif / Rabi) filters first (DC Transit Challan).
 ivri_od.portal.section_report_settings = function (opts = {}) {
 	const filters = [
 		{ fieldname: "from_date", label: __("Seen From"), fieldtype: "Date" },
@@ -120,6 +262,17 @@ ivri_od.portal.section_report_settings = function (opts = {}) {
 		{ fieldname: "mill_id", label: __("Mill No."), fieldtype: "Link", options: "Mill Master" },
 		{ fieldname: "entry_source", label: __("Entered From"), fieldtype: "Select", options: "\nPortal\nManual" },
 	];
+	if (opts.season_filter) {
+		// Mill and Season first (DC Transit Challan): Season keeps the DCs View DC shows with it.
+		const mill = filters.splice(
+			filters.findIndex((f) => f.fieldname === "mill_id"),
+			1
+		)[0];
+		filters.unshift(
+			{ ...mill, label: __("Mill") },
+			{ fieldname: "season", label: __("Season"), fieldtype: "Select", options: "\nKharif\nRabi" }
+		);
+	}
 	if (opts.details) {
 		filters.push({ fieldname: "show_details", label: __("Show Detail Rows (Lots)"), fieldtype: "Check" });
 	}
@@ -131,6 +284,16 @@ ivri_od.portal.section_report_settings = function (opts = {}) {
 
 		onload(report) {
 			report.page.add_inner_button(__("Portal View"), () => ivri_od.portal.show_report_as_portal(report));
+			// Edit on top (public/js/report_edit.js): only then the cells below can be edited.
+			const editable = [
+				...(opts.edit_district ? [__("District")] : []),
+				...(opts.edit_ac_note_values
+					? [__("Accepted Date, Net Weight and AC Note of the rows without an AC Note date")]
+					: []),
+			];
+			if (editable.length) {
+				ivri_od.report_edit.add_button(report, editable);
+			}
 		},
 
 		after_refresh(report) {
@@ -152,11 +315,41 @@ ivri_od.portal.section_report_settings = function (opts = {}) {
 			}
 			// Document columns (e.g. Details, AC Note Doc): the saved file of that button.
 			if (/^doc\d+$/.test(column.fieldname)) {
-				return value
+				const shown = value
 					? `<a href="${encodeURI(value)}" target="_blank" rel="noopener">${__("Download")}</a>`
 					: `<span class="text-muted">${__("Not saved")}</span>`;
+				// AC Note not giving the Accepted Date: attach one by hand.
+				if (
+					opts.edit_ac_note_values &&
+					ivri_od.report_edit.is_editing() &&
+					column.label === "AC Note Doc" &&
+					data &&
+					data.ac_note_by_hand
+				) {
+					const record = frappe.utils.escape_html(data.record);
+					return `${shown} · <a href="#" class="text-primary" title="${__("Attach AC Note")}"
+						onclick="ivri_od.portal.edit_ac_note_values('${record}'); return false;">📎 ${__("Attach")}</a>`;
+				}
+				return shown;
 			}
 			let text = default_formatter(value, row, column, data);
+			if (opts.edit_district && column.label === "District" && data && data.record) {
+				const record = frappe.utils.escape_html(data.record);
+				const shown = value === NO_DISTRICT ? `<span class="text-danger">${text}</span>` : text;
+				const mark = data.district_manual ? ` <span class="text-muted small">(${__("set by hand")})</span>` : "";
+				return ivri_od.report_edit.cell(`${shown}${mark}`, `ivri_od.portal.edit_district('${record}')`);
+			}
+			// A weight set by hand fills both Net Weight and Weight After Moisture Cut.
+			const by_hand = {
+				"Accepted Date": "accepted_date_manual",
+				"Net Weight": "net_weight_manual",
+				"Weight After Moisture Cut": "net_weight_manual",
+			}[column.label];
+			if (opts.edit_ac_note_values && by_hand && data && data.record && data.ac_note_by_hand) {
+				const record = frappe.utils.escape_html(data.record);
+				const mark = data[by_hand] ? ` <span class="text-muted small">(${__("set by hand")})</span>` : "";
+				return ivri_od.report_edit.cell(`${text}${mark}`, `ivri_od.portal.edit_ac_note_values('${record}')`);
+			}
 			// Portal cell that held the document button (e.g. View DC: View_RRC): link to the saved file,
 			// shown as opts.file_link_text (e.g. "Download_DC") when set.
 			const file = data && data[`${column.fieldname}_file`];
@@ -196,7 +389,11 @@ ivri_od.portal.report_rows = function (report) {
 	const footer = [];
 	(report.data || []).forEach((d) => {
 		const out = {};
-		columns.forEach((c) => (out[c.label || c.name] = d[c.fieldname || c.id] || ""));
+		columns.forEach((c) => {
+			const value = d[c.fieldname || c.id] || "";
+			// Date columns (e.g. DC Transit Challan Accepted Date) as the user sees them, not yyyy-mm-dd.
+			out[c.label || c.name] = c.fieldtype === "Date" && value ? frappe.datetime.str_to_user(value) : value;
+		});
 		(ivri_od.portal.is_total_row(d) ? footer : rows).push(out);
 	});
 	return { rows, footer };

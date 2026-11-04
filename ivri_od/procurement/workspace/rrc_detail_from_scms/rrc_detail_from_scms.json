@@ -1,7 +1,7 @@
 {
  "app": "ivri_od",
  "charts": [],
- "content": "[{\"id\": \"d4e4ca7572\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>RRC Detail from SCMS</b></span>\", \"col\": 12}}, {\"id\": \"d672cfdb05\", \"type\": \"paragraph\", \"data\": {\"text\": \"Rice handover data read from the SCMS portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"5c552095ed\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"RRC Manual Entry\", \"col\": 12}}, {\"id\": \"97167dbdce\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC DC Summary from SCMS\", \"col\": 4}}, {\"id\": \"fa082f85f1\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC Transit Pass from SCMS\", \"col\": 4}}, {\"id\": \"92b72484ea\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gunny Stock Register Details from SCMS\", \"col\": 4}}, {\"id\": \"f42250c671\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Lot Search from SCMS\", \"col\": 4}}, {\"id\": \"9ddf96c30d\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Rejected Lot for RRC from SCMS\", \"col\": 4}}, {\"id\": \"3765c2d07f\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Pending Lot In for RRC from SCMS\", \"col\": 4}}, {\"id\": \"3057a6f925\", \"type\": \"card\", \"data\": {\"card_name\": \"SCMS reports\", \"col\": 4}}]",
+ "content": "[{\"id\": \"16b9dc910c\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\"><b>RRC Detail from SCMS</b></span>\", \"col\": 12}}, {\"id\": \"e8f412c3c0\", \"type\": \"paragraph\", \"data\": {\"text\": \"Rice handover data read from the SCMS portal with <b>Portal Data Extraction</b>.\", \"col\": 12}}, {\"id\": \"f2e92d644d\", \"type\": \"custom_block\", \"data\": {\"custom_block_name\": \"RRC Manual Entry\", \"col\": 12}}, {\"id\": \"6361c76e36\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC DC Summary from SCMS\", \"col\": 4}}, {\"id\": \"c5ebca919a\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"RRC Transit Pass from SCMS\", \"col\": 4}}, {\"id\": \"40834541c3\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Gunny Stock Register Details from SCMS\", \"col\": 4}}, {\"id\": \"0af774bc3e\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Lot Search from SCMS\", \"col\": 4}}, {\"id\": \"dec87fb9a2\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Rejected Lot for RRC from SCMS\", \"col\": 4}}, {\"id\": \"d4b186d111\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Pending Lot In for RRC from SCMS\", \"col\": 4}}, {\"id\": \"b9f6896027\", \"type\": \"card\", \"data\": {\"card_name\": \"SCMS reports\", \"col\": 4}}]",
  "creation": "2026-10-14 14:11:04.219740",
  "custom_blocks": [
   {
@@ -89,7 +89,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-10-21 11:53:39.606151",
+ "modified": "2026-11-04 13:40:28.188179",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "RRC Detail from SCMS",

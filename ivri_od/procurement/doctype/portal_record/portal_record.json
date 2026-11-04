@@ -15,6 +15,9 @@
   "extraction",
   "entry_source",
   "details_source",
+  "district_manual",
+  "accepted_date_manual",
+  "net_weight_manual",
   "data_section",
   "row_html",
   "row_data",
@@ -117,6 +120,29 @@
    "fieldtype": "Select",
    "label": "Details Entered From",
    "options": "\nPortal\nManual",
+   "read_only": 1
+  },
+  {
+   "default": "0",
+   "description": "View DC: the District was set by hand in the report and is kept when the DC is read again.",
+   "fieldname": "district_manual",
+   "fieldtype": "Check",
+   "label": "District Set by Hand",
+   "read_only": 1
+  },
+  {
+   "description": "DCRO DC Transit Challan: Accepted Date set by hand in the report, used while the AC Note gives no Date of Acceptance.",
+   "fieldname": "accepted_date_manual",
+   "fieldtype": "Date",
+   "label": "Accepted Date Set by Hand",
+   "read_only": 1
+  },
+  {
+   "description": "DCRO DC Transit Challan: weight set by hand in the report, shown as Net Weight and Weight After Moisture Cut while the AC Note gives no weight.",
+   "fieldname": "net_weight_manual",
+   "fieldtype": "Float",
+   "label": "Net Weight Set by Hand",
+   "precision": "5",
    "read_only": 1
   },
   {
@@ -237,7 +263,7 @@
  "in_create": 1,
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-10-21 12:00:00.000000",
+ "modified": "2026-10-29 13:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Portal Record",
