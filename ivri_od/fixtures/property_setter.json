@@ -4094,5 +4094,14 @@
   "property": "label",
   "property_type": "Data",
   "value": "Quantity"
+ },
+ {
+  "doctype": "Property Setter",
+  "name": "Vehicle Wise Statement-main-default_print_format",
+  "doctype_or_field": "DocType",
+  "doc_type": "Vehicle Wise Statement",
+  "property": "default_print_format",
+  "property_type": "Data",
+  "value": "Vehicle Wise Statement - Shyamji"
  }
 ]

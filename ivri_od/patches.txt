@@ -153,3 +153,6 @@ ivri_od.patches.v1_0.create_bags_uom
 ivri_od.patches.v1_0.allow_rate_change_on_receipt
 ivri_od.patches.v1_0.remove_pds_entry_select
 ivri_od.patches.v1_0.remove_po_grand_total_from_receipt
+ivri_od.patches.v1_0.create_mill_reminders
+ivri_od.patches.v1_0.fill_completion_names
+ivri_od.patches.v1_0.add_indian_banks

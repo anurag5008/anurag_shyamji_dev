@@ -1,0 +1,13 @@
+reminder_kanha.jpg  (the picture of Kanha shown in the desk reminder banner)
+
+Cropped and resized from:
+  "Infinite Eyes, Shri Krishna playing music in the forest"
+  Artist / uploader: Infinite Eyes
+  Source page: https://commons.wikimedia.org/wiki/File:Infinite_Eyes,_Shri_Krishna_playing_music_in_the_forest.jpg
+  Original post: https://www.flickr.com/photos/144060333@N07/27127207987/
+  Licence on Wikimedia Commons: CC0 1.0 (public domain dedication), http://creativecommons.org/publicdomain/zero/1.0/deed.en
+  Checked on: 2 November 2026
+
+Changes made: cropped to the face, crown and flute, and reduced to 240 x 240 pixels. No other change.
+
+To use another picture, replace reminder_kanha.jpg with a square image of about 240 x 240 pixels (keep the same file name), and update this note.

@@ -1,0 +1,134 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 15:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-04 20:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Vehicle Wise Statement Item",
+ "owner": "Administrator",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "istable": 1,
+ "editable_grid": 1,
+ "field_order": [
+  "sl_no",
+  "ppc",
+  "vehicle_no",
+  "bags",
+  "trips",
+  "qty",
+  "km",
+  "rate",
+  "amount",
+  "voucher_no",
+  "payment_mode",
+  "vehicle_type"
+ ],
+ "fields": [
+  {
+   "fieldname": "sl_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "S.L No",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "ppc",
+   "fieldtype": "Data",
+   "label": "PPC",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "vehicle_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vehicle No",
+   "read_only": 1,
+   "columns": 2
+  },
+  {
+   "fieldname": "bags",
+   "fieldtype": "Int",
+   "label": "Bags",
+   "read_only": 1,
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "trips",
+   "fieldtype": "Int",
+   "label": "No. of Trips",
+   "read_only": 1,
+   "in_list_view": 0
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Qty in Qntls",
+   "precision": "2",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "km",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "KM",
+   "non_negative": 1,
+   "columns": 1,
+   "description": "Distance of this PPC, only noted",
+   "precision": "1"
+  },
+  {
+   "description": "Per quintal per KM",
+   "fieldname": "rate",
+   "fieldtype": "Float",
+   "in_list_view": 1,
+   "label": "Rate",
+   "non_negative": 1,
+   "precision": "4",
+   "columns": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount in Rs",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "voucher_no",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Voucher No",
+   "read_only": 1,
+   "columns": 1
+  },
+  {
+   "default": "CASH",
+   "fieldname": "payment_mode",
+   "fieldtype": "Data",
+   "label": "Payment Mode",
+   "read_only": 1
+  },
+  {
+   "fieldname": "vehicle_type",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Vehicle Type",
+   "read_only": 1,
+   "columns": 1
+  }
+ ],
+ "permissions": []
+}

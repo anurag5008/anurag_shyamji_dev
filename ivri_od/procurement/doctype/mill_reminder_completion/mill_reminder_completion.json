@@ -1,0 +1,154 @@
+{
+ "actions": [],
+ "creation": "2026-11-03 09:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Document",
+ "engine": "InnoDB",
+ "field_order": [
+  "reminder",
+  "period",
+  "column_break_1",
+  "completed_by",
+  "payment_section",
+  "completed_on",
+  "bank",
+  "amount",
+  "column_break_2",
+  "entered_by",
+  "entered_by_name",
+  "approved_by",
+  "approved_by_name",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "reminder",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Reminder",
+   "options": "Mill Reminder",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "description": "The month the reminder belongs to, for example 2026-11.",
+   "fieldname": "period",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Period",
+   "read_only": 1,
+   "reqd": 1,
+   "search_index": 1
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "completed_by",
+   "fieldtype": "Link",
+   "label": "Submitted By (Login)",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "payment_section",
+   "fieldtype": "Section Break",
+   "label": "Payment Details"
+  },
+  {
+   "fieldname": "completed_on",
+   "fieldtype": "Datetime",
+   "in_list_view": 1,
+   "label": "Date and Time",
+   "read_only": 1
+  },
+  {
+   "fieldname": "bank",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Bank",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount",
+   "non_negative": 1,
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "entered_by",
+   "fieldtype": "Link",
+   "in_list_view": 0,
+   "label": "Entered By (Login)",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "entered_by_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Entered By",
+   "read_only": 1,
+   "fetch_from": "entered_by.full_name"
+  },
+  {
+   "fieldname": "approved_by",
+   "fieldtype": "Link",
+   "in_list_view": 0,
+   "label": "Approved By (Login)",
+   "options": "User",
+   "read_only": 1
+  },
+  {
+   "fieldname": "approved_by_name",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Approved By",
+   "read_only": 1,
+   "fetch_from": "approved_by.full_name"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "hidden": 1,
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "Mill Reminder Completion",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 14:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Mill Reminder Completion",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "export": 1,
+   "print": 1,
+   "email": 1,
+   "share": 1,
+   "cancel": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1,
+ "is_submittable": 1
+}

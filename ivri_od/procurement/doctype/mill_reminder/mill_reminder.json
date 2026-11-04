@@ -1,0 +1,106 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "autoname": "field:reminder_title",
+ "creation": "2026-11-03 09:00:00.000000",
+ "doctype": "DocType",
+ "document_type": "Setup",
+ "engine": "InnoDB",
+ "field_order": [
+  "reminder_title",
+  "enabled",
+  "column_break_1",
+  "day_of_month",
+  "visible_for_days",
+  "section_break_1",
+  "message",
+  "section_break_2",
+  "roles"
+ ],
+ "fields": [
+  {
+   "fieldname": "reminder_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Reminder Name",
+   "reqd": 1,
+   "unique": 1
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "fieldname": "column_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "The reminder shows from this day of every month. A 31st is moved to the last day of a shorter month.",
+   "fieldname": "day_of_month",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Day of Month",
+   "reqd": 1
+  },
+  {
+   "default": "3",
+   "description": "How many days the reminder stays on the desk if nobody marks it as completed.",
+   "fieldname": "visible_for_days",
+   "fieldtype": "Int",
+   "in_list_view": 1,
+   "label": "Visible for (Days)",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_1",
+   "fieldtype": "Section Break"
+  },
+  {
+   "fieldname": "message",
+   "fieldtype": "Small Text",
+   "label": "Message",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_break_2",
+   "fieldtype": "Section Break",
+   "label": "Who Sees It"
+  },
+  {
+   "description": "Only users with one of these roles see the reminder. Leave it empty to show it to System Managers only until the roles are decided.",
+   "fieldname": "roles",
+   "fieldtype": "Table",
+   "label": "Roles",
+   "options": "Mill Reminder Role"
+  }
+ ],
+ "index_web_pages_for_search": 0,
+ "links": [],
+ "modified": "2026-11-03 09:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Procurement",
+ "name": "Mill Reminder",
+ "naming_rule": "By fieldname",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
