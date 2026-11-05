@@ -110,8 +110,30 @@ function calculate_rst_chhatni(frm) {
 	frm.set_value({ chhatni_kg, chhatni_qt, received_chhatni_pct: received_pct });
 }
 
+// Party Name drop-down: PPCs of PPAS Transit Pass and Depo Master names. Typing another name
+// (a local farmer) is still allowed, so the field never rejects a value.
+function load_party_name_choices(frm) {
+	const field = frm.fields_dict.party_name;
+	if (!field) {
+		return;
+	}
+	field.df.ignore_validation = 1;
+	if (frappe.ivri_od_party_choices) {
+		field.set_data(frappe.ivri_od_party_choices);
+		return;
+	}
+	frappe.call({
+		method: "ivri_od.procurement.doctype.rst_details.rst_details.get_party_name_choices",
+		callback(r) {
+			frappe.ivri_od_party_choices = r.message || [];
+			field.set_data(frappe.ivri_od_party_choices);
+		},
+	});
+}
+
 frappe.ui.form.on("RST Details", {
 	refresh(frm) {
+		load_party_name_choices(frm);
 		sync_mill_requirement(frm);
 		frm.toggle_display("local_purchase_order", Boolean(frm.doc.local_purchase_order));
 		always_show_read_only(frm, ["season_code", "rst_unique_key"]);

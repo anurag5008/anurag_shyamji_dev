@@ -566,6 +566,19 @@ class TestRSTRiceDispatchNoDB(unittest.TestCase):
 		with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=False):
 			self.assertEqual(resolve_rst_tp_details("", "Some Farmer")["tp_status"], "Local Paddy Purchase")
 
+	def test_tp_no_zero_is_treated_as_no_tp_no(self):
+		# "0" is typed when the truck has no TP: same result as an empty TP No.
+		for tp_no in ("0", "00", " 0 "):
+			with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=True):
+				self.assertEqual(resolve_rst_tp_details(tp_no, "AGALPUR(S1)")["tp_status"], "TP No Not Received")
+			with patch(f"{MODULE}.party_matches_any_transit_pass_ppc", return_value=False):
+				self.assertEqual(resolve_rst_tp_details(tp_no, "Some Farmer")["tp_status"], "Local Paddy Purchase")
+		# a real TP No such as "10" is not blank
+		from ivri_od.procurement.doctype.rst_details.rst_details import tp_no_is_blank
+
+		self.assertFalse(tp_no_is_blank("10"))
+		self.assertTrue(tp_no_is_blank(None))
+
 	def test_government_paddy_purchase_unchanged(self):
 		rows = [{"pass_unique_key": "M051007-AGALPUR(S1)-K25-TP1", "ppc": "AGALPUR(S1)", "miller": ""}]
 		with patch(f"{MODULE}.find_transit_passes_by_tp_and_ppc", return_value=rows), patch(

@@ -1,13 +1,138 @@
 // Copyright (c) 2026, Profezzo and contributors
 
+// Excess Received Qty: press Edit on top, then click the cell of a Transit Pass. The quantity is
+// saved (Chhatni Excess) and the Chhatni (QT) and Received Chhatni % of that pass are worked out again.
+frappe.provide("ivri_od.mandi_book");
+ivri_od.mandi_book.edit_excess = function (pass_unique_key) {
+	const report = frappe.query_report;
+	const row = (report.data || []).find((d) => d.pass_unique_key === pass_unique_key && d.grn_lines) || {};
+	const dialog = new frappe.ui.Dialog({
+		title: __("Excess Received Qty, TP {0}", [row.transit_pass_no || ""]),
+		fields: [
+			{
+				fieldname: "value",
+				label: __("Excess Received Qty (QT)"),
+				fieldtype: "Float",
+				precision: 3,
+				default: row.excess_received_qty || "",
+				description: __(
+					"Quantity received above the TP Qty that is paddy, not Chhatni. It is taken out of Chhatni (QT) and Received Chhatni %. Empty or 0 removes it."
+				),
+			},
+		],
+		primary_action_label: __("Save"),
+		primary_action: ({ value }) => {
+			frappe
+				.xcall("ivri_od.procurement.report.mandi_book.mandi_book.set_excess_received_qty", {
+					pass_unique_key,
+					value: value || 0,
+				})
+				.then(() => {
+					dialog.hide();
+					frappe.show_alert({ message: __("Saved"), indicator: "green" });
+					report.refresh();
+				});
+		},
+	});
+	dialog.show();
+};
+
+// RST No: one weighment that holds the goods of several Transit Passes. Staff learn this later, so in Edit
+// mode they click the RST No, choose each TP No (from PPAS Transit Pass, same PPC and season) and give it
+// its Qty. The Qty of all rows must equal the RST Net Qty. The GRN Note itself is not changed.
+ivri_od.mandi_book.attach_tp = function (grn_name) {
+	const report = frappe.query_report;
+	const api = "ivri_od.procurement.report.mandi_book.mandi_book.";
+	frappe.xcall(api + "get_tp_split", { grn_name }).then((info) => {
+		const dialog = new frappe.ui.Dialog({
+			title: __("RST {0}: attach TP No", [info.rst_no || ""]),
+			size: "large",
+			fields: [
+				{
+					fieldtype: "HTML",
+					fieldname: "intro",
+					options: `<p class="text-muted">${__("RST Net Qty: {0} QT. The Qty of the TP Nos below must add up to it.", [format_number(info.net_qty, null, 3)])}</p>`,
+				},
+				{
+					fieldname: "rows",
+					fieldtype: "Table",
+					label: __("TP No and Qty"),
+					cannot_add_rows: false,
+					in_place_edit: true,
+					data: info.rows,
+					fields: [
+						{
+							fieldname: "transit_pass_no",
+							fieldtype: "Select",
+							label: __("TP No"),
+							options: ["", ...info.choices].join("\n"),
+							in_list_view: 1,
+							reqd: 1,
+							columns: 5,
+						},
+						{
+							fieldname: "qty",
+							fieldtype: "Float",
+							label: __("Qty (QT)"),
+							precision: 3,
+							in_list_view: 1,
+							reqd: 1,
+							columns: 4,
+						},
+					],
+				},
+			],
+			primary_action_label: __("Save"),
+			primary_action: ({ rows }) => {
+				const clean = (rows || []).filter((r) => r.transit_pass_no || flt(r.qty));
+				const total = flt(clean.reduce((sum, r) => sum + flt(r.qty), 0), 3);
+				if (Math.abs(total - flt(info.net_qty, 3)) > 0.001) {
+					frappe.msgprint(
+						__("The Qty adds up to {0} QT but the RST Net Qty is {1} QT. They must be equal.", [total, flt(info.net_qty, 3)])
+					);
+					return;
+				}
+				frappe.xcall(api + "save_tp_split", { grn_name, rows: JSON.stringify(clean) }).then(() => {
+					dialog.hide();
+					frappe.show_alert({ message: __("Saved"), indicator: "green" });
+					report.refresh();
+				});
+			},
+		});
+		if (info.has_split) {
+			dialog.set_secondary_action_label(__("Back to one TP No"));
+			dialog.set_secondary_action(() => {
+				frappe.xcall(api + "clear_tp_split", { grn_name }).then(() => {
+					dialog.hide();
+					frappe.show_alert({ message: __("Saved"), indicator: "green" });
+					report.refresh();
+				});
+			});
+		}
+		dialog.show();
+	});
+};
+
 frappe.query_reports["Mandi Book"] = {
 	collapsible_filters: true,
+	onload(report) {
+		ivri_od.report_edit.add_button(report, ["Excess Received Qty", "RST No (attach TP No)"]);
+		// Open with the latest season chosen; staff pick another one from the drop-down.
+		if (!report.get_filter_value("season")) {
+			frappe.db.get_list("Season Master", { fields: ["name"], order_by: "creation desc", limit: 1 }).then((rows) => {
+				if (rows && rows.length) {
+					report.set_filter_value("season", rows[0].name);
+				}
+			});
+		}
+	},
 	filters: [
 		{
 			fieldname: "season",
 			label: __("Season"),
 			fieldtype: "Link",
 			options: "Season Master",
+			reqd: 1,
 		},
 		{
 			fieldname: "mill_name",
@@ -62,11 +187,23 @@ frappe.query_reports["Mandi Book"] = {
 		}
 
 		if (fieldname === "rst_no") {
+			let html = frappe.utils.escape_html(value);
 			if (data && data.weigh_bridge_measurement) {
 				const link = frappe.utils.get_form_link("Weigh Bridge Measurement", data.weigh_bridge_measurement);
-				return `<a href="${link}">${frappe.utils.escape_html(value)}</a>`;
+				html = `<a href="${link}">${html}</a>`;
 			}
-			return frappe.utils.escape_html(value);
+			if (data && data.split_qty != null) {
+				html += ` <span class="text-muted" title="${__("This RST is shared by several TP Nos. Qty for this TP No: {0}", [data.split_qty])}">⇄ ${data.split_qty}</span>`;
+			}
+			if (data && data.grn_name) {
+				// Edit mode: click the RST No to give its Qty to several TP Nos.
+				return ivri_od.report_edit.cell(
+					html,
+					`ivri_od.mandi_book.attach_tp(decodeURIComponent('${encodeURIComponent(String(data.grn_name)).replace(/'/g, "%27")}'))`,
+					data.split_qty != null
+				);
+			}
+			return html;
 		}
 
 		if (fieldname === "entry") {
@@ -81,6 +218,14 @@ frappe.query_reports["Mandi Book"] = {
 		if (fieldname === "tp_status") {
 			const indicator = value === __("TP Completed") ? "green" : (value === __("Pending") ? "gray" : "orange");
 			return `<span class="indicator-pill ${indicator}">${frappe.utils.escape_html(value)}</span>`;
+		}
+
+		if (fieldname === "excess_received_qty" && data && data.pass_unique_key && data.grn_lines) {
+			return ivri_od.report_edit.cell(
+				default_formatter(value, row, column, data),
+				`ivri_od.mandi_book.edit_excess(decodeURIComponent('${encodeURIComponent(String(data.pass_unique_key)).replace(/'/g, "%27")}'))`,
+				flt(value) > 0
+			);
 		}
 
 		return default_formatter(value, row, column, data);
@@ -177,7 +322,9 @@ function apply_mandi_book_grouping(datatable) {
 
 	const summaryFieldnames = new Set([
 		"season",
+		"ppc_name_slip_no",
 		"ppc_name",
+		"rst_no",
 		"mill_name",
 		"transit_pass_no",
 		"pass_unique_key",
@@ -603,7 +750,9 @@ function render_mandi_book_super_header(datatable_obj) {
 
 		const summaryFieldnames = new Set([
 			"season",
+			"ppc_name_slip_no",
 			"ppc_name",
+			"rst_no",
 			"mill_name",
 			"transit_pass_no",
 			"pass_unique_key",

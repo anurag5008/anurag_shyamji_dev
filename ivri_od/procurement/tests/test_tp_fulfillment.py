@@ -880,3 +880,35 @@ def run():
 		raise RuntimeError(f"Tests failed: {len(result.failures)} failures, {len(result.errors)} errors")
 	print(f"All {result.testsRun} tests passed successfully!")
 	return True
+
+
+class TestMandiBookChhatniFromReceived(unittest.TestCase):
+	"""New Chhatni logic: Chhatni (QT) = Total Received - TP Qty - Excess; Received % = Chhatni (QT) / TP Qty."""
+
+	def test_percent_from_received_minus_tp(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import chhatni_from_received
+
+		self.assertEqual(chhatni_from_received(250, 262), (12.0, 4.8))
+
+	def test_excess_is_taken_out_of_chhatni(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import chhatni_from_received
+
+		self.assertEqual(chhatni_from_received(250, 262, 2), (10.0, 4.0))
+
+	def test_nothing_above_tp_and_excess_larger_than_extra(self):
+		from ivri_od.procurement.report.mandi_book.mandi_book import chhatni_from_received
+
+		self.assertEqual(chhatni_from_received(250, 240), (0.0, 0.0))
+		self.assertEqual(chhatni_from_received(250, 262, 20), (0.0, 0.0))
+		self.assertEqual(chhatni_from_received(0, 262), (0.0, 0.0))
+
+	def test_tolerance_band_with_excess(self):
+		from ivri_od.procurement.grn_tp_fulfillment import actual_chhatni_status
+		from ivri_od.procurement.report.mandi_book.mandi_book import chhatni_from_received
+
+		_, pct = chhatni_from_received(250, 262)
+		self.assertEqual(actual_chhatni_status(250, pct, 4), "Extra Chhatni Received")
+		_, pct = chhatni_from_received(250, 262, 2)
+		self.assertEqual(actual_chhatni_status(250, pct, 4), "Chhatni Received")
+		_, pct = chhatni_from_received(250, 258)
+		self.assertEqual(actual_chhatni_status(250, pct, 4), "Chhatni Pending")

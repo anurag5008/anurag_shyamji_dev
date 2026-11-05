@@ -57,7 +57,7 @@ class GateExit(Document):
 		self._create_grn_notes()
 
 	def _create_grn_notes(self):
-		# GRN is generated when the vehicle leaves the mill, not at tare weight.
+		# The GRN already exists from the tare weight: add the Gate Exit to it (or create it if it is missing).
 		from ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement import (
 			create_grn_notes_after_gate_exit,
 		)

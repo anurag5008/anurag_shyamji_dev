@@ -213,6 +213,41 @@ def find_transit_passes_by_tp_and_ppc(tp_no: str, ppc_name: str) -> list[dict]:
 	return [row for row in rows if _transit_pass_ppc_matches_master(row.get("ppc"), ppc_name)]
 
 
+def list_transit_pass_numbers(ppc_master: str, season: str | None = None) -> list[str]:
+	"""Every Transit Pass No in PPAS Transit Pass for this PPC (and Season), smallest number first."""
+	ppc_master = (ppc_master or "").strip()
+	if not ppc_master:
+		return []
+
+	code, label = ppc_master, ""
+	if frappe.db.exists("PPC Master", ppc_master):
+		code = ppc_master
+		label = (frappe.db.get_value("PPC Master", ppc_master, "ppc_name") or "").strip()
+
+	rows = frappe.db.sql(
+		"""
+		SELECT name, ppc, transit_pass_no, season
+		FROM `tabPPAS Transit Pass`
+		WHERE IFNULL(TRIM(transit_pass_no), '') != ''
+			AND (ppc LIKE %(code)s OR (%(label)s != '' AND ppc LIKE %(label)s))
+		""",
+		{"code": f"%{code}%", "label": f"%{label}%" if label else ""},
+		as_dict=True,
+	)
+	numbers = set()
+	for row in rows:
+		if not _transit_pass_ppc_matches_master(row.get("ppc"), ppc_master):
+			continue
+		if season and not _transit_pass_matches_season(row, season):
+			continue
+		numbers.add((row.get("transit_pass_no") or "").strip())
+
+	def sort_key(value: str):
+		return (0, int(value), value) if value.isdigit() else (1, 0, value)
+
+	return sorted(numbers, key=sort_key)
+
+
 def _transit_pass_matches_season(row: dict, season_master: str) -> bool:
 	"""True when PPAS row belongs to the selected Season Master."""
 	season_master = (season_master or "").strip()

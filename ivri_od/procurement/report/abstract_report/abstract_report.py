@@ -9,21 +9,14 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
-from ivri_od.procurement.doctype.ppas_transit_pass.pass_unique_key import (
-	miller_code_part,
-	short_season_code,
-)
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.ppc_pass_metrics import (
-	build_pass_quantity_maps,
-	completed_quantity_for_pass,
 	get_ppc_season_target_map,
-	key_matches_mapping,
 	make_ppc_resolver,
 	ppc_display_name,
 	season_label,
 )
-from ivri_od.procurement.transit_pass_resolve import resolve_ppc_master_name
+from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name, resolve_ppc_master_name
 
 
 def execute(filters=None):
@@ -252,6 +245,11 @@ def get_eligible_ppcs_query(doctype, txt, searchfield, start, page_len, filters)
 	eligible_ppc_names = {
 		p_name for (s, p_name), qty in ppc_season_totals.items() if flt(qty) > 0
 	}
+	# PPCs that have Transit Passes in PPAS Transit Pass show in the report too.
+	season_name = (resolve_season_master_name(season) or season) if season else ""
+	for (s, _mill, p_name), qty in get_received_map(make_ppc_resolver(ppc_master_rows)).items():
+		if flt(qty) > 0 and (not season_name or s == season_name):
+			eligible_ppc_names.add(p_name)
 
 	txt_lower = (txt or "").strip().casefold()
 	results = []
@@ -270,6 +268,26 @@ def get_eligible_ppcs_query(doctype, txt, searchfield, start, page_len, filters)
 	start = int(start or 0)
 	page_len = int(page_len or 20)
 	return results[start : start + page_len]
+
+
+def get_received_map(resolve_to_ppc_master) -> dict[tuple[str, str, str], float]:
+	"""{(Season Master, Mill Master, PPC Master): sum of Quantity} from PPAS Transit Pass."""
+	received_map: dict[tuple[str, str, str], float] = defaultdict(float)
+	groups = frappe.db.sql(
+		"""
+		SELECT season, miller, ppc, SUM(quantity) AS qty
+		FROM `tabPPAS Transit Pass`
+		GROUP BY season, miller, ppc
+		""",
+		as_dict=True,
+	)
+	for group in groups:
+		season_name = resolve_season_master_name(group.season) or (group.season or "").strip()
+		mill_name = resolve_mill_master_name(None, group.miller)
+		ppc_doc = resolve_to_ppc_master(group.ppc)
+		if season_name and mill_name and ppc_doc:
+			received_map[(season_name, mill_name, ppc_doc.name)] += flt(group.qty)
+	return received_map
 
 
 def get_data(filters, relevant_mills=None):
@@ -322,38 +340,18 @@ def get_data(filters, relevant_mills=None):
 		ppc_master_rows=ppc_master_rows,
 	)
 
-	# 3. Index completed pass quantities using canonical key_matches_mapping
-	maps = build_pass_quantity_maps()
-	received_by_key = maps["received_by_key"]
-	tp_qty_by_key = maps["tp_qty_by_key"]
-
-	passes = frappe.get_all(
-		"PPAS Transit Pass",
-		fields=["name", "pass_unique_key", "season", "ppc", "miller", "quantity"],
-	)
-
-	passes_by_mill_season = defaultdict(list)
-	for tp in passes:
-		key = (tp.pass_unique_key or tp.name or "").strip()
-		if not key:
-			continue
-		parts = key.split("-")
-		if len(parts) < 4:
-			continue
-		m_code = miller_code_part(parts[0]).casefold()
-		s_code = parts[-2].casefold()
-		recv = received_by_key.get(key, 0)
-		tp_q = tp_qty_by_key.get(key, 0) or flt(tp.quantity)
-		comp = completed_quantity_for_pass(recv, tp_q)
-		passes_by_mill_season[(m_code, s_code)].append((key, comp))
+	# 3. Received: filter PPAS Transit Pass by Season, Miller and PPC, then group them and sum Quantity.
+	received_map = get_received_map(resolve_to_ppc_master)
+	ppc_received = defaultdict(float)
+	for (season_name, _mill, ppc_name), qty in received_map.items():
+		ppc_received[(season_name, ppc_name)] += qty
 
 	# 4. Render rows: only PPCs present in PPC Master with Target Allocation > 0 in season
 	data = []
 	for season in relevant_seasons:
-		season_code = short_season_code(season)
 		for p in candidate_ppcs:
-			# Only appear if Target Quantity is filled and > 0 for this season
-			if ppc_season_totals.get((season, p.name), 0) <= 0:
+			# A PPC appears when it has a Target (Target Allocation) or Transit Passes in this season.
+			if ppc_season_totals.get((season, p.name), 0) <= 0 and ppc_received.get((season, p.name), 0) <= 0:
 				continue
 
 			ppc_label = (
@@ -376,13 +374,7 @@ def get_data(filters, relevant_mills=None):
 
 				assigned = target_map.get((season, p.name, mill.get("name")), 0.0)
 
-				candidate_passes = passes_by_mill_season.get(
-					(mill_code.casefold(), season_code.casefold()), []
-				)
-				completed = 0.0
-				for key, comp in candidate_passes:
-					if key_matches_mapping(key, mill_code, p.code or "", p.name, season_code):
-						completed += comp
+				completed = received_map.get((season, mill.get("name"), p.name), 0.0)
 
 				remaining = flt(max(assigned - completed, 0.0), 3)
 

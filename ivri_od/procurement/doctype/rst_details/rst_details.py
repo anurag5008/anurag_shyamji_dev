@@ -42,6 +42,16 @@ class RSTDetails(Document):
 	def on_trash(self):
 		wbm_name = self.weigh_bridge_measurement
 		if wbm_name and frappe.db.exists("Weigh Bridge Measurement", wbm_name):
+			grn_notes = frappe.get_all(
+				"GRN Note", filters={"weigh_bridge_measurement": wbm_name, "docstatus": ["<", 2]}, pluck="name"
+			)
+			if grn_notes:
+				frappe.throw(
+					_("This RST cannot be deleted: its weighment {0} already has GRN Note {1}. Delete the GRN Note first.").format(
+						wbm_name, ", ".join(grn_notes)
+					),
+					title=_("GRN Note Exists"),
+				)
 			frappe.delete_doc("Weigh Bridge Measurement", wbm_name, ignore_permissions=True)
 
 	def on_update(self):
@@ -492,6 +502,12 @@ def rice_dispatch_unique_key(depo: dict, season_code: str, lot_no: str | None) -
 	return "-".join(parts)[:MAX_KEY_LENGTH]
 
 
+def tp_no_is_blank(tp_no) -> bool:
+	"""True when no TP No was given: empty, or only zeros ("0" is typed when there is no TP)."""
+	text = (tp_no or "").strip()
+	return not text or set(text) == {"0"}
+
+
 def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_datetime=None) -> dict:
 	"""Implement the 5 RST TP & Party Name rules:
 	1. TP No. exists in Transit Pass and Party Name identifies its PPC (name, code or name plus code; case, spaces
@@ -548,7 +564,7 @@ def resolve_rst_tp_details(tp_no: str | None, party_name: str | None, rst_dateti
 			result["rst_unique_key"] = rice_dispatch_unique_key(depo, result["season_code"], tp_no)
 		return result
 
-	if not tp_no:
+	if tp_no_is_blank(tp_no):
 		if not party_name:
 			result["tp_status"] = ""
 			return result
@@ -614,7 +630,7 @@ def party_found_awaiting_tp(doc) -> bool:
 	"""Party Name is a transit-pass PPC and this RST has no TP No yet."""
 	tp_no = (getattr(doc, "tp_no", None) or "").strip()
 	party_name = (getattr(doc, "party_name", None) or getattr(doc, "ppc_name", None) or "").strip()
-	if tp_no or not party_name:
+	if not tp_no_is_blank(tp_no) or not party_name:
 		return False
 	if party_matches_depo_master(party_name):
 		return False
@@ -625,7 +641,7 @@ def is_private_procurement_rst(doc) -> bool:
 	"""Farmer/agent only when Party Name is not a transit-pass PPC and TP No is empty."""
 	tp_no = (getattr(doc, "tp_no", None) or "").strip()
 	party_name = (getattr(doc, "party_name", None) or getattr(doc, "ppc_name", None) or "").strip()
-	if tp_no or not party_name:
+	if not tp_no_is_blank(tp_no) or not party_name:
 		return False
 	if party_matches_depo_master(party_name):
 		return False
@@ -660,7 +676,7 @@ def get_rst_agent_name(demo_rst_data=None, rst_no=None) -> str | None:
 def try_get_matching_transit_pass(doc):
 	tp_no = (doc.tp_no or "").strip()
 	party_name = (getattr(doc, "party_name", None) or getattr(doc, "ppc_name", None) or "").strip()
-	if not tp_no or not party_name:
+	if tp_no_is_blank(tp_no) or not party_name:
 		return None
 
 	transit_passes = find_rst_transit_passes(tp_no, party_name)
@@ -694,3 +710,26 @@ def fetch_mill_and_agent_from_tp(tp_no=None, party_name=None, ppc_name=None, ent
 	party_name = (party_name or ppc_name or "").strip()
 	tp_no = (tp_no or "").strip()
 	return resolve_rst_tp_details(tp_no, party_name, entry_datetime or None)
+
+
+@frappe.whitelist()
+def get_party_name_choices():
+	"""Party Name drop-down: every PPC on PPAS Transit Pass, then every Depo Master Depo Name.
+
+	Staff pick from here so a spelling mistake cannot break the Transit Pass match. Other
+	names (a local farmer) can still be typed: they save as Local Paddy Purchase.
+	"""
+	ppcs = frappe.db.sql(
+		"""
+		SELECT DISTINCT TRIM(ppc) FROM `tabPPAS Transit Pass`
+		WHERE IFNULL(TRIM(ppc), '') != '' ORDER BY 1
+		""",
+		pluck=True,
+	)
+	depos = frappe.get_all("Depo Master", pluck="depo_name", order_by="depo_name asc")
+	seen, choices = set(), []
+	for name in [*ppcs, *[(d or "").strip() for d in depos]]:
+		if name and name.casefold() not in seen:
+			seen.add(name.casefold())
+			choices.append(name)
+	return choices

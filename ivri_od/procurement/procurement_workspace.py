@@ -279,6 +279,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		[
 			("Mill Master", "DocType"),
 			("PPC Master", "DocType"),
+			("Own Vehicle", "DocType"),
 			("Depo Master", "DocType"),
 			("District Master", "DocType"),
 			("Agent Master", "DocType"),
@@ -341,6 +342,7 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			(RICE_STOCK_REPORT, "Report"),
 			(GUNNY_YEARLY_REPORT, "Report"),
 			(CUSTODY_REPORT, "Report"),
+			("Vehicle Wise Statement", "DocType"),
 		],
 	),
 	(

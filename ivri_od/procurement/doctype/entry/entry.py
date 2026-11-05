@@ -6,7 +6,10 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-from ivri_od.procurement.transit_pass_resolve import get_transit_pass_for_ppc_and_tp_no
+from ivri_od.procurement.transit_pass_resolve import (
+	get_transit_pass_for_ppc_and_tp_no,
+	list_transit_pass_numbers,
+)
 
 
 class Entry(Document):
@@ -161,3 +164,25 @@ def resolve_entry_pass_from_ppc_tp(ppc_name=None, tp_no=None, season=None):
 		"quantity": row.get("quantity"),
 		"pacs": row.get("pacs"),
 	}
+
+
+@frappe.whitelist()
+def get_transit_pass_numbers(ppc_name=None, season=None, current=None):
+	"""TP No choices for the Entry form: Transit Pass Nos of this PPC in this Season that no Entry uses yet.
+
+	`current` is the Entry being edited: its own TP No stays in the list.
+	"""
+	numbers = list_transit_pass_numbers(ppc_name, season)
+	if not numbers:
+		return []
+
+	filters = {"ppc_name": ppc_name, "docstatus": ["<", 2]}
+	if season:
+		filters["season"] = season
+	if current:
+		filters["name"] = ["!=", current]
+	used = {
+		(tp_no or "").strip().casefold()
+		for tp_no in frappe.get_all("Entry", filters=filters, pluck="tp_no")
+	}
+	return [number for number in numbers if number.casefold() not in used]

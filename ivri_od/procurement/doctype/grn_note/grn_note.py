@@ -889,10 +889,7 @@ def build_auto_grn_doc_dict(wbm_name: str) -> dict | None:
 	if not flt(frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "tare_weight")):
 		return None
 
-	quality_test = frappe.db.get_value("Weigh Bridge Measurement", wbm_name, "quality_test") or ""
-	if quality_test not in ("Accepted", "Partially Accepted"):
-		return None
-
+	# No wait for the Quality Check: it is attached to the GRN when it becomes available.
 	if is_local_procurement_wbm(wbm_name):
 		return None
 
@@ -909,8 +906,7 @@ def build_auto_grn_doc_dict(wbm_name: str) -> dict | None:
 	if not rst_no or not pass_key:
 		return None
 
-	qc_ok = (wbm.quality_test or "") in ("Accepted", "Partially Accepted")
-	details = _grn_details_from_rst(rst_no, pass_key, strict_wbm=qc_ok)
+	details = _grn_details_from_rst(rst_no, pass_key, strict_wbm=False)
 	if details.get("error"):
 		return None
 

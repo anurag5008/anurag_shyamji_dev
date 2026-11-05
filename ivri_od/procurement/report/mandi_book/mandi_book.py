@@ -13,14 +13,49 @@ from ivri_od.procurement.doctype.season_master.season_master import resolve_seas
 from ivri_od.procurement.ppc_pass_metrics import ppc_display_name
 from ivri_od.procurement.grn_tp_fulfillment import (
 	actual_chhatni_status,
-	excess_tp_received_quantity,
 	pending_tp_quantity,
 	remaining_tp_quantity,
 	required_chhatni_qt,
 	tp_chhatni_balance_qt,
 	tp_fulfillment_status,
 )
-from ivri_od.procurement.transit_pass_resolve import resolve_mill_master_name
+from ivri_od.procurement.doctype.season_mapping.season_mapping import get_chhatni_from_season_mapping
+from ivri_od.procurement.transit_pass_resolve import (
+	get_transit_pass_for_ppc_and_tp_no,
+	list_transit_pass_numbers,
+	resolve_mill_master_name,
+	resolve_ppc_master_name,
+)
+
+
+GRN_FIELDS = [
+			"name",
+			"grn_no",
+			"pass_unique_key",
+			"ppc",
+			"ppc_name",
+			"mill_name",
+			"cmr_season",
+			"transit_pass_no",
+			"tp_quantity",
+			"chhatni",
+			"received_quantity",
+			"net_weight",
+			"gross_vehicle_weight",
+			"tare_weight",
+			"gross_weight",
+			"gunny_weight",
+			"tp_cumulative_received",
+			"tp_fulfillment_status",
+			"chhatni_fulfillment_status",
+			"rst_no",
+			"gunny_type",
+			"deduction",
+			"weigh_bridge_measurement",
+			"vehicle_no",
+			"receipt_datetime",
+			"creation",
+]
 
 
 def execute(filters=None):
@@ -30,13 +65,14 @@ def execute(filters=None):
 
 def get_columns():
 	return [
-		{"label": _("Season"), "fieldname": "season", "fieldtype": "Data", "width": 110},
+		# Kept empty for now: it will be linked to its source later.
+		{"label": _("Slip No"), "fieldname": "ppc_name_slip_no", "fieldtype": "Data", "width": 110},
 		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 260},
 		{
 			"label": _("Mill Name"),
 			"fieldname": "mill_name",
 			"fieldtype": "Data",
-			"width": 480,
+			"width": 110,
 		},
 		{"label": _("TP No."), "fieldname": "transit_pass_no", "fieldtype": "Data", "width": 95},
 		{
@@ -54,6 +90,7 @@ def get_columns():
 			"precision": 3,
 			"width": 105,
 		},
+		{"label": _("RST No."), "fieldname": "rst_no", "fieldtype": "Data", "width": 120},
 		{
 			"label": _("Total Gross Wt"),
 			"fieldname": "total_gross_weight",
@@ -139,7 +176,6 @@ def get_columns():
 		{"label": _("Price per Quintal"), "fieldname": "entry_price_per_quintal", "fieldtype": "Float", "precision": 2, "width": 135},
 		{"label": _("Total Amount"), "fieldname": "total_amount", "fieldtype": "Float", "precision": 2, "width": 135},
 		{"label": _("GRN No."), "fieldname": "grn_no", "fieldtype": "Link", "options": "GRN Note", "width": 135},
-		{"label": _("RST No."), "fieldname": "rst_no", "fieldtype": "Data", "width": 120},
 		{"label": _("Vehicle No."), "fieldname": "vehicle_no", "fieldtype": "Data", "width": 125},
 		{"label": _("Load Wt"), "fieldname": "load_weight", "fieldtype": "Float", "precision": 3, "width": 105},
 		{"label": _("Tare Wt"), "fieldname": "tare_weight", "fieldtype": "Float", "precision": 3, "width": 105},
@@ -155,38 +191,15 @@ def get_data(filters):
 	grns = frappe.get_all(
 		"GRN Note",
 		filters={"is_local_procurement": 0, "docstatus": ["<", 2]},
-		fields=[
-			"name",
-			"grn_no",
-			"pass_unique_key",
-			"ppc",
-			"ppc_name",
-			"mill_name",
-			"cmr_season",
-			"transit_pass_no",
-			"tp_quantity",
-			"chhatni",
-			"received_quantity",
-			"net_weight",
-			"gross_vehicle_weight",
-			"tare_weight",
-			"gross_weight",
-			"gunny_weight",
-			"tp_cumulative_received",
-			"tp_fulfillment_status",
-			"chhatni_fulfillment_status",
-			"rst_no",
-			"gunny_type",
-			"deduction",
-			"weigh_bridge_measurement",
-			"vehicle_no",
-			"receipt_datetime",
-			"creation",
-		],
+		fields=GRN_FIELDS,
 		order_by="receipt_datetime asc, creation asc",
 	)
 	if not grns:
 		return []
+
+	# An RST split over several Transit Passes counts under each TP No for its own Qty.
+	wbm_grns = grns
+	grns = _expand_tp_splits(grns)
 
 	grouped: dict[str, list] = defaultdict(list)
 	for grn in grns:
@@ -194,10 +207,10 @@ def get_data(filters):
 		if key:
 			grouped[key].append(grn)
 
-	wbm_by_name = _weigh_bridges_for(grns)
+	wbm_by_name = _weigh_bridges_for(wbm_grns)
 	bags_by_wbm = _bags_by_wbm(list(wbm_by_name))
 	entries_by_pass = _entries_for(list(grouped))
-	chhatni_by_pass = _chhatni_for(list(grouped))
+	excess_by_pass = _excess_for(list(grouped))
 	ppc_filter = _ppc_filter_values(filters.get("ppc_name"))
 	season_filter = (filters.get("season") or "").strip()
 	mill_filter = (filters.get("mill_name") or "").strip()
@@ -226,12 +239,8 @@ def get_data(filters):
 		total_gunny_weight = flt(sum(line["gunny_weight"] for line in rst_lines), 3)
 		total_deduction_received = flt(sum(line["deduction"] for line in rst_lines), 3)
 		# Actual chhatni from saved Chhatni records of this pass (Pass Unique Key = TP + PPC + season).
-		chhatni = chhatni_by_pass.get(key) or {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0}
-		actual_chhatni_qt = chhatni["chhatni_qt"]
-		# Total Qty Received = Total Gross Wt - Total Gunny Wt - Total Deduction Received - Chhatni (QT).
-		total_received = flt(
-			max(total_gross_weight - total_gunny_weight - total_deduction_received - actual_chhatni_qt, 0.0), 3
-		)
+		# Total Qty Received = Total Gross Wt - Total Gunny Wt - Total Deduction Received.
+		total_received = flt(max(total_gross_weight - total_gunny_weight - total_deduction_received, 0.0), 3)
 
 		chhatni_assigned = _assigned_chhatni(docs)
 		total_deduction = flt(sum(flt(doc.deduction) for doc in docs), 3)
@@ -239,10 +248,11 @@ def get_data(filters):
 		tp_complete = tp_status == "TP Completed"
 		pending_qty = pending_tp_quantity(tp_qty, total_received)
 		required_chhatni = required_chhatni_qt(tp_qty, chhatni_assigned)
-		# Total Qty Received is already after Chhatni, so excess is what is left above TP Qty.
-		excess_qty = excess_tp_received_quantity(tp_qty, total_received)
-		# Received Chhatni % as saved on the Chhatni record (Chhatni QT ÷ TP Quantity × 100).
-		received_pct = chhatni["received_chhatni_pct"]
+		# Chhatni = what is received above the TP Qty, less the Excess Received Qty typed by the user.
+		# Received Chhatni % = Chhatni (QT) / TP Qty x 100, which is (Total Qty Received - TP Qty) / TP Qty
+		# x 100 until an excess is typed. Every other quantity above the TP Qty is then Excess.
+		excess_qty = flt(excess_by_pass.get(key), 3)
+		actual_chhatni_qt, received_pct = chhatni_from_received(tp_qty, total_received, excess_qty)
 		chhatni_status = actual_chhatni_status(tp_qty, received_pct, chhatni_assigned)
 		balance = tp_chhatni_balance_qt(tp_qty, total_received, total_deduction)
 		extra = excess_qty
@@ -261,6 +271,7 @@ def get_data(filters):
 		tp_summary = {
 			"season": season_name,
 			"ppc_name": ppc_display_name(sample.ppc or sample.ppc_name),
+			"ppc_name_slip_no": "",
 			"mill_name": mill_label,
 			"transit_pass_no": tp_no,
 			"pass_unique_key": key,
@@ -426,6 +437,12 @@ def _mill_label(pass_key: str, miller_text: str | None, companies: dict[str, str
 			if code not in companies:
 				company = frappe.db.get_value("Mill Master", code, "company") or ""
 				companies[code] = (company or "").strip()
+	# Short Name of the mill (Mill Master), like SSPPB; the long name only when it is not filled.
+	short_key = f"short:{code}"
+	if short_key not in companies:
+		companies[short_key] = (frappe.db.get_value("Mill Master", code, "short_name") or "").strip() if code else ""
+	if companies[short_key]:
+		return companies[short_key], code
 	company = companies.get(code) or ""
 	text = (miller_text or "").strip()
 	if company and code:
@@ -551,8 +568,22 @@ def _rst_lines(docs, wbm_by_name: dict, bags_by_wbm: dict) -> list[dict]:
 		if not net_wt and gross_wt:
 			net_wt = flt(gross_wt - gunny_weight - deduction, 3)
 
+		split_qty = doc.get("split_qty")
+		if split_qty is not None:
+			# This RST is shared by several TP Nos: this TP gets its Qty, and gross, gunny, deduction and
+			# bags in the same proportion, so that gross - gunny - deduction is exactly its Qty.
+			base_qty = gross_wt - gunny_weight - deduction
+			ratio = flt(split_qty) / base_qty if base_qty > 0 else 0.0
+			load_wt, tare_wt = flt(load_wt * ratio, 3), flt(tare_wt * ratio, 3)
+			gross_wt, gunny_weight = flt(gross_wt * ratio, 3), flt(gunny_weight * ratio, 3)
+			deduction = flt(gross_wt - gunny_weight - flt(split_qty), 3)
+			net_wt = flt(split_qty, 3)
+			jute, plastic = int(round(jute * ratio)), int(round(plastic * ratio))
+			total_bags = int(round(total_bags * ratio))
+
 		lines.append(
 			{
+				"split_qty": flt(split_qty, 3) if split_qty is not None else None,
 				"grn_no": (doc.grn_no or doc.name or "").strip(),
 				"grn_name": (doc.name or "").strip(),
 				"rst_no": rst_no,
@@ -568,11 +599,57 @@ def _rst_lines(docs, wbm_by_name: dict, bags_by_wbm: dict) -> list[dict]:
 				"actual_vehicle_no": vehicle,
 				"jute_pkt": jute,
 				"plastic_pkt": plastic,
-				"no_of_bags": cint(wbm.get("no_of_bags")),
+				"no_of_bags": int(round(cint(wbm.get("no_of_bags")) * (ratio if split_qty is not None else 1))),
 				"total_bags": total_bags,
 			}
 		)
 	return lines
+
+
+def chhatni_from_received(tp_qty: float, total_received: float, excess_qty: float = 0.0) -> tuple[float, float]:
+	"""Chhatni (QT) and Received Chhatni % of one Transit Pass.
+
+	Chhatni (QT) = Total Qty Received - TP Qty - Excess Received Qty (never below 0).
+	Received Chhatni % = Chhatni (QT) / TP Qty x 100 (0 when there is no TP Qty).
+	"""
+	tp_qty = flt(tp_qty)
+	if tp_qty <= 0:
+		return 0.0, 0.0
+	chhatni_qt = flt(max(flt(total_received) - tp_qty - flt(excess_qty), 0.0), 3)
+	return chhatni_qt, flt(chhatni_qt / tp_qty * 100.0, 2)
+
+
+def _excess_for(pass_keys: list[str]) -> dict[str, float]:
+	"""Excess Received Qty typed for each pass (Chhatni Excess records)."""
+	if not pass_keys:
+		return {}
+	rows = frappe.get_all(
+		"Chhatni Excess",
+		filters={"pass_unique_key": ["in", list(pass_keys)]},
+		fields=["pass_unique_key", "excess_qty"],
+	)
+	return {row.pass_unique_key: flt(row.excess_qty, 3) for row in rows}
+
+
+@frappe.whitelist(methods=["POST"])
+def set_excess_received_qty(pass_unique_key: str, value: float | None = None) -> float:
+	"""Save the Excess Received Qty typed in the Mandi Book for one pass; empty or 0 removes it."""
+	pass_unique_key = (pass_unique_key or "").strip()
+	if not pass_unique_key:
+		frappe.throw(_("Pass Unique Key is missing"))
+	frappe.has_permission("Chhatni Excess", "create", throw=True)
+	value = flt(value, 3)
+	if value < 0:
+		frappe.throw(_("The value cannot be negative"))
+	name = frappe.db.exists("Chhatni Excess", {"pass_unique_key": pass_unique_key})
+	if not value:
+		if name:
+			frappe.delete_doc("Chhatni Excess", name)
+		return 0.0
+	doc = frappe.get_doc("Chhatni Excess", name) if name else frappe.new_doc("Chhatni Excess")
+	doc.update({"pass_unique_key": pass_unique_key, "excess_qty": value})
+	doc.save()
+	return doc.excess_qty
 
 
 def _chhatni_for(pass_keys: list[str]) -> dict[str, dict]:
@@ -657,6 +734,7 @@ def _grn_fields_dict(line: dict) -> dict:
 		"deduction": flt(line.get("deduction"), 3),
 		"net_weight": flt(line.get("net_weight"), 3),
 		"weigh_bridge_measurement": (line.get("weigh_bridge_measurement") or "").strip(),
+		"split_qty": line.get("split_qty"),
 	}
 
 
@@ -674,6 +752,7 @@ def _empty_grn_dict() -> dict:
 		"deduction": None,
 		"net_weight": None,
 		"weigh_bridge_measurement": "",
+		"split_qty": None,
 	}
 
 
@@ -696,3 +775,148 @@ def _empty_entry_dict() -> dict:
 		"total_amount": None,
 	}
 
+
+
+# ---- RST shared by several Transit Passes ----
+
+def _expand_tp_splits(grns: list) -> list:
+	"""Replace the GRN of a split RST by one line per TP No (see Mandi Book TP Split)."""
+	names = [grn.name for grn in grns]
+	rows = frappe.get_all(
+		"Mandi Book TP Split Row",
+		filters={"parenttype": "Mandi Book TP Split", "parent": ["in", names]},
+		fields=["parent", "pass_unique_key", "qty", "idx"],
+		order_by="parent asc, idx asc",
+	)
+	if not rows:
+		return grns
+	by_grn: dict[str, list] = defaultdict(list)
+	for row in rows:
+		by_grn[row.parent].append(row)
+
+	real_by_key = {}
+	for grn in grns:
+		key = (grn.pass_unique_key or "").strip()
+		if key:
+			real_by_key.setdefault(key, grn)
+
+	out = []
+	for grn in grns:
+		split = by_grn.get(grn.name)
+		if not split:
+			out.append(grn)
+			continue
+		for row in split:
+			out.append(_split_line_doc(grn, (row.pass_unique_key or "").strip(), flt(row.qty, 3), real_by_key))
+	return out
+
+
+def _split_line_doc(grn, key: str, qty: float, real_by_key: dict):
+	"""The GRN as it counts under another TP No: that TP's details and the Qty given to it."""
+	doc = frappe._dict(grn)
+	doc.pass_unique_key = key
+	doc.split_qty = qty
+	template = real_by_key.get(key)
+	if template:
+		for fieldname in ("ppc", "ppc_name", "mill_name", "cmr_season", "transit_pass_no", "tp_quantity", "chhatni"):
+			doc[fieldname] = template.get(fieldname)
+		doc.tp_fulfillment_status = template.get("tp_fulfillment_status")
+		return doc
+
+	row = frappe.db.get_value(
+		"PPAS Transit Pass", key, ["ppc", "transit_pass_no", "quantity"], as_dict=True
+	) or frappe._dict()
+	doc.ppc = row.get("ppc") or grn.get("ppc")
+	doc.transit_pass_no = row.get("transit_pass_no") or ""
+	doc.tp_quantity = flt(row.get("quantity"))
+	doc.mill_name = key.partition("-")[0].strip() or grn.get("mill_name")
+	doc.tp_fulfillment_status = ""
+	mill_link = resolve_mill_master_name(key, doc.mill_name) or ""
+	ppc_link = resolve_ppc_master_name(doc.ppc) or ""
+	season_link = resolve_season_master_name(grn.get("cmr_season")) or ""
+	doc.chhatni = get_chhatni_from_season_mapping(season_link, ppc_link, mill_link) if (mill_link and ppc_link and season_link) else 0
+	return doc
+
+
+def rst_net_qty(grn_name: str) -> float:
+	"""RST Net Qty of a GRN Note as the Mandi Book counts it: gross - gunny - deduction."""
+	grns = frappe.get_all("GRN Note", filters={"name": grn_name}, fields=GRN_FIELDS)
+	if not grns:
+		frappe.throw(_("GRN Note {0} not found").format(grn_name))
+	wbm = _weigh_bridges_for(grns)
+	lines = _rst_lines(grns, wbm, _bags_by_wbm(list(wbm)))
+	if not lines:
+		return 0.0
+	line = lines[0]
+	return flt(line["gross_weight"] - line["gunny_weight"] - line["deduction"], 3)
+
+
+def _split_context(grn_name: str):
+	grn = frappe.db.get_value("GRN Note", grn_name, ["name", "rst_no", "pass_unique_key", "ppc", "ppc_name", "cmr_season", "transit_pass_no"], as_dict=True)
+	if not grn:
+		frappe.throw(_("GRN Note {0} not found").format(grn_name))
+	ppc = resolve_ppc_master_name(grn.ppc) or resolve_ppc_master_name(grn.ppc_name) or ""
+	season = resolve_season_master_name(grn.cmr_season) or ""
+	return grn, ppc, season
+
+
+@frappe.whitelist()
+def get_tp_split(grn_name: str) -> dict:
+	"""Data for the Attach TP dialog: RST Net Qty, the TP Nos already given, and the TP No choices."""
+	frappe.has_permission("Mandi Book TP Split", "read", throw=True)
+	grn, ppc, season = _split_context(grn_name)
+	net_qty = rst_net_qty(grn_name)
+	choices = list_transit_pass_numbers(ppc, season) if ppc else []
+	rows = []
+	name = frappe.db.exists("Mandi Book TP Split", {"grn_note": grn_name})
+	if name:
+		doc = frappe.get_doc("Mandi Book TP Split", name)
+		rows = [{"transit_pass_no": row.transit_pass_no, "qty": flt(row.qty, 3)} for row in doc.tp_rows]
+	else:
+		own = (grn.transit_pass_no or "").strip()
+		rows = [{"transit_pass_no": own, "qty": net_qty}]
+	for row in rows:
+		if row["transit_pass_no"] and row["transit_pass_no"] not in choices:
+			choices.append(row["transit_pass_no"])
+	return {"rst_no": grn.rst_no, "net_qty": net_qty, "rows": rows, "choices": choices, "has_split": bool(name)}
+
+
+@frappe.whitelist(methods=["POST"])
+def save_tp_split(grn_name: str, rows) -> str:
+	"""Give each TP No its Qty of this RST. rows: [{"transit_pass_no": "46", "qty": 200}, ...]."""
+	import json
+
+	frappe.has_permission("Mandi Book TP Split", "create", throw=True)
+	if isinstance(rows, str):
+		rows = json.loads(rows or "[]")
+	grn, ppc, season = _split_context(grn_name)
+	child_rows = []
+	for row in rows or []:
+		tp_no = (row.get("transit_pass_no") or "").strip()
+		if not tp_no and not flt(row.get("qty")):
+			continue
+		if not tp_no:
+			frappe.throw(_("Choose the TP No for every row."))
+		found = get_transit_pass_for_ppc_and_tp_no(ppc, tp_no, season=season)
+		key = ((found or {}).get("pass_unique_key") or (found or {}).get("name") or "").strip()
+		if not key:
+			frappe.throw(_("TP No {0} is not in PPAS Transit Pass for this PPC and season.").format(tp_no))
+		child_rows.append({"pass_unique_key": key, "qty": flt(row.get("qty"), 3)})
+
+	name = frappe.db.exists("Mandi Book TP Split", {"grn_note": grn_name})
+	doc = frappe.get_doc("Mandi Book TP Split", name) if name else frappe.new_doc("Mandi Book TP Split")
+	doc.grn_note = grn_name
+	doc.set("tp_rows", [])
+	for row in child_rows:
+		doc.append("tp_rows", row)
+	doc.save()
+	return doc.name
+
+
+@frappe.whitelist(methods=["POST"])
+def clear_tp_split(grn_name: str) -> None:
+	"""Back to one TP No for this RST."""
+	frappe.has_permission("Mandi Book TP Split", "delete", throw=True)
+	name = frappe.db.exists("Mandi Book TP Split", {"grn_note": grn_name})
+	if name:
+		frappe.delete_doc("Mandi Book TP Split", name)

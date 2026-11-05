@@ -1,6 +1,6 @@
 # Copyright (c) 2026, Profezzo and Contributors
 # See license.txt
-"""GRN Note is auto-generated after Gate Exit, not at tare weight.
+"""GRN Note is auto-generated at tare weight; Quality Check and Gate Exit are added to it later.
 
 Mocked tests: no site, no database.
 """
@@ -55,10 +55,11 @@ class TestEnsureGrnWaitsForGateExit(_NoSite):
 		self.patch(f"{MODULE}.wbm_vehicle_has_exited", return_value=exited)
 		_ensure_grn_note_for_weigh_bridge("WBM-1")
 
-	def test_no_grn_after_tare_while_vehicle_inside(self):
+	def test_grn_created_at_tare_while_vehicle_inside(self):
+		# New rule: the GRN does not wait for Gate Exit (or for the Quality Check).
 		self._ensure(grn_exists=False, exited=False)
-		self.build.assert_not_called()
-		self.grn.insert.assert_not_called()
+		self.build.assert_called_once_with("WBM-1")
+		self.grn.insert.assert_called_once_with(ignore_permissions=True)
 
 	def test_grn_created_once_vehicle_exited(self):
 		self._ensure(grn_exists=False, exited=True)
@@ -173,13 +174,14 @@ class TestCreateGrnOnGateExit(_NoSite):
 
 
 class TestPendingReasons(_NoSite):
-	def test_pending_reason_until_exit(self):
+	def test_no_pending_reason_for_vehicle_inside(self):
 		wbm = frappe._dict(tare_weight=200, pass_unique_key="KEY", rst_no="401", is_farmer_or_agent=0)
 		self.db.exists.side_effect = [True, False]  # WBM exists, no GRN yet
 		self.db.get_value.return_value = wbm
 		self.patch(f"{MODULE}.is_local_procurement_wbm", return_value=False)
+		# The vehicle being inside the mill no longer holds the GRN back.
 		with patch(f"{MODULE}.wbm_vehicle_has_exited", return_value=False):
-			self.assertEqual(grn_pending_reasons_for_wbm("WBM-1"), ["Vehicle has not exited yet. The GRN is created after Gate Exit."])
+			self.assertEqual(grn_pending_reasons_for_wbm("WBM-1"), [])
 		self.db.exists.side_effect = [True, False]
 		with patch(f"{MODULE}.wbm_vehicle_has_exited", return_value=True):
 			self.assertEqual(grn_pending_reasons_for_wbm("WBM-1"), [])

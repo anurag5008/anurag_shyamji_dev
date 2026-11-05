@@ -265,6 +265,7 @@ class WeighBridgeMeasurement(Document):
 		self._schedule_procurement_rollup_sync()
 
 	def on_update(self):
+		self._sync_measurement_columns()
 		# Recheck when RST adds a TP key or tare/QC values make this WBM eligible.
 		_ensure_grn_note_for_weigh_bridge(self.name)
 		self._schedule_procurement_rollup_sync()
@@ -306,6 +307,7 @@ class WeighBridgeMeasurement(Document):
 				)
 
 	def validate(self):
+		self._sync_date_from_rst()
 		ensure_doc_datetime(self, "date", default_now=True)
 		self._sync_and_validate_weighment()
 		self._sync_weighment_datetime()
@@ -356,6 +358,28 @@ class WeighBridgeMeasurement(Document):
 
 	def _sync_tp_status(self):
 		self.tp_status = compute_wbm_tp_status(self)
+
+	def _sync_measurement_columns(self):
+		"""Older reports read the measurement date and time columns: keep them equal to Date & Time."""
+		if not self.date or not (self.get("demo_rst_data") or "").strip():
+			return
+		dt = get_datetime(self.date)
+		values = {}
+		if frappe.db.has_column("Weigh Bridge Measurement", "measurement_date"):
+			values["measurement_date"] = getdate(dt)
+		if frappe.db.has_column("Weigh Bridge Measurement", "measurement_time"):
+			values["measurement_time"] = get_time(dt).replace(microsecond=0)
+		if values:
+			frappe.db.set_value("Weigh Bridge Measurement", self.name, values, update_modified=False)
+
+	def _sync_date_from_rst(self):
+		"""Date & Time of a weighment made from an RST is the RST Details Date & Time (not today's date)."""
+		rst_name = (self.get("demo_rst_data") or "").strip()
+		if not rst_name:
+			return
+		value = rst_date_time(rst_name)
+		if value:
+			self.date = value
 
 	def _sync_weighment_datetime(self):
 		ensure_doc_datetime(self, "date", default_now=True)
@@ -1169,6 +1193,18 @@ def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 	return data
 
 
+def rst_date_time(rst_name: str):
+	"""Date & Time of an RST Details record (its Date & Time, else its Date and Time), or None."""
+	row = frappe.db.get_value("RST Details", rst_name, ["entry_datetime", "entry_date", "entry_time"], as_dict=True)
+	if not row:
+		return None
+	if row.entry_datetime:
+		return get_datetime(row.entry_datetime)
+	if row.entry_date:
+		return get_datetime(f"{row.entry_date} {row.entry_time or '00:00:00'}")
+	return None
+
+
 def is_rice_dispatch_wbm(wbm_name: str) -> bool:
 	"""Rice Dispatch weighment: never turned into a GRN Note and not part of Transit Pass totals."""
 	if not wbm_name:
@@ -1231,9 +1267,10 @@ def wbm_vehicle_has_exited(wbm_name: str) -> bool:
 
 
 def create_grn_notes_after_gate_exit(gate_entry_in: str) -> list[str]:
-	"""Create GRN Notes for the weighments of this visit; called when the vehicle exits.
+	"""Called when the vehicle exits: add the Gate Exit to the GRN Notes of this visit.
 
-	Returns the GRN Notes created now (existing ones are only synced).
+	A GRN Note normally exists already (made at tare weight) and is only synced. One is created
+	here only when it was not made earlier. Returns the GRN Notes created now.
 	"""
 	gate_entry_in = (gate_entry_in or "").strip()
 	gate_in = frappe.db.get_value("Gate Entry", gate_entry_in, ["vehicle_no", "creation"], as_dict=True)
@@ -1267,7 +1304,8 @@ def create_grn_notes_after_gate_exit(gate_entry_in: str) -> list[str]:
 def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	"""Create or update GRN Note when the WBM is eligible (RST-linked or manual entry).
 
-	A new GRN Note is created only after the vehicle's Gate Exit; an existing one keeps syncing.
+	A new GRN Note is created once the tare weight is entered. Quality Check and Gate Exit are
+	added to it when they become available: every later save, QC sync or Gate Exit syncs the GRN.
 	"""
 	from ivri_od.procurement.doctype.grn_note.grn_note import (
 		build_auto_grn_doc_dict,
@@ -1291,10 +1329,8 @@ def _ensure_grn_note_for_weigh_bridge(wbm_name: str):
 	if is_local_procurement_wbm(wbm_name):
 		return
 
-	# GRN is generated when the vehicle leaves, not at tare weight: Gate Exit calls this again.
-	if not wbm_vehicle_has_exited(wbm_name):
-		return
-
+	# GRN is generated as soon as the tare weight is entered (build_auto_grn_doc_dict checks it). It does
+	# not wait for the Quality Check or the Gate Exit: they are attached to this GRN when they arrive.
 	payload = build_auto_grn_doc_dict(wbm_name)
 	if not payload:
 		return
@@ -1348,8 +1384,6 @@ def grn_pending_reasons_for_wbm(wbm_name: str) -> list[str]:
 			reasons.append(_("Select Pass Unique Key."))
 		if not (wbm.rst_no or "").strip():
 			reasons.append(_("Enter RST No."))
-		if not wbm_vehicle_has_exited(wbm_name):
-			reasons.append(_("Vehicle has not exited yet. The GRN is created after Gate Exit."))
 	return reasons
 
 
