@@ -117,14 +117,7 @@ frappe.query_reports["Mandi Book"] = {
 	collapsible_filters: true,
 	onload(report) {
 		ivri_od.report_edit.add_button(report, ["Excess Received Qty", "RST No (attach TP No)"]);
-		// Open with the latest season chosen; staff pick another one from the drop-down.
-		if (!report.get_filter_value("season")) {
-			frappe.db.get_list("Season Master", { fields: ["name"], order_by: "creation desc", limit: 1 }).then((rows) => {
-				if (rows && rows.length) {
-					report.set_filter_value("season", rows[0].name);
-				}
-			});
-		}
+		// No season is filled in: staff choose the season they want to see from the drop-down.
 	},
 	filters: [
 		{
@@ -132,7 +125,12 @@ frappe.query_reports["Mandi Book"] = {
 			label: __("Season"),
 			fieldtype: "Link",
 			options: "Season Master",
-			reqd: 1,
+		},
+		{
+			fieldname: "district",
+			label: __("District"),
+			fieldtype: "Link",
+			options: "District Master",
 		},
 		{
 			fieldname: "mill_name",
@@ -402,7 +400,10 @@ function apply_mandi_book_grouping(datatable) {
 	const lastSummaryColIndex = summaryColIndices.length ? Math.max(...summaryColIndices) : -1;
 	const lastEntryColIndex = entryColIndices.length ? Math.max(...entryColIndices) : -1;
 
+	const slipNoColIndex = datatable.datamanager.getColumnIndexById("ppc_name_slip_no");
+
 	inject_mandi_book_styles(group_end_indices, {
+		slipNoColIndex,
 		grnColIndex,
 		entryColIndex,
 		rowIndexColIndex,
@@ -474,6 +475,16 @@ function inject_mandi_book_styles(group_end_indices, col_indices = {}) {
 	const lastSummaryCol = col_indices.lastSummaryColIndex != null ? col_indices.lastSummaryColIndex : -1;
 	const lastEntryCol = col_indices.lastEntryColIndex != null ? col_indices.lastEntryColIndex : -1;
 	const lastGrnCol = col_indices.lastGrnColIndex != null ? col_indices.lastGrnColIndex : -1;
+
+	const slipNoCol = col_indices.slipNoColIndex != null ? col_indices.slipNoColIndex : -1;
+	if (slipNoCol >= 0) {
+		vertical_border_css += `
+		.report-wrapper .dt-cell--col-${slipNoCol},
+		.datatable .dt-cell--col-${slipNoCol} {
+			border-right: 2px solid var(--gray-600, #4c5a67) !important;
+		}
+		`;
+	}
 
 	if (rowIndexCol >= 0) {
 		vertical_border_css += `

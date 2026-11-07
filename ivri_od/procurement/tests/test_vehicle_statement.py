@@ -154,7 +154,7 @@ class TestDocumentCalculation(unittest.TestCase):
 		self.assertEqual([r.voucher_no for r in doc.items], ["1,2", "", "3"])
 		lines = vs.vehicle_lines(doc)
 		self.assertEqual([(l.vehicle_no, l.sl_no, l.qty, l.amount, l.voucher_no) for l in lines], [("OD01A0001", 1, 1200.0, 60000.0, "1,2"), ("OD02B0002", 2, 10.0, 500.0, "3")])
-		self.assertEqual([(v["voucher_no"], v["vehicle_no"], v["amount"]) for v in vs.debit_vouchers(doc)], [("1", "OD01A0001", 50000), ("2", "OD01A0001", 10000), ("3", "OD02B0002", 500)])
+		self.assertEqual([(v["voucher_no"], v["vehicle_no"], v["amount"]) for v in vs.debit_vouchers(doc)], [("1", "OD01A0001", 30000), ("2", "OD01A0001", 30000), ("3", "OD02B0002", 500)])
 
 
 class TestFilesAndPrint(unittest.TestCase):
@@ -164,7 +164,7 @@ class TestFilesAndPrint(unittest.TestCase):
 		fields = {f["fieldname"]: f for f in statement["fields"]}
 		self.assertEqual((fields["district"]["options"], fields["items"]["options"]), ("District Master", "Vehicle Wise Statement Item"))
 		for name in ("miller", "season"):
-			self.assertEqual((fields[name]["fieldtype"], fields[name]["mandatory_depends_on"]), ("Select", 'eval:doc.statement_type!="CMR"'))
+			self.assertEqual((fields[name]["fieldtype"], fields[name]["reqd"]), ("Select", 1))
 		item = {f["fieldname"]: f for f in json.loads((base / "vehicle_wise_statement_item" / "vehicle_wise_statement_item.json").read_text())["fields"]}
 		for name, label in (("sl_no", "S.L No"), ("vehicle_no", "Vehicle No"), ("qty", "Qty in Qntls"), ("km", "KM"), ("rate", "Rate"), ("amount", "Amount in Rs"), ("voucher_no", "Voucher No"), ("payment_mode", "Payment Mode"), ("vehicle_type", "Vehicle Type")):
 			self.assertEqual(item[name]["label"], label, name)
@@ -177,7 +177,7 @@ class TestFilesAndPrint(unittest.TestCase):
 		for part in ("get_filter_options", "Fetch Details", "fetch_details", "VOUCHER_LIMIT = 50000", "Math.ceil(amount / VOUCHER_LIMIT)"):
 			self.assertIn(part, script, part)
 		html = {d["name"]: d["html"] for d in json.loads((ROOT / "fixtures" / "print_format.json").read_text())}["Vehicle Wise Statement - Shyamji"]
-		for part in ("VEHICLE WISE STATEMENT OF PADDY LIFTED FOR", "ALONG WITH VOUCHER DETAILS", "S.L NO", "VEHICLE NO.", "QUANTITY IN QUINTALS", "AMOUNT IN RS", "VOUCHER NO", "PAYMENT<br>MODE", "VEHICLE TYPE", "HIRED VEHICLE", "A/C)", "TOTAL"):
+		for part in ("VEHICLE WISE STATEMENT OF", "PADDY LIFTED", "CMR DELIVERY (", "FOR {{ doc.kms_title or doc.season }}", "ALONG WITH VOUCHER DETAILS", "S.L NO", "VEHICLE NO.", "QUANTITY IN QUINTALS", "AMOUNT IN RS", "VOUCHER NO", "PAYMENT<br>MODE", "VEHICLE TYPE", "HIRED VEHICLE", "A/C)", "TOTAL"):
 			self.assertIn(part, html, part)  # the corrected spelling
 		self.assertIn("Vehicle Wise Statement - Shyamji", (ROOT / "hooks.py").read_text())
 
@@ -193,7 +193,7 @@ class TestNoDateFields(unittest.TestCase):
 		self.assertNotIn("from_date", html)
 		self.assertNotIn("to_date", html)
 		fields = [f["fieldname"] for f in json.loads((base / "doctype" / "vehicle_wise_statement" / "vehicle_wise_statement.json").read_text())["fields"]]
-		self.assertEqual(fields[:7], ["naming_series", "statement_type", "cmr_note", "filters_section", "miller", "season", "column_break_1"])
+		self.assertEqual(fields[:7], ["naming_series", "statement_type", "cmr_to", "filters_section", "miller", "season", "column_break_1"])
 		self.assertIn("district", fields)
 
 
@@ -256,8 +256,11 @@ class TestDebitVoucher(unittest.TestCase):
 		self.assertEqual(vs.rupees_in_words(11191), "Eleven Thousand One Hundred And Ninety One Only")
 		self.assertEqual(vs.rupees_in_words(33160), "Thirty Three Thousand One Hundred And Sixty Only")
 
-	def test_an_amount_is_split_in_50000_vouchers(self):
-		self.assertEqual(vs.voucher_amounts(114300, 3), [50000, 50000, 14300])
+	def test_an_amount_is_shared_equally_by_its_vouchers(self):
+		self.assertEqual(vs.voucher_amounts(114300, 3), [38100, 38100, 38100])
+		self.assertEqual(vs.voucher_amounts(60000, 2), [30000, 30000])
+		self.assertEqual(vs.voucher_amounts(160000, 4), [40000] * 4)
+		self.assertEqual(vs.voucher_amounts(100001, 3), [33333, 33333, 33335])  # the rupees left over go to the last voucher
 		self.assertEqual(vs.voucher_amounts(50000, 1), [50000])
 		self.assertEqual(vs.voucher_amounts(7570, 1), [7570])
 		self.assertEqual(vs.voucher_amounts(0, 0), [])
@@ -270,7 +273,7 @@ class TestDebitVoucher(unittest.TestCase):
 		])
 		got = vs.debit_vouchers(doc)
 		self.assertEqual([(v["voucher_no"], v["vehicle_no"], v["amount"]) for v in got],
-			[("1", "CG04HT3302", 11191), ("2", "OD02CL7021", 50000), ("3", "OD02CL7021", 50000), ("4", "OD02CL7021", 14300)])
+			[("1", "CG04HT3302", 11191), ("2", "OD02CL7021", 38100), ("3", "OD02CL7021", 38100), ("4", "OD02CL7021", 38100)])
 		self.assertEqual(sum(v["amount"] for v in got[1:]), 114300)
 
 	def test_format_button_and_hook(self):
@@ -303,22 +306,87 @@ class TestStatementType(unittest.TestCase):
 		d = json.loads((ROOT / "procurement" / "doctype" / "vehicle_wise_statement" / "vehicle_wise_statement.json").read_text())
 		fields = {f["fieldname"]: f for f in d["fields"]}
 		self.assertEqual((fields["statement_type"]["options"], fields["statement_type"]["default"]), ("Paddy\nCMR", "Paddy"))
-		self.assertEqual(d["field_order"][:3], ["naming_series", "statement_type", "cmr_note"])
-		for name in ("filters_section", "details_section", "totals_section"):
-			self.assertEqual(fields[name]["depends_on"], 'eval:doc.statement_type!="CMR"')
-		self.assertNotIn("reqd", fields["miller"])
-		self.assertEqual(fields["miller"]["mandatory_depends_on"], 'eval:doc.statement_type!="CMR"')
+		self.assertEqual(d["field_order"][:3], ["naming_series", "statement_type", "cmr_to"])
+		self.assertEqual(fields["cmr_to"]["options"], "\nFCI\nRRC")
+		self.assertEqual(fields["cmr_to"]["mandatory_depends_on"], 'eval:doc.statement_type=="CMR"')
+		self.assertNotIn("depends_on", fields["district"])  # the district is used by Paddy (PPCs) and by the CMR print heading
+		self.assertEqual((fields["miller"]["reqd"], fields["season"]["reqd"]), (1, 1))
 
-	def test_cmr_is_refused_for_now(self):
+	def test_cmr_needs_fci_or_rrc(self):
 		from ivri_od.procurement.doctype.vehicle_wise_statement.vehicle_wise_statement import VehicleWiseStatement
 
 		doc = frappe.new_doc("Vehicle Wise Statement")
 		doc.statement_type = "CMR"
 		with self.assertRaises(frappe.ValidationError):
-			VehicleWiseStatement.validate(doc)
+			VehicleWiseStatement.check_statement_type(doc)
+		doc.cmr_to = "FCI"
+		doc.check_statement_type()
 		doc.statement_type = ""
 		doc.check_statement_type()
 		self.assertEqual(doc.statement_type, "Paddy")
+
+
+class TestLotSearchVehicle(unittest.TestCase):
+	"""Lot Search from SCMS: the Vehicle No is read from the lot's PDF (Vehicle Registration No.)."""
+
+	TEXT = (
+		"12. VEHICLE DETAILS\nSl# Challan No. Vehicle Registration No. Driver Name Driver Aadhaar Date No of Bag.\n"
+		"1 0038 OD03AB4135 NARENDRA KAANR XXXXXXXX6375 29-09-2026 580\n15. RESULT OF ANALYSIS/RE-ANALYSIS\nSl# 1 Broken 15.00"
+	)
+
+	def test_one_vehicle(self):
+		from ivri_od.procurement.portal_sync import _vehicles_in
+
+		self.assertEqual(_vehicles_in(self.TEXT), "OD03AB4135")
+
+	def test_two_vehicles_and_spaces(self):
+		from ivri_od.procurement.portal_sync import _vehicles_in
+
+		text = self.TEXT.replace("15. RESULT", "2 0039 od 03 ac 3255 RAM XXXXXXXX1111 29-09-2026 580\n15. RESULT")
+		self.assertEqual(_vehicles_in(text), "OD03AB4135, OD03AC3255")
+
+	def test_no_block_no_vehicle(self):
+		from ivri_od.procurement.portal_sync import _vehicles_in
+
+		self.assertEqual(_vehicles_in("nothing here"), "")
+		self.assertEqual(_vehicles_in(""), "")
+
+	def test_ac_note_no_is_the_part_between_the_slashes(self):
+		from ivri_od.procurement.portal_sync import _lot_ac_note_in
+
+		self.assertEqual(_lot_ac_note_in("1. Acceptance Note No.\nDW051105 / 0481 / 2025-2026\n2. Receive Date"), "0481")
+		self.assertEqual(_lot_ac_note_in("Acceptance Note No. DW051105/12/2025-2026"), "12")
+		self.assertEqual(_lot_ac_note_in("no note here"), "")
+
+	def test_the_column_comes_after_the_lot_no(self):
+		from ivri_od.procurement.portal_sync import with_vehicle
+
+		cells = {"DC No.": "D1", "Lot No.": "5", "No.of Bag": "580"}
+		self.assertEqual(list(with_vehicle(cells, "OD03AB4135", "0481")), ["DC No.", "Lot No.", "Vehicle No", "A.C. Note No.", "No.of Bag"])
+		self.assertEqual(list(with_vehicle(with_vehicle(cells, "A"), "B")).count("Vehicle No"), 1)
+
+
+class TestCmrStatement(unittest.TestCase):
+	def test_season_is_read_as_crop_and_year(self):
+		from ivri_od.procurement.cmr_statement import parse_season
+
+		self.assertEqual(parse_season("Kharif(2025)"), ("kharif", "2025"))
+		self.assertEqual(parse_season("Rabi 2025"), ("rabi", "2025"))
+		self.assertEqual(parse_season(""), ("", ""))
+
+	def test_two_vehicles_of_one_challan_are_split(self):
+		from ivri_od.procurement.cmr_statement import split_vehicles
+
+		self.assertEqual(split_vehicles("OD31P9471 ,OD31P9499"), ["OD31P9471", "OD31P9499"])
+		self.assertEqual(split_vehicles("od03 ab4135"), ["OD03AB4135"])
+		self.assertEqual(split_vehicles(""), [])
+
+	def test_miller_code_is_taken_from_the_bracket(self):
+		from ivri_od.procurement.cmr_statement import mill_code_of
+
+		self.assertEqual(mill_code_of("SHREE SHYAMJI PADDY PROCESSING PVT LTD (M051007)"), "M051007")
+		self.assertEqual(mill_code_of("Radhe Govind Food Products (Raw) (M050415)"), "M050415")
+		self.assertEqual(mill_code_of("M051007"), "M051007")
 
 
 class TestOwnVehicles(unittest.TestCase):
@@ -381,7 +449,9 @@ class TestPpcRows(unittest.TestCase):
 class TestTableLook(unittest.TestCase):
 	def test_ppc_comes_before_vehicle_no_and_the_table_text_wraps(self):
 		item = json.loads((ROOT / "procurement" / "doctype" / "vehicle_wise_statement_item" / "vehicle_wise_statement_item.json").read_text())
-		self.assertEqual(item["field_order"][:4], ["sl_no", "ppc", "vehicle_no", "bags"])
+		order = item["field_order"]
+		self.assertLess(order.index("ppc"), order.index("vehicle_no"))
+		self.assertLess(order.index("vehicle_no"), order.index("bags"))
 		script = (ROOT / "procurement" / "doctype" / "vehicle_wise_statement" / "vehicle_wise_statement.js").read_text()
 		self.assertIn("white-space: normal !important", script)  # headings and PPC names are not cut with "..."
 		self.assertIn(".ivri-no-row-number .row-index { display: none !important; }", script)

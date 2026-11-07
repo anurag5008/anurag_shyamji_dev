@@ -44,8 +44,25 @@
 
 		const fetch_related_icons = header.prototype.fetch_related_icons;
 		header.prototype.fetch_related_icons = function () {
-			const items = fetch_related_icons.apply(this, arguments);
-			(items || []).forEach((item) => {
+			let items = fetch_related_icons.apply(this, arguments) || [];
+			// Frappe drops the wrong icon from the switcher when the open desk is not found by its label,
+			// so the open desk stayed in the list and the other desk could be missing. Show only the OTHER desks.
+			const app = frappe.current_app && frappe.current_app.app_name;
+			if (app === "ivri_od") {
+				const open_label = this.title;
+				items = items.filter((i) => i.label !== open_label);
+				(frappe.boot.desktop_icons || []).forEach((icon) => {
+					if (icon.app !== "ivri_od" || icon.hidden || icon.icon_type !== "Link" || icon.parent_icon) return;
+					if (icon.label === open_label) return;
+					if (items.some((i) => i.label === icon.label)) return;
+					const item = { name: icon.label.toLowerCase(), label: icon.label, url: frappe.utils.get_route_for_icon(icon) };
+					const url = frappe.utils.get_desktop_icon(icon.label, frappe.boot.desktop_icon_style);
+					if (url) item.icon_url = url;
+					else item.icon_html = frappe.utils.desktop_icon(icon.label, "gray", "sm");
+					items.push(item);
+				});
+			}
+			items.forEach((item) => {
 				if (item.label === SIDEBAR_TITLE) item.label = DISPLAY_TITLE;
 			});
 			return items;

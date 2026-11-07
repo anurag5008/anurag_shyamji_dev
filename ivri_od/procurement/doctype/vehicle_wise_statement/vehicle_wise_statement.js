@@ -1,9 +1,10 @@
 // Copyright (c) 2026, Profezzo and contributors
 // For license information, please see license.txt
 
-// Vehicle Wise Statement: choose the Miller and Season (from the PPAS Transit Passes) and optionally a District, then "Fetch Details" lists one row
-// per vehicle and PPC with the bags and the quantity of its passes added up. The user types the KM and Rate of each PPC; the Amount (Qty x Rate),
-// the Voucher No of the vehicle (numbered from 1; one more voucher for every 50,000 or part of the vehicle's total) and the totals follow. Keep in step with
+// Vehicle Wise Statement: Paddy: choose the Miller and Season (from the PPAS Transit Passes) and optionally a District, then "Fetch Details" lists one row
+// per vehicle and PPC with the bags and the quantity of its passes added up. CMR: choose FCI or RRC, the Miller and the Season; the rows are the challans
+// of the DC Transit Challan from DCRO (FCI) or the Lot Search from SCMS (RRC). The user types the KM and Rate of each PPC; the Amount (Qty x Rate),
+// the Voucher No of the vehicle (numbered from 1; one more voucher for every 50,000 or part of the vehicle's total; the debit vouchers share the amount equally) and the totals follow. Keep in step with
 // ivri_od/procurement/vehicle_statement.py, which holds the same rules for the server.
 const VOUCHER_LIMIT = 50000;
 
@@ -62,21 +63,44 @@ function recalculate(frm) {
 	frm.set_value("total_vouchers", vouchers);
 }
 
-// KM and Rate belong to the PPC: what is typed on one row is also put on the other rows of the same PPC that are still empty
+// KM and Rate belong to the PPC (Paddy) or the Depo (CMR): what is typed on one row is also put on the other rows of the same PPC / Depo that are still empty
 function copy_to_same_ppc(frm, row, field) {
-	if (!row.ppc || !flt(row[field])) return;
+	const key = row.ppc ? "ppc" : "depo_name";
+	if (!row[key] || !flt(row[field])) return;
 	(frm.doc.items || []).forEach((other) => {
-		if (other.name !== row.name && other.ppc === row.ppc && !flt(other[field])) other[field] = row[field];
+		if (other.name !== row.name && other[key] === row[key] && !flt(other[field])) other[field] = row[field];
 	});
 }
 
+// The columns of the table: Paddy shows the PPC; CMR shows the date, depo, lot no and A.C. note no of the challan
+const PADDY_COLUMNS = { sl_no: 1, ppc: 2, vehicle_no: 2, bags: 1, qty: 1, km: 1, rate: 1, amount: 1, voucher_no: 1, vehicle_type: 1 };
+const CMR_COLUMNS = { sl_no: 1, challan_date: 1, depo_name: 2, lot_no: 1, vehicle_no: 2, ac_note_no: 2, bags: 1, qty: 1, km: 1, rate: 1, amount: 1, voucher_no: 1, vehicle_type: 1 };
+
+function set_table_columns(frm) {
+	const grid = frm.fields_dict.items.grid;
+	const wanted = frm.doc.statement_type === "CMR" ? CMR_COLUMNS : PADDY_COLUMNS;
+	const all = new Set([...Object.keys(PADDY_COLUMNS), ...Object.keys(CMR_COLUMNS)]);
+	const key = frm.doc.statement_type === "CMR" ? "cmr" : "paddy";
+	if (grid.__ivri_columns === key) return;
+	grid.__ivri_columns = key;
+	all.forEach((fieldname) => {
+		grid.update_docfield_property(fieldname, "in_list_view", wanted[fieldname] ? 1 : 0);
+		if (wanted[fieldname]) grid.update_docfield_property(fieldname, "columns", wanted[fieldname]);
+	});
+	grid.reset_grid();
+}
+
 function set_filter_options(frm) {
-	if (frm.__filter_options) return apply_options(frm, frm.__filter_options);
+	// the millers of CMR depend on FCI / RRC, so they are read again when these change
+	const key = `${frm.doc.statement_type || "Paddy"}|${frm.doc.cmr_to || ""}`;
+	frm.__filter_options = frm.__filter_options || {};
+	if (frm.__filter_options[key]) return apply_options(frm, frm.__filter_options[key]);
 	frappe.call({
 		method: "ivri_od.procurement.doctype.vehicle_wise_statement.vehicle_wise_statement.get_filter_options",
+		args: { statement_type: frm.doc.statement_type || "Paddy", cmr_to: frm.doc.cmr_to || "" },
 		callback(r) {
-			frm.__filter_options = r.message || { millers: [], seasons: [] };
-			apply_options(frm, frm.__filter_options);
+			frm.__filter_options[key] = r.message || { millers: [], seasons: [] };
+			apply_options(frm, frm.__filter_options[key]);
 		},
 	});
 }
@@ -107,10 +131,11 @@ const DEBIT_VOUCHER_FORMAT = "Debit Voucher - Shyamji";
 frappe.ui.form.on("Vehicle Wise Statement", {
 	refresh(frm) {
 		set_filter_options(frm);
+		set_table_columns(frm);
 		frm.fields_dict.items.grid.wrapper.addClass("ivri-no-row-number");
-		const paddy = frm.doc.statement_type !== "CMR"; // only the Paddy statement is built; CMR (rice) comes later
-		// Print PDF drop down (saved statements only): the statement sheet, or the debit vouchers of all its voucher numbers
-		if (paddy && !frm.is_new()) {
+		const paddy = frm.doc.statement_type !== "CMR";
+		// Print PDF drop down (saved statements only): the statement sheet, or the debit vouchers of all its voucher numbers (Paddy and CMR)
+		if (!frm.is_new()) {
 			const download = (format, extra = {}) => {
 				const query = $.param({ doctype: frm.doctype, name: frm.docname, format, no_letterhead: 1, ...extra });
 				window.open(`/api/method/frappe.utils.print_format.download_pdf?${query}`);
@@ -130,19 +155,19 @@ frappe.ui.form.on("Vehicle Wise Statement", {
 				);
 			}, __("Print PDF"));
 		}
-		if (!paddy) return;
 		frm.add_custom_button(__("Fetch Details"), () => {
 			if (!frm.doc.miller || !frm.doc.season) return frappe.msgprint(__("Choose the Miller and the Season first."));
+			if (!paddy && !frm.doc.cmr_to) return frappe.msgprint(__("Choose FCI or RRC first."));
 			frm.call({
 				doc: frm.doc,
 				method: "fetch_details",
 				freeze: true,
-				freeze_message: __("Fetching from the PPAS Transit Passes ..."),
+				freeze_message: paddy ? __("Fetching from the PPAS Transit Passes ...") : __("Fetching the {0} challans ...", [frm.doc.cmr_to]),
 				callback(r) {
 					if (r.exc) return;
 					frm.dirty();
 					frm.refresh();
-					frappe.show_alert({ message: __("{0} vehicles fetched.", [r.message]), indicator: "green" });
+					frappe.show_alert({ message: paddy ? __("{0} vehicles fetched.", [r.message]) : __("{0} rows fetched.", [r.message]), indicator: "green" });
 				},
 			});
 		}).addClass("btn-primary");
@@ -151,7 +176,12 @@ frappe.ui.form.on("Vehicle Wise Statement", {
 		frm.set_value("kms_title", "");
 	},
 	statement_type(frm) {
+		frm.set_value("miller", "");
 		frm.trigger("refresh");
+	},
+	cmr_to(frm) {
+		frm.set_value("miller", "");
+		set_filter_options(frm);
 	},
 });
 

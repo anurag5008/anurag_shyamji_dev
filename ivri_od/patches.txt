@@ -160,3 +160,10 @@ ivri_od.patches.v1_0.sync_wbm_datetime_from_rst
 ivri_od.patches.v1_0.weigh_bridge_list_date_before_tp_no
 ivri_od.patches.v1_0.rst_details_list_date_before_vehicle
 ivri_od.patches.v1_0.abstract_report_not_prepared
+ivri_od.patches.v1_0.wbm_party_name_from_rst
+ivri_od.patches.v1_0.wbm_rst_no_before_party_name
+ivri_od.patches.v1_0.grn_note_list_columns
+ivri_od.patches.v1_0.remove_chhatni_doctype
+ivri_od.patches.v1_0.clear_saved_list_filters
+ivri_od.patches.v1_0.lot_search_vehicle_no
+ivri_od.patches.v1_0.lot_search_ac_note_no

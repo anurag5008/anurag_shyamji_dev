@@ -25,30 +25,35 @@ frappe.listview_settings["Weigh Bridge Measurement"] = {
 			return `<span class="ellipsis" title="${__("Party Name")}: ${party}">${party}</span>`;
 		},
 	},
+	// No ID filter: RST No, Party Name, TP No, Lot No, Truck No and Commodity are the filters staff use.
+	// Each one is a drop-down of the values that exist in the weighments.
+	hide_name_filter: true,
 	onload(listview) {
-		listview.page.add_inner_button(__("TP Not Received"), () => {
+		// Open with no filter: Frappe remembers the filters used last time, which hid data from staff.
+		// A link with filters in its address (route options) is left alone.
+		if (!Object.keys(frappe.route_options || {}).length && listview.filter_area) {
 			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "TP Not Received"],
-			]);
-		});
-		listview.page.add_inner_button(__("PPC Mismatch"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "PPC Mismatch"],
-			]);
-		});
-		listview.page.add_inner_button(__("TP Received"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "TP Received"],
-			]);
-		});
-		listview.page.add_inner_button(__("Rice Dispatch"), () => {
-			listview.filter_area.clear();
-			listview.filter_area.add([
-				["Weigh Bridge Measurement", "tp_status", "=", "Rice Dispatch"],
-			]);
-		});
+		}
+		const fieldnames = ["rst_no", "party_name", "transit_pass_no", "lot_no", "actual_truck_no", "commodity"];
+		frappe
+			.xcall("ivri_od.procurement.doctype.weigh_bridge_measurement.weigh_bridge_measurement.get_filter_values")
+			.then((values) => {
+				// The filter fields are made a moment after the list opens: wait for them.
+				let tries = 0;
+				const timer = setInterval(() => {
+					tries += 1;
+					const ready = fieldnames.filter((name) => listview.page.fields_dict[name]);
+					ready.forEach((name) => {
+						const field = listview.page.fields_dict[name];
+						if (field.set_data && !field.__wbm_values_set) {
+							field.__wbm_values_set = true;
+							field.set_data(values[name] || []);
+						}
+					});
+					if (ready.length === fieldnames.length || tries > 40) {
+						clearInterval(timer);
+					}
+				}, 250);
+			});
 	},
 };

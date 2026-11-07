@@ -90,13 +90,13 @@ def get_relevant_mills(filters=None) -> list[dict]:
 	all_mills = frappe.get_all(
 		"Mill Master",
 		filters={"is_active": 1},
-		fields=["name", "miller_code", "company", "type"],
+		fields=["name", "miller_code", "company", "type", "short_name"],
 		order_by="creation asc, name asc",
 	)
 	if not all_mills:
 		all_mills = frappe.get_all(
 			"Mill Master",
-			fields=["name", "miller_code", "company", "type"],
+			fields=["name", "miller_code", "company", "type", "short_name"],
 			order_by="creation asc, name asc",
 		)
 
@@ -106,7 +106,7 @@ def get_relevant_mills(filters=None) -> list[dict]:
 	for mm in mapping_mills:
 		if mm and mm not in existing_names:
 			doc = frappe.db.get_value(
-				"Mill Master", mm, ["name", "miller_code", "company", "type"], as_dict=True
+				"Mill Master", mm, ["name", "miller_code", "company", "type", "short_name"], as_dict=True
 			)
 			if doc:
 				all_mills.append(doc)
@@ -120,7 +120,7 @@ def get_relevant_mills(filters=None) -> list[dict]:
 		if filtered:
 			return sort_mills_by_company_and_type(filtered)
 		doc = frappe.db.get_value(
-			"Mill Master", mill_filter, ["name", "miller_code", "company", "type"], as_dict=True
+			"Mill Master", mill_filter, ["name", "miller_code", "company", "type", "short_name"], as_dict=True
 		)
 		if doc:
 			return [doc]
@@ -132,7 +132,8 @@ def get_columns(relevant_mills=None, filters=None):
 	if relevant_mills is None:
 		relevant_mills = get_relevant_mills(filters)
 
-	columns = [
+	# The Season column shows only while no season is chosen, to tell the seasons apart.
+	columns = [] if (filters or {}).get("season") else [
 		{
 			"label": _("Season"),
 			"fieldname": "season",
@@ -140,6 +141,8 @@ def get_columns(relevant_mills=None, filters=None):
 			"options": "Season Master",
 			"width": 120,
 		},
+	]
+	columns += [
 		{
 			"label": _("PPC"),
 			"fieldname": "ppc_display",
@@ -151,7 +154,7 @@ def get_columns(relevant_mills=None, filters=None):
 
 	for mill in relevant_mills:
 		code = (mill.get("miller_code") or mill.get("name") or "").strip()
-		company = (mill.get("company") or mill.get("name") or "").strip()
+		company = (mill.get("short_name") or mill.get("company") or mill.get("name") or "").strip()
 		prefix = frappe.scrub(mill.get("name"))
 
 		columns.extend([
@@ -233,13 +236,14 @@ def get_eligible_ppcs_query(doctype, txt, searchfield, start, page_len, filters)
 
 	ppc_master_rows = frappe.get_all(
 		"PPC Master",
-		fields=["name", "code", "ppc_name", "title"],
+		fields=["name", "code", "ppc_name", "title", "district"],
 		order_by="ppc_name asc, name asc",
 	)
 	_, ppc_season_totals = get_ppc_season_target_map(
 		season=season if season else None,
 		mill_name=mill_name if mill_name else None,
 		ppc_master_rows=ppc_master_rows,
+		include_season_mapping=False,
 	)
 
 	eligible_ppc_names = {
@@ -251,10 +255,13 @@ def get_eligible_ppcs_query(doctype, txt, searchfield, start, page_len, filters)
 		if flt(qty) > 0 and (not season_name or s == season_name):
 			eligible_ppc_names.add(p_name)
 
+	district = (filters.get("district") or "").strip()
 	txt_lower = (txt or "").strip().casefold()
 	results = []
 	for p in ppc_master_rows:
 		if p.name not in eligible_ppc_names:
+			continue
+		if district and (p.get("district") or "").strip() != district:
 			continue
 		if txt_lower:
 			name_match = txt_lower in p.name.casefold()
@@ -301,7 +308,7 @@ def get_data(filters, relevant_mills=None):
 	# 1. Authoritative PPC master list from PPC Master DocType
 	ppc_master_rows = frappe.get_all(
 		"PPC Master",
-		fields=["name", "code", "ppc_name", "title"],
+		fields=["name", "code", "ppc_name", "title", "district"],
 		order_by="ppc_name asc, name asc",
 	)
 	resolve_to_ppc_master = make_ppc_resolver(ppc_master_rows)
@@ -311,6 +318,13 @@ def get_data(filters, relevant_mills=None):
 		candidate_ppcs = [filter_doc] if filter_doc else []
 	else:
 		candidate_ppcs = ppc_master_rows
+
+	# District filter: only the PPCs of this district (PPC Master).
+	district_filter = (filters.get("district") or "").strip()
+	if district_filter:
+		candidate_ppcs = [
+			p for p in candidate_ppcs if (p.get("district") or "").strip() == district_filter
+		]
 
 	# Season handling
 	if season_filter:
@@ -338,6 +352,7 @@ def get_data(filters, relevant_mills=None):
 		season=season_filter if season_filter else None,
 		mill_name=filters.get("mill_name"),
 		ppc_master_rows=ppc_master_rows,
+		include_season_mapping=False,
 	)
 
 	# 3. Received: filter PPAS Transit Pass by Season, Miller and PPC, then group them and sum Quantity.

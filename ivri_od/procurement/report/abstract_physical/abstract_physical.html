@@ -50,9 +50,10 @@
 
 <div class="report-header">
 	<div class="report-title">{{ __("Abstract Physical Report") }}</div>
-	{% if filters.season || filters.ppc_name %}
+	{% if filters.season || filters.ppc_name || filters.district %}
 		<div class="report-subtitle">
 			{% if filters.season %}<span><strong>{{ __("Season") }}:</strong> {{ filters.season }}</span>{% endif %}
+			{% if filters.district %}<span style="margin-left: 16px;"><strong>{{ __("District") }}:</strong> {{ filters.district }}</span>{% endif %}
 			{% if filters.ppc_name %}<span style="margin-left: 16px;"><strong>{{ __("PPC") }}:</strong> {{ filters.ppc_name }}</span>{% endif %}
 		</div>
 	{% endif %}
@@ -62,12 +63,11 @@
 	<table>
 		<thead>
 			<tr>
-				<th colspan="7" class="summary-super" style="background-color: #dbeafe; color: #1e3a8a; font-weight: 700; text-align: center; border-bottom: 2px solid #4c5a67; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px;">
+				<th colspan="6" class="summary-super" style="background-color: #dbeafe; color: #1e3a8a; font-weight: 700; text-align: center; border-bottom: 2px solid #4c5a67; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; padding: 6px 10px;">
 					{{ __("Summary") }}
 				</th>
 			</tr>
 			<tr>
-				<th style="width: 15%; text-align: left; background-color: #eff6ff;">{{ __("Season") }}</th>
 				<th style="width: 25%; text-align: left; background-color: #eff6ff;">{{ __("PPC") }}</th>
 				<th style="width: 12%; text-align: right; background-color: #eff6ff;">{{ __("TP Quantity (QTL)") }}</th>
 				<th style="width: 12%; text-align: right; background-color: #eff6ff;">{{ __("Physical Paddy (QTL)") }}</th>
@@ -92,7 +92,6 @@
 					total_chhatni += flt(row.chhatni_quantity);
 				%}
 				<tr>
-					<td class="text-left">{{ row.season }}</td>
 					<td class="text-left">{{ row.ppc }}</td>
 					<td class="text-right">{{ flt(row.tp_quantity).toFixed(3) }}</td>
 					<td class="text-right">{{ flt(row.physical_paddy).toFixed(3) }}</td>
@@ -106,7 +105,7 @@
 				const total_chhatni_pct = total_denom > 0 ? (total_chhatni / total_denom * 100) : 0;
 			%}
 			<tr class="total-row">
-				<td class="text-left" colspan="2"><strong>{{ __("Total") }}</strong></td>
+				<td class="text-left"><strong>{{ __("Total") }}</strong></td>
 				<td class="text-right">{{ total_tp.toFixed(3) }}</td>
 				<td class="text-right">{{ total_physical.toFixed(3) }}</td>
 				<td class="text-right">{{ total_entry.toFixed(3) }}</td>

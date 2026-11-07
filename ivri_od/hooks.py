@@ -31,7 +31,7 @@ add_to_apps_screen = [
 # include js, css files in header of desk.html
 app_include_js = [
 	"/assets/ivri_od/js/disable_quick_entry.js",
-	"/assets/ivri_od/js/sidebar_logo.js?v=3",
+	"/assets/ivri_od/js/sidebar_logo.js?v=4",
 	"/assets/ivri_od/js/warehouse_wise_stock_balance.js?v=2",
 	"/assets/ivri_od/js/mill_reminder_banner.js?v=12",
 	"/assets/ivri_od/js/report_column_width.js",
@@ -40,7 +40,7 @@ app_include_js = [
 	"/assets/ivri_od/js/stock_register_filters.js",
 	"portal_detail_table.bundle.js",
 ]
-# app_include_css = "/assets/ivri_od/css/ivri_od.css"
+app_include_css = ["/assets/ivri_od/css/report_filter_dropdown.css?v=2"]
 # include js, css files in header of web template
 # web_include_css = "/assets/ivri_od/css/ivri_od.css"
 # web_include_js = "/assets/ivri_od/js/ivri_od.js"

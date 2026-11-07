@@ -60,11 +60,15 @@ GRN_FIELDS = [
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
-	return get_columns(), get_data(filters)
+	return get_columns(show_season=not filters.get("season")), get_data(filters)
 
 
-def get_columns():
-	return [
+def get_columns(show_season: bool = False):
+	"""The Season column shows only while no season is chosen, to tell the seasons apart."""
+	columns = [
+		{"label": _("Season"), "fieldname": "season", "fieldtype": "Data", "width": 110},
+	]
+	return (columns if show_season else []) + [
 		# Kept empty for now: it will be linked to its source later.
 		{"label": _("Slip No"), "fieldname": "ppc_name_slip_no", "fieldtype": "Data", "width": 110},
 		{"label": _("PPC Name"), "fieldname": "ppc_name", "fieldtype": "Data", "width": 260},
@@ -212,6 +216,14 @@ def get_data(filters):
 	entries_by_pass = _entries_for(list(grouped))
 	excess_by_pass = _excess_for(list(grouped))
 	ppc_filter = _ppc_filter_values(filters.get("ppc_name"))
+	# District filter: only the Transit Passes of PPCs in this district (PPC Master).
+	district_filter = (filters.get("district") or "").strip()
+	district_ppcs = (
+		set(frappe.get_all("PPC Master", filters={"district": district_filter}, pluck="name"))
+		if district_filter
+		else None
+	)
+	ppc_in_district: dict[str, bool] = {}
 	season_filter = (filters.get("season") or "").strip()
 	mill_filter = (filters.get("mill_name") or "").strip()
 	tp_no_filter = (filters.get("transit_pass_no") or "").strip()
@@ -228,6 +240,12 @@ def get_data(filters):
 			continue
 		if ppc_filter and not any(_ppc_matches(doc, ppc_filter) for doc in docs):
 			continue
+		if district_ppcs is not None:
+			ppc_text = ((docs[0].ppc or docs[0].ppc_name) or "").strip()
+			if ppc_text not in ppc_in_district:
+				ppc_in_district[ppc_text] = (resolve_ppc_master_name(ppc_text) or "") in district_ppcs
+			if not ppc_in_district[ppc_text]:
+				continue
 		tp_no = _tp_no(docs)
 		if tp_no_filter and tp_no_filter.lower() not in (tp_no or "").lower():
 			continue
@@ -650,30 +668,6 @@ def set_excess_received_qty(pass_unique_key: str, value: float | None = None) ->
 	doc.update({"pass_unique_key": pass_unique_key, "excess_qty": value})
 	doc.save()
 	return doc.excess_qty
-
-
-def _chhatni_for(pass_keys: list[str]) -> dict[str, dict]:
-	"""Actual Chhatni QT and Received Chhatni % per pass from saved Chhatni records (one per pass).
-
-	Records of one pass share its TP Quantity, so their Received % add up like their QT.
-	"""
-	if not pass_keys:
-		return {}
-	rows = frappe.get_all(
-		"Chhatni",
-		filters={"pass_unique_key": ["in", pass_keys]},
-		fields=["name", "pass_unique_key", "chhatni_qt", "received_chhatni_pct"],
-	)
-	totals: dict[str, dict] = defaultdict(lambda: {"chhatni_qt": 0.0, "received_chhatni_pct": 0.0})
-	seen: set[str] = set()
-	for row in rows:
-		if row.name in seen:
-			continue
-		seen.add(row.name)
-		bucket = totals[(row.pass_unique_key or "").strip()]
-		bucket["chhatni_qt"] = flt(bucket["chhatni_qt"] + flt(row.chhatni_qt), 3)
-		bucket["received_chhatni_pct"] = flt(bucket["received_chhatni_pct"] + flt(row.received_chhatni_pct), 2)
-	return totals
 
 
 def _assigned_chhatni(docs) -> float:

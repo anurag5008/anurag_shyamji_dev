@@ -36,6 +36,11 @@ function add_ppas_list_style() {
 
 frappe.listview_settings["PPAS Transit Pass"] = {
 	onload(listview) {
+		// Open with no filter: Frappe remembers the filters used last time, which hid data from staff.
+		// A link with filters in its address (route options) is left alone.
+		if (!Object.keys(frappe.route_options || {}).length && listview.filter_area) {
+			listview.filter_area.clear();
+		}
 		add_ppas_list_style();
 		listview.page.wrapper.addClass("ppas-tp-list");
 	},

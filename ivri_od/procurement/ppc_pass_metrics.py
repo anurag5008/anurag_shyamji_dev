@@ -291,9 +291,11 @@ def get_ppc_season_target_map(
 	season: str | None = None,
 	mill_name: str | None = None,
 	ppc_master_rows: list | None = None,
+	include_season_mapping: bool = True,
 ) -> tuple[dict[tuple[str, str, str], float], dict[tuple[str, str], float]]:
 	"""
 	Authoritatively load targets from Target Allocation (and fallback Season Mapping).
+	With include_season_mapping=False only Target Allocation counts (the Abstract Report).
 	Returns:
 	  target_map: (canonical_season, ppc_master_name, mill_name) -> target_quantity
 	  ppc_season_totals: (canonical_season, ppc_master_name) -> total_target_quantity
@@ -331,7 +333,7 @@ def get_ppc_season_target_map(
 		sm_filters["season"] = canonical_s
 
 	mappings = []
-	if frappe.db.table_exists("Season Mapping"):
+	if include_season_mapping and frappe.db.table_exists("Season Mapping"):
 		mappings = frappe.get_all(
 			"Season Mapping",
 			filters=sm_filters,

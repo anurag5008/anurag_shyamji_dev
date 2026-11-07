@@ -4,7 +4,7 @@
 The statement is made from the PPAS Transit Passes of one Miller and one Season (and, if chosen, one District):
   - one row per vehicle: the quantity of all its passes is added up (a vehicle that comes many times is shown once);
   - Amount = Quantity (quintals) x KM x Rate (per quintal per KM), with the KM and the Rate typed for the vehicle, to the nearest whole rupee;
-  - Voucher No: numbered from 1 down the statement; an amount of more than 50,000 gets one voucher for every 50,000 or part of it;
+  - Voucher No: numbered from 1 down the statement; an amount of more than 50,000 gets one voucher for every 50,000 or part of it, and the amount is shared equally by them (more than 50,000: 2 vouchers, more than 1 lakh: 3, more than 1.5 lakh: 4 ...);
   - Payment Mode is Cash for all; Vehicle Type is Own Vehicle when the number is in the Own Vehicle list, else Hired Vehicle.
 The District works through the PPC Master: the PPCs of that district are found, and only the passes of those PPCs are used.
 """
@@ -159,11 +159,14 @@ def rupees_in_words(amount):
 
 
 def voucher_amounts(amount, count):
-	"""An amount is paid by 50,000 vouchers, the last one carries what is left: 114300 in 3 gives 50000, 50000, 14300."""
+	"""An amount is shared equally by its vouchers: more than 50,000 in 2, more than 1 lakh in 3, more than 1.5 lakh in 4 and so on
+	(the count comes from vouchers_needed). Whole rupees: 114300 in 3 gives 38100, 38100, 38100; what is left over (rupees that do not
+	divide) goes to the last voucher: 100001 in 3 gives 33333, 33333, 33335."""
 	amount = round(flt(amount))
 	if count <= 1:
 		return [amount] if count == 1 else []
-	return [VOUCHER_LIMIT] * (count - 1) + [amount - VOUCHER_LIMIT * (count - 1)]
+	share = amount // count
+	return [share] * (count - 1) + [amount - share * (count - 1)]
 
 
 def voucher_date(start_date, vehicle_index, per_date=4):

@@ -11,7 +11,6 @@ from frappe.utils import flt
 
 from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
 from ivri_od.procurement.report.abstract_physical.abstract_physical import (
-	chhatni_qt_by_season_ppc,
 	execute,
 	get_columns,
 	get_data,
@@ -52,49 +51,27 @@ def grn_totals(ppc_code: str, season: str) -> tuple[float, float]:
 	return flt(physical, 3), flt(entry, 3)
 
 
-def chhatni_total(ppc: str, season: str) -> float:
-	"""Expected Chhatni Quantity: sum of Chhatni (QT) of the saved Chhatni records."""
-	rows = frappe.get_all("Chhatni", filters={"ppc_name": ppc, "season": season}, pluck="chhatni_qt")
-	return flt(sum(flt(qt) for qt in rows), 3)
-
-
 class TestAbstractPhysical(FrappeTestCase):
 	def test_columns_structure_and_labels(self):
-		"""Columns must have Season, PPC (Link to PPC Master), and the physical procurement metrics."""
+		"""Columns: PPC (Link to PPC Master) and the physical procurement metrics. No Season column."""
 		columns = get_columns()
-		self.assertEqual(len(columns), 7, "Report must have 7 columns (including Season)")
+		self.assertEqual(len(columns), 6, "Report must have 6 columns (the season is a filter)")
 
 		labels = [c["label"] for c in columns]
 		fieldnames = [c["fieldname"] for c in columns]
 
-		self.assertEqual(labels[0], "Season")
-		self.assertEqual(labels[1], "PPC")
-		self.assertNotEqual(labels[1], "PACS Name", "PPC column must NOT be PACS Name")
-		self.assertEqual(labels[2], "TP Quantity (QTL)")
-		self.assertEqual(labels[3], "Physical Paddy (QTL)")
-		self.assertEqual(labels[4], "Entry Qty (QTL)")
-		self.assertEqual(labels[5], "Chhatni Quantity (QTL)")
-		self.assertEqual(labels[6], "Chhatni %")
+		self.assertEqual(labels[0], "PPC")
+		self.assertNotEqual(labels[0], "PACS Name", "PPC column must NOT be PACS Name")
+		self.assertEqual(labels[1], "TP Quantity (QTL)")
+		self.assertEqual(labels[2], "Physical Paddy (QTL)")
+		self.assertEqual(labels[3], "Entry Qty (QTL)")
+		self.assertEqual(labels[4], "Chhatni Quantity (QTL)")
+		self.assertEqual(labels[5], "Chhatni %")
 
-		self.assertEqual(fieldnames, [
-			"season",
-			"ppc",
-			"tp_quantity",
-			"physical_paddy",
-			"entry_qty",
-			"chhatni_quantity",
-			"chhatni_pct",
-		])
-
-		self.assertEqual(columns[0]["fieldtype"], "Link")
-		self.assertEqual(columns[0]["options"], "Season Master")
-		self.assertEqual(columns[1]["fieldtype"], "Link")
-		self.assertEqual(columns[1]["options"], "PPC Master")
-		self.assertEqual(columns[2]["fieldtype"], "Float")
-		self.assertEqual(columns[3]["fieldtype"], "Float")
-		self.assertEqual(columns[4]["fieldtype"], "Float")
-		self.assertEqual(columns[5]["fieldtype"], "Float")
-		self.assertEqual(columns[6]["fieldtype"], "Percent")
+		self.assertEqual(
+			fieldnames,
+			["ppc", "tp_quantity", "physical_paddy", "entry_qty", "chhatni_quantity", "chhatni_pct"],
+		)
 
 	def test_chhatni_percentage_formula_and_zero_division(self):
 		"""Verify formula: Chhatni % = (Chhatni Quantity / (TP Quantity - Entry Qty)) * 100."""
@@ -129,7 +106,9 @@ class TestAbstractPhysical(FrappeTestCase):
 		self.assertGreater(physical, 0, "DUDUKA needs GRNs on this site for a meaningful check")
 		self.assertAlmostEqual(row["physical_paddy"], physical, places=3)
 		self.assertAlmostEqual(row["entry_qty"], entry, places=3)
-		self.assertAlmostEqual(row["chhatni_quantity"], chhatni_total("S1050113", "Kharif 2025"), places=3)
+		self.assertAlmostEqual(
+			row["chhatni_quantity"], row["physical_paddy"] + row["entry_qty"] - row["tp_quantity"], places=3
+		)
 		self.assertGreater(row["tp_quantity"], 3000.0)
 
 		expected_pct = flt((row["chhatni_quantity"] / (row["tp_quantity"] - row["entry_qty"])) * 100.0, 2)
@@ -143,7 +122,9 @@ class TestAbstractPhysical(FrappeTestCase):
 
 		self.assertEqual(row["ppc"], "DHOLMANDAL(S1051411)")
 		self.assertAlmostEqual(row["physical_paddy"], 1738.55, places=2)
-		self.assertAlmostEqual(row["chhatni_quantity"], chhatni_total("S1051411", "Kharif 2025"), places=3)
+		self.assertAlmostEqual(
+			row["chhatni_quantity"], row["physical_paddy"] + row["entry_qty"] - row["tp_quantity"], places=3
+		)
 		self.assertAlmostEqual(row["entry_qty"], 0.0, places=3)
 		self.assertAlmostEqual(row["tp_quantity"], 4699.19, places=2)
 		expected_pct = flt((row["chhatni_quantity"] / (row["tp_quantity"] - row["entry_qty"])) * 100.0, 2)
@@ -296,58 +277,4 @@ def run():
 	print(f"All {result.testsRun} tests passed successfully!")
 	return True
 
-
-class TestAbstractPhysicalChhatniNoDB(unittest.TestCase):
-	"""Chhatni Quantity = cumulative Chhatni (QT) per Season + PPC. Mocked: no site, no database."""
-
-	def setUp(self):
-		frappe.local.lang = "en"
-		self.ppcs = {code: frappe._dict(name=code) for code in ("S1", "S2")}
-		patchers = [
-			# flt(value, precision) reads the rounding method from System Settings; use Frappe's default.
-			patch.object(frappe, "get_system_settings", MagicMock(return_value=None), create=True),
-			patch(
-				"ivri_od.procurement.report.abstract_physical.abstract_physical.resolve_season_master_name",
-				side_effect=lambda s: (s or "").strip() or None,
-			),
-		]
-		for patcher in patchers:
-			patcher.start()
-			self.addCleanup(patcher.stop)
-
-	def _totals(self, rows, tp_meta=None):
-		with patch.object(frappe, "get_all", return_value=[frappe._dict(r) for r in rows], create=True):
-			return chhatni_qt_by_season_ppc(lambda code: self.ppcs.get(code), tp_meta or {})
-
-	def _row(self, name, qt, season="Kharif 2025", ppc="S1", key=""):
-		return {"name": name, "season": season, "ppc_name": ppc, "pass_unique_key": key, "chhatni_qt": qt}
-
-	def test_multiple_records_of_one_ppc_are_summed(self):
-		totals = self._totals([self._row("CH-1", 3.465), self._row("CH-2", 10), self._row("CH-3", 1.535)])
-		self.assertEqual(totals[("Kharif 2025", "S1")], 15.0)
-
-	def test_same_record_is_not_counted_twice(self):
-		totals = self._totals([self._row("CH-1", 4.2), self._row("CH-1", 4.2)])
-		self.assertEqual(totals[("Kharif 2025", "S1")], 4.2)
-
-	def test_ppcs_and_seasons_are_kept_apart(self):
-		totals = self._totals(
-			[self._row("CH-1", 2), self._row("CH-2", 3, ppc="S2"), self._row("CH-3", 7, season="Rabi 2025")]
-		)
-		self.assertEqual(
-			dict(totals), {("Kharif 2025", "S1"): 2.0, ("Kharif 2025", "S2"): 3.0, ("Rabi 2025", "S1"): 7.0}
-		)
-
-	def test_season_and_ppc_from_transit_pass_when_missing(self):
-		tp_meta = {"KEY-1": {"season": "Kharif 2025", "ppc_doc": self.ppcs["S2"]}}
-		totals = self._totals([self._row("CH-1", 5, season="", ppc="", key="KEY-1")], tp_meta)
-		self.assertEqual(totals[("Kharif 2025", "S2")], 5.0)
-
-	def test_record_without_season_or_ppc_is_left_out(self):
-		self.assertEqual(dict(self._totals([self._row("CH-1", 5, season="", ppc="UNKNOWN")])), {})
-
-	def test_chhatni_pct_uses_existing_formula(self):
-		# Chhatni % = cumulative Chhatni QT / (TP Quantity - Entry Qty) x 100
-		chhatni_qt, tp_qty, entry_qty = 20.0, 3726.81, 0.0
-		self.assertEqual(flt((chhatni_qt / (tp_qty - entry_qty)) * 100.0, 2), 0.54)
 

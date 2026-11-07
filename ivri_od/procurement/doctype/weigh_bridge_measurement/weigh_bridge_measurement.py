@@ -308,6 +308,7 @@ class WeighBridgeMeasurement(Document):
 
 	def validate(self):
 		self._sync_date_from_rst()
+		self._sync_party_from_rst()
 		ensure_doc_datetime(self, "date", default_now=True)
 		self._sync_and_validate_weighment()
 		self._sync_weighment_datetime()
@@ -371,6 +372,15 @@ class WeighBridgeMeasurement(Document):
 			values["measurement_time"] = get_time(dt).replace(microsecond=0)
 		if values:
 			frappe.db.set_value("Weigh Bridge Measurement", self.name, values, update_modified=False)
+
+	def _sync_party_from_rst(self):
+		"""Party Name of a weighment made from an RST is the RST Party Name, so the list can filter on it."""
+		rst_name = (self.get("demo_rst_data") or "").strip()
+		if not rst_name:
+			return
+		party = (frappe.db.get_value("RST Details", rst_name, "party_name") or "").strip()
+		if party:
+			self.party_name = party
 
 	def _sync_date_from_rst(self):
 		"""Date & Time of a weighment made from an RST is the RST Details Date & Time (not today's date)."""
@@ -1191,6 +1201,25 @@ def persist_quality_check_sync(name, actual_truck_no=None, truck_no_in_tp=None):
 
 	_ensure_wbm_bag_details_from_qc(name, data)
 	return data
+
+
+FILTER_VALUE_FIELDS = ("rst_no", "party_name", "transit_pass_no", "lot_no", "actual_truck_no", "commodity")
+
+
+@frappe.whitelist()
+def get_filter_values() -> dict[str, list[str]]:
+	"""Drop-down values of the list filters: the distinct values of each field in the weighments."""
+	frappe.has_permission("Weigh Bridge Measurement", "read", throw=True)
+	values = {}
+	for fieldname in FILTER_VALUE_FIELDS:
+		values[fieldname] = frappe.db.sql(
+			f"""
+			SELECT DISTINCT TRIM(`{fieldname}`) FROM `tabWeigh Bridge Measurement`
+			WHERE IFNULL(TRIM(`{fieldname}`), '') != '' ORDER BY 1
+			""",
+			pluck=True,
+		)
+	return values
 
 
 def rst_date_time(rst_name: str):

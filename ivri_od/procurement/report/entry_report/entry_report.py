@@ -111,11 +111,11 @@ def get_data(filters=None):
 	# 3. Fetch Mill Master for display names and codes
 	all_mills = frappe.get_all(
 		"Mill Master",
-		fields=["name", "miller_code", "company"],
+		fields=["name", "miller_code", "company", "short_name"],
 	)
 	mill_name_by_code = {}
 	for m in all_mills:
-		company = (m.company or m.name or "").strip()
+		company = (m.short_name or m.company or m.name or "").strip()
 		if m.name:
 			mill_name_by_code[m.name.casefold()] = company
 		if m.miller_code:

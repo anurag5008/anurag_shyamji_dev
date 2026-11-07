@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-04 12:00:00.000000",
+ "modified": "2026-11-05 23:30:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Vehicle Wise Statement",
@@ -19,7 +19,7 @@
  "field_order": [
   "naming_series",
   "statement_type",
-  "cmr_note",
+  "cmr_to",
   "filters_section",
   "miller",
   "season",
@@ -61,16 +61,17 @@
    "in_standard_filter": 1
   },
   {
-   "fieldname": "cmr_note",
-   "fieldtype": "HTML",
-   "options": "<p class=\"text-muted\">The CMR (rice) statement is not ready yet. It will be added soon. Choose <b>Paddy</b> to make a statement now.</p>",
-   "depends_on": "eval:doc.statement_type==\"CMR\""
+   "fieldname": "cmr_to",
+   "fieldtype": "Select",
+   "label": "CMR Delivery To",
+   "options": "\nFCI\nRRC",
+   "depends_on": "eval:doc.statement_type==\"CMR\"",
+   "mandatory_depends_on": "eval:doc.statement_type==\"CMR\""
   },
   {
    "fieldname": "filters_section",
    "fieldtype": "Section Break",
-   "label": "Filters",
-   "depends_on": "eval:doc.statement_type!=\"CMR\""
+   "label": "Filters"
   },
   {
    "fieldname": "miller",
@@ -78,7 +79,7 @@
    "in_list_view": 1,
    "label": "Miller",
    "description": "The millers found in the PPAS Transit Passes.",
-   "mandatory_depends_on": "eval:doc.statement_type!=\"CMR\""
+   "reqd": 1
   },
   {
    "fieldname": "season",
@@ -86,14 +87,14 @@
    "in_list_view": 1,
    "label": "Season",
    "description": "The seasons found in the PPAS Transit Passes.",
-   "mandatory_depends_on": "eval:doc.statement_type!=\"CMR\""
+   "reqd": 1
   },
   {
    "fieldname": "column_break_1",
    "fieldtype": "Column Break"
   },
   {
-   "description": "Optional. Only the passes of the PPCs that the PPC Master puts under this district are used.",
+   "description": "Paddy: only the PPCs of this district. CMR: for the print heading and layout only (Balangir or another district).",
    "fieldname": "district",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -109,8 +110,7 @@
   {
    "fieldname": "details_section",
    "fieldtype": "Section Break",
-   "label": "Vehicle Wise Statement",
-   "depends_on": "eval:doc.statement_type!=\"CMR\""
+   "label": "Vehicle Wise Statement"
   },
   {
    "fieldname": "items",
@@ -121,8 +121,7 @@
   {
    "fieldname": "totals_section",
    "fieldtype": "Section Break",
-   "label": "Total",
-   "depends_on": "eval:doc.statement_type!=\"CMR\""
+   "label": "Total"
   },
   {
    "fieldname": "total_vehicles",

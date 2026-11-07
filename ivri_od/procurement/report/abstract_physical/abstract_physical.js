@@ -10,16 +10,32 @@ frappe.query_reports["Abstract Physical"] = {
 			options: "Season Master",
 		},
 		{
+			fieldname: "district",
+			label: __("District"),
+			fieldtype: "Link",
+			options: "District Master",
+		},
+		{
+			fieldname: "mill_name",
+			label: __("Mill"),
+			fieldtype: "Link",
+			options: "Mill Master",
+		},
+		{
 			fieldname: "ppc_name",
 			label: __("PPC"),
 			fieldtype: "Link",
 			options: "PPC Master",
 			get_query: () => {
 				const season = frappe.query_report.get_filter_value("season");
+				const district = frappe.query_report.get_filter_value("district");
+				const mill_name = frappe.query_report.get_filter_value("mill_name");
 				return {
 					query: "ivri_od.procurement.report.abstract_report.abstract_report.get_eligible_ppcs_query",
 					filters: {
 						season: season || "",
+						district: district || "",
+						mill_name: mill_name || "",
 					},
 				};
 			},

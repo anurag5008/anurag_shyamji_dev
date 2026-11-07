@@ -111,8 +111,6 @@
    "bold": 1,
    "fieldname": "grn_no",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "GRN No",
    "no_copy": 1,
    "read_only": 1,
@@ -122,8 +120,6 @@
    "depends_on": "eval:!doc.is_local_procurement",
    "fieldname": "pass_unique_key",
    "fieldtype": "Autocomplete",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Pass Unique Key",
    "mandatory_depends_on": "eval:!doc.is_local_procurement"
   },
@@ -174,8 +170,6 @@
    "depends_on": "eval:doc.is_local_procurement",
    "fieldname": "is_local_procurement",
    "fieldtype": "Check",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Local Procurement",
    "read_only": 1
   },
@@ -201,7 +195,9 @@
    "fieldname": "transit_pass_no",
    "fieldtype": "Data",
    "label": "TP No",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1
   },
   {
    "fieldname": "transit_pass_datetime",
@@ -231,8 +227,6 @@
   {
    "fieldname": "pacs",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "PACS",
    "read_only": 1
   },
@@ -241,7 +235,8 @@
    "fieldtype": "Data",
    "in_standard_filter": 1,
    "label": "PPC",
-   "read_only": 1
+   "read_only": 1,
+   "in_list_view": 1
   },
   {
    "depends_on": "eval:!doc.is_local_procurement",
@@ -368,8 +363,6 @@
    "depends_on": "eval:doc.is_farmer_or_agent",
    "fieldname": "agent_name",
    "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "Agent Name",
    "mandatory_depends_on": "eval:doc.is_farmer_or_agent && !doc.is_local_procurement",
    "options": "Agent Master",
@@ -379,7 +372,6 @@
    "depends_on": "eval:doc.is_local_procurement",
    "fieldname": "local_purchase_order",
    "fieldtype": "Link",
-   "in_standard_filter": 1,
    "label": "Local Purchase Order",
    "options": "Local Paddy Purchase Order",
    "read_only": 1
@@ -533,8 +525,6 @@
   {
    "fieldname": "ppc_name",
    "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
    "label": "PPC Name",
    "read_only": 1
   },
@@ -699,7 +689,8 @@
    "in_list_view": 1,
    "label": "Chhatni Status",
    "options": "\nChhatni Not Received\nChhatni Pending\nChhatni Received\nExtra Chhatni Received",
-   "read_only": 1
+   "read_only": 1,
+   "in_standard_filter": 1
   },
   {
    "depends_on": "eval:!doc.is_local_procurement",
@@ -711,7 +702,7 @@
  ],
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-10-06 16:28:29.019300",
+ "modified": "2026-11-05 16:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "GRN Note",

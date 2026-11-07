@@ -322,7 +322,6 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"Receipt & GRN",
 		[
 			("Entry", "DocType"),
-			("Chhatni", "DocType"),
 			("RST Details", "DocType"),
 			("GRN Note", "DocType"),
 		],
@@ -331,6 +330,18 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 		"CMR",
 		[
 			("Miller Verification Report", "DocType"),
+		],
+	),
+	(
+		"Registers",
+		[
+			("Mandi Book", "Report"),
+			("Entry Report", "Report"),
+			("Vehicle Gate Movement Summary", "Report"),
+			(DC_TRACK_REPORT, "Report"),
+			(DC_DETAILS_REPORT, "Report"),
+			(PADDY_REGISTER_REPORT, "Report"),
+			(RICE_REGISTER_REPORT, "Report"),
 		],
 	),
 	(
@@ -353,18 +364,6 @@ WORKSPACE_CARDS: list[tuple[str, list[tuple[str, str]]]] = [
 			("Abstract Physical", "Report"),
 			("TP Mandi Quantity Fulfillment", "Report"),
 			("Rice Dispatch", "Report"),
-		],
-	),
-	(
-		"Registers",
-		[
-			("Mandi Book", "Report"),
-			("Entry Report", "Report"),
-			("Vehicle Gate Movement Summary", "Report"),
-			(DC_TRACK_REPORT, "Report"),
-			(DC_DETAILS_REPORT, "Report"),
-			(PADDY_REGISTER_REPORT, "Report"),
-			(RICE_REGISTER_REPORT, "Report"),
 		],
 	),
 ]

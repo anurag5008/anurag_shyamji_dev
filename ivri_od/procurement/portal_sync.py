@@ -336,6 +336,79 @@ def with_district(cells: dict[str, str], district: str) -> dict[str, str]:
 	return {DISTRICT_COLUMN: district, **cells}
 
 
+# SCMS Lot Search: the "Vehicle No" column is read from the lot's Print PDF (the acceptance note), table
+# "12. VEHICLE DETAILS", column "Vehicle Registration No.". A lot with two vehicles gives "OD03AB4135, OD03AC3255".
+# Every read that has the PDF (sent now, or saved before on the record) sets it again; no PDF keeps the value
+# already saved. The column is not part of the record key.
+VEHICLE_COLUMN = "Vehicle No"
+# "1. Acceptance Note No. DW051105 / 0481 / 2025-2026": the number between the two slashes (0481) is the A.C. Note No.
+LOT_AC_NOTE_COLUMN = "A.C. Note No."
+LOT_AC_NOTE_TEXT = re.compile(r"Acceptance\s*Note\s*No\.?\s*:?\s*[A-Z0-9]+\s*/\s*([A-Z0-9]+)\s*/", re.IGNORECASE)
+VEHICLE_SECTIONS = {("SCMS", "Lot Search")}
+VEHICLE_AFTER_COLUMN = "Lot No."
+VEHICLE_BLOCK_TEXT = re.compile(r"VEHICLE\s*DETAILS(.*?)(?=\n\s*1[3-9]\.\s|\Z)", re.IGNORECASE | re.DOTALL)
+VEHICLE_NUMBER_TEXT = re.compile(r"\b[A-Z]{2}\s?\d{1,2}\s?[A-Z]{0,3}\s?\d{4}\b")
+
+
+def lot_vehicle_numbers(content: bytes | None) -> str:
+	"""Vehicle Registration No. of a Lot Search PDF ("OD03AB4135"); "" when there is no PDF or no vehicle on it."""
+	return _vehicles_in(ac_note_text(content))
+
+
+def _vehicles_in(text: str) -> str:
+	block = VEHICLE_BLOCK_TEXT.search(text or "")
+	if not block:
+		return ""
+	found = []
+	# the header line ("Sl# Challan No. Vehicle Registration No. ...") has no number; the rows have
+	for match in VEHICLE_NUMBER_TEXT.finditer(block.group(1).upper()):
+		number = re.sub(r"\s", "", match.group(0))
+		if number not in found:
+			found.append(number)
+	return ", ".join(found)
+
+
+def lot_ac_note_no(content: bytes | None) -> str:
+	"""A.C. Note No of a Lot Search PDF ("0481" of "DW051105 / 0481 / 2025-2026", as written); "" when not found."""
+	return _lot_ac_note_in(ac_note_text(content))
+
+
+def _lot_ac_note_in(text: str) -> str:
+	match = LOT_AC_NOTE_TEXT.search(text or "")
+	return match.group(1) if match else ""
+
+
+def add_lot_vehicle(site: str, section: str, cells: dict[str, str], row: dict, record_name: str) -> dict[str, str]:
+	"""Set the Vehicle No and A.C. Note No columns of a row of a VEHICLE_SECTIONS section from the PDF sent with the
+	row, else from the PDF saved before on the record, else the values saved before (else empty)."""
+	if (site, section) not in VEHICLE_SECTIONS:
+		return cells
+	saved = frappe.db.get_value("Portal Record", record_name, ["receipt_file", "row_data"], as_dict=True) or frappe._dict()
+	before = _load_json(saved.row_data)
+	sent = ac_note_text(_sent_receipt(row))
+	stored = ac_note_text(_saved_file(saved.receipt_file)) if saved.receipt_file else ""
+	vehicle = _vehicles_in(sent) or _vehicles_in(stored) or before.get(VEHICLE_COLUMN, "")
+	ac_note = _lot_ac_note_in(sent) or _lot_ac_note_in(stored) or before.get(LOT_AC_NOTE_COLUMN, "")
+	return with_vehicle(cells, vehicle, ac_note)
+
+
+def with_vehicle(cells: dict[str, str], vehicle: str, ac_note: str = "") -> dict[str, str]:
+	"""The Vehicle No and A.C. Note No columns right after the Lot No. column (same position on every read)."""
+	cells = {h: v for h, v in cells.items() if h not in (VEHICLE_COLUMN, LOT_AC_NOTE_COLUMN)}
+	out = {}
+	placed = False
+	for header, value in cells.items():
+		out[header] = value
+		if header == VEHICLE_AFTER_COLUMN:
+			out[VEHICLE_COLUMN] = vehicle
+			out[LOT_AC_NOTE_COLUMN] = ac_note
+			placed = True
+	if not placed:
+		out[VEHICLE_COLUMN] = vehicle
+		out[LOT_AC_NOTE_COLUMN] = ac_note
+	return out
+
+
 def _sent_receipt(row: dict) -> bytes | None:
 	receipt = row.get("receipt") or {}
 	if not receipt.get("content_b64"):
@@ -641,6 +714,7 @@ def _upsert_row(extraction, row: dict, key_columns: list[str]) -> tuple[str, Doc
 	# Added after the key: the Net Weight / Accepted Date / District never make a new record.
 	cells = add_net_weight(extraction.site, extraction.section, cells, row, name)
 	cells = add_dc_district(extraction.site, extraction.section, cells, row, name)
+	cells = add_lot_vehicle(extraction.site, extraction.section, cells, row, name)
 	row_hash = build_row_hash(cells)
 	details = normalize_details(row["details"]) if row.get("details") is not None else None
 	receipt = row.get("receipt") or None

@@ -5,7 +5,7 @@
  "engine": "InnoDB",
  "index_web_pages_for_search": 0,
  "links": [],
- "modified": "2026-11-04 20:00:00.000000",
+ "modified": "2026-11-05 22:10:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Vehicle Wise Statement Item",
@@ -17,8 +17,12 @@
  "editable_grid": 1,
  "field_order": [
   "sl_no",
+  "challan_date",
   "ppc",
+  "depo_name",
+  "lot_no",
   "vehicle_no",
+  "ac_note_no",
   "bags",
   "trips",
   "qty",
@@ -27,7 +31,8 @@
   "amount",
   "voucher_no",
   "payment_mode",
-  "vehicle_type"
+  "vehicle_type",
+  "depot_code"
  ],
  "fields": [
   {
@@ -128,6 +133,37 @@
    "label": "Vehicle Type",
    "read_only": 1,
    "columns": 1
+  },
+  {
+   "fieldname": "challan_date",
+   "fieldtype": "Date",
+   "label": "Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "depo_name",
+   "fieldtype": "Data",
+   "label": "Depo",
+   "read_only": 1
+  },
+  {
+   "fieldname": "depot_code",
+   "fieldtype": "Data",
+   "label": "Depo Code",
+   "read_only": 1,
+   "hidden": 1
+  },
+  {
+   "fieldname": "lot_no",
+   "fieldtype": "Data",
+   "label": "Lot No",
+   "read_only": 1
+  },
+  {
+   "fieldname": "ac_note_no",
+   "fieldtype": "Data",
+   "label": "A.C. Note No",
+   "read_only": 1
   }
  ],
  "permissions": []

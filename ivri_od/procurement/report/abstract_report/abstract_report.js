@@ -10,6 +10,12 @@ frappe.query_reports["Abstract Report"] = {
 			options: "Season Master",
 		},
 		{
+			fieldname: "district",
+			label: __("District"),
+			fieldtype: "Link",
+			options: "District Master",
+		},
+		{
 			fieldname: "ppc_name",
 			label: __("PPC Name"),
 			fieldtype: "Link",
@@ -17,11 +23,13 @@ frappe.query_reports["Abstract Report"] = {
 			get_query: () => {
 				const season = frappe.query_report.get_filter_value("season");
 				const mill_name = frappe.query_report.get_filter_value("mill_name");
+				const district = frappe.query_report.get_filter_value("district");
 				return {
 					query: "ivri_od.procurement.report.abstract_report.abstract_report.get_eligible_ppcs_query",
 					filters: {
 						season: season || "",
 						mill_name: mill_name || "",
+						district: district || "",
 					},
 				};
 			},
@@ -62,7 +70,8 @@ frappe.query_reports["Abstract Report"] = {
 		inject_abstract_report_styles();
 		render_grouped_super_header(datatable_obj);
 		if (datatable_obj && datatable_obj.wrapper) {
-			$(datatable_obj.wrapper).find(".dt-row-total .dt-cell--col-1, .dt-row-total .dt-cell--col-2, .dt-row--total .dt-cell--col-1, .dt-row--total .dt-cell--col-2").empty();
+			// The Season column is gone: only the PPC cell (column 1) of the total row is emptied.
+			$(datatable_obj.wrapper).find(".dt-row-total .dt-cell--col-1, .dt-row--total .dt-cell--col-1").empty();
 		}
 		if (!datatable_obj.__abstract_header_bound) {
 			datatable_obj.__abstract_header_bound = true;

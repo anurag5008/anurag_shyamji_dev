@@ -48,14 +48,18 @@ def get_data(filters):
 	data = []
 	for mapping in mappings:
 		mill_code = frappe.db.get_value("Mill Master", mapping.mill_name, "miller_code") or ""
-		mill_name = frappe.db.get_value("Mill Master", mapping.mill_name, "company") or mapping.mill_name
+		mill_name = (
+			frappe.db.get_value("Mill Master", mapping.mill_name, "short_name")
+			or frappe.db.get_value("Mill Master", mapping.mill_name, "company")
+			or mapping.mill_name
+		)
 		ppc = frappe.db.get_value(
 			"PPC Master", mapping.ppc_name, ["ppc_name", "code"], as_dict=True
 		)
 		ppc_display = (
 			f"{ppc.ppc_name} ({ppc.code})" if ppc and ppc.code else (ppc.ppc_name if ppc else mapping.ppc_name)
 		)
-		mill_display = f"{mill_name} ({mill_code})" if mill_code else mill_name
+		mill_display = mill_name
 		season_aliases = _season_aliases(mapping.season, mapping.season_year)
 		ppc_aliases = _aliases(mapping.ppc_name, ppc.code if ppc else "")
 		mill_aliases = _aliases(mapping.mill_name, mill_code)

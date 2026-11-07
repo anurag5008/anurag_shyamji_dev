@@ -1,0 +1,26 @@
+/* Report filters: the drop-down of a filter (Season, PPC, Mill ...) opens over the report table.
+   The sticky header and first columns of the table were drawn over it, which cut the list. */
+.page-head,
+.page-form {
+	overflow: visible;
+}
+
+.page-head {
+	z-index: 1019 !important;
+}
+
+.page-form .awesomplete > ul,
+.page-form .link-field .dropdown-menu {
+	z-index: 1100 !important;
+}
+
+/* Collapsed sidebar: the app name and its sub title ("Govt Procurement & CMR", "ivri_od")
+   were drawn outside the narrow bar and over the page title. Show only the logo. */
+.body-sidebar-container:not(.expanded) .sidebar-header {
+	overflow: hidden;
+	justify-content: center;
+}
+.body-sidebar-container:not(.expanded) .sidebar-header .title-container,
+.body-sidebar-container:not(.expanded) .sidebar-header .drop-icon {
+	display: none !important;
+}

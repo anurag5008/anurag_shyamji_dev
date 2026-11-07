@@ -263,7 +263,7 @@
    "hidden": 0,
    "is_query_report": 0,
    "label": "Receipt & GRN",
-   "link_count": 4,
+   "link_count": 3,
    "link_type": "DocType",
    "onboard": 0,
    "type": "Card Break"
@@ -274,16 +274,6 @@
    "label": "Entry",
    "link_count": 0,
    "link_to": "Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Chhatni",
-   "link_count": 0,
-   "link_to": "Chhatni",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -324,6 +314,85 @@
    "link_count": 0,
    "link_to": "Miller Verification Report",
    "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Registers",
+   "link_count": 7,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Mandi Book",
+   "link_count": 0,
+   "link_to": "Mandi Book",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Entry Report",
+   "link_count": 0,
+   "link_to": "Entry Report",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Vehicle Gate Movement",
+   "link_count": 0,
+   "link_to": "Vehicle Gate Movement Summary",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Track",
+   "link_count": 0,
+   "link_to": "DC Track",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "DC Details",
+   "link_count": 0,
+   "link_to": "DC Details",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Paddy Stock Register",
+   "link_count": 0,
+   "link_to": "Paddy Stock Register",
+   "link_type": "Report",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "Rice Stock Register",
+   "link_count": 0,
+   "link_to": "Rice Stock Register",
+   "link_type": "Report",
    "onboard": 0,
    "type": "Link"
   },
@@ -444,88 +513,9 @@
    "link_type": "Report",
    "onboard": 0,
    "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Registers",
-   "link_count": 7,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Mandi Book",
-   "link_count": 0,
-   "link_to": "Mandi Book",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Entry Report",
-   "link_count": 0,
-   "link_to": "Entry Report",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Vehicle Gate Movement",
-   "link_count": 0,
-   "link_to": "Vehicle Gate Movement Summary",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "DC Track",
-   "link_count": 0,
-   "link_to": "DC Track",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "DC Details",
-   "link_count": 0,
-   "link_to": "DC Details",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Paddy Stock Register",
-   "link_count": 0,
-   "link_to": "Paddy Stock Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Rice Stock Register",
-   "link_count": 0,
-   "link_to": "Rice Stock Register",
-   "link_type": "Report",
-   "onboard": 0,
-   "type": "Link"
   }
  ],
- "modified": "2026-11-04 13:40:28.013771",
+ "modified": "2026-11-05 21:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Procurement",

@@ -22,6 +22,8 @@ Data comes from Portal Data Extraction (agent) -> Portal Record; see procurement
 import re
 
 import frappe
+
+from ivri_od.procurement.mill_names import mill_short_name
 from frappe import _
 
 from ivri_od.procurement.portal_report import MAX_RECORDS, _date_sort_key, _detail_sum, _get_details, _key, _load
@@ -171,7 +173,7 @@ def _line(dc) -> dict:
 		status = NOT_STARTED
 	return {
 		"mill_id": dc["mill_id"],
-		"mill_name": dc["mill_name"],
+		"mill_name": mill_short_name(dc["mill_id"]) if mill_short_name(dc["mill_id"]) != (dc["mill_id"] or "").strip() else dc["mill_name"],
 		"dc_no": dc["dc_no"],
 		"dc_date": dc["dc_date"],
 		"dc_type": dc["dc_type"],

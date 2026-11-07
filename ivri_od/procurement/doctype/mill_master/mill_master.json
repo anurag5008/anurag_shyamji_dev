@@ -88,13 +88,14 @@
    "fieldtype": "Data",
    "label": "Short Name",
    "in_list_view": 1,
-   "unique": 1
+   "unique": 1,
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-11-05 03:00:00.000000",
+ "modified": "2026-11-05 18:00:00.000000",
  "modified_by": "Administrator",
  "module": "Procurement",
  "name": "Mill Master",
@@ -137,6 +138,6 @@
  "sort_field": "creation",
  "sort_order": "DESC",
  "states": [],
- "title_field": "company",
+ "title_field": "short_name",
  "track_changes": 1
 }

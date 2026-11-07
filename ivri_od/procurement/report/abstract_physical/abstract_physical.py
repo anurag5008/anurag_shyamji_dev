@@ -6,9 +6,12 @@ from collections import defaultdict
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 
-from ivri_od.procurement.doctype.season_master.season_master import resolve_season_master_name
+from ivri_od.procurement.doctype.season_master.season_master import (
+	get_season_for_date,
+	resolve_season_master_name,
+)
 from ivri_od.procurement.ppc_pass_metrics import (
 	get_ppc_season_target_map,
 	make_ppc_resolver,
@@ -19,11 +22,12 @@ from ivri_od.procurement.transit_pass_resolve import resolve_ppc_master_name
 
 def execute(filters=None):
 	filters = frappe._dict(filters or {})
-	return get_columns(), get_data(filters)
+	return get_columns(show_season=not filters.get("season")), get_data(filters)
 
 
-def get_columns():
-	return [
+def get_columns(show_season: bool = False):
+	"""The Season column shows only while no season is chosen, to tell the seasons apart."""
+	columns = [
 		{
 			"label": _("Season"),
 			"fieldname": "season",
@@ -31,6 +35,8 @@ def get_columns():
 			"options": "Season Master",
 			"width": 120,
 		},
+	]
+	return (columns if show_season else []) + [
 		{
 			"label": _("PPC"),
 			"fieldname": "ppc",
@@ -84,7 +90,7 @@ def get_data(filters):
 	# 1. Authoritative PPC master list from PPC Master DocType
 	ppc_master_rows = frappe.get_all(
 		"PPC Master",
-		fields=["name", "code", "ppc_name", "title"],
+		fields=["name", "code", "ppc_name", "title", "district"],
 		order_by="ppc_name asc, name asc",
 	)
 	resolve_to_ppc_master = make_ppc_resolver(ppc_master_rows)
@@ -94,6 +100,13 @@ def get_data(filters):
 		candidate_ppcs = [filter_doc] if filter_doc else []
 	else:
 		candidate_ppcs = ppc_master_rows
+
+	# District filter: only the PPCs of this district (PPC Master).
+	district_filter = (filters.get("district") or "").strip()
+	if district_filter:
+		candidate_ppcs = [
+			p for p in candidate_ppcs if (p.get("district") or "").strip() == district_filter
+		]
 
 	# Season handling
 	if season_filter:
@@ -119,9 +132,17 @@ def get_data(filters):
 					discovered.add(resolve_season_master_name(grn) or grn.strip())
 			relevant_seasons = sorted(list(discovered))
 
+	# Mill filter: Transit Passes, weighments, entries and Chhatni of this mill only. The mill is the
+	# first part of the Pass Unique Key (a weighment without a pass takes the Mill No of its RST).
+	mill_filter = (filters.get("mill_name") or "").strip()
+
+	def mill_of_key(key: str) -> str:
+		return (key or "").partition("-")[0].strip()
+
 	# 2. Authoritative Target Allocation totals dynamically at runtime
 	target_map, ppc_season_totals = get_ppc_season_target_map(
 		season=season_filter if season_filter else None,
+		mill_name=mill_filter or None,
 		ppc_master_rows=ppc_master_rows,
 	)
 
@@ -181,6 +202,8 @@ def get_data(filters):
 	})
 
 	for tp in all_tps:
+		if mill_filter and mill_of_key(tp.pass_unique_key or tp.name) != mill_filter:
+			continue
 		s = resolve_season_master_name(tp.season) or (tp.season or "").strip()
 		p = resolve_to_ppc_master(tp.ppc)
 		if not s or not p:
@@ -190,6 +213,8 @@ def get_data(filters):
 
 	for grn in all_grns:
 		pass_key = (grn.pass_unique_key or "").strip()
+		if mill_filter and mill_of_key(pass_key) != mill_filter:
+			continue
 		tp_meta = tp_meta_by_key.get(pass_key, {})
 		s = (
 			resolve_season_master_name(grn.cmr_season)
@@ -200,17 +225,44 @@ def get_data(filters):
 		if not s or not p:
 			# Skip transactions referencing PPCs not found in PPC Master
 			continue
-		net_wt = flt(grn.net_weight)
 		entry_q = (
 			flt(grn.get("entry_qty"))
 			or flt(grn.get("entry_quantity"))
 			or grn_entry_map.get(grn.name, 0.0)
 		)
-		aggregated[(s, p.name)]["physical_paddy"] += net_wt
 		aggregated[(s, p.name)]["entry_qty"] += entry_q
 
-	# 6. Cumulative Chhatni (QT) from saved Chhatni records, per Season + PPC (Mandi)
-	chhatni_by_ppc_season = chhatni_qt_by_season_ppc(resolve_to_ppc_master, tp_meta_by_key)
+	# Physical Paddy = Net Weight (QT) of the weighments (Weigh Bridge Measurement), grouped by PPC.
+	# The PPC is the weighment's Party Name (a weighment with a Transit Pass and no Party Name takes the
+	# PPC of its pass). The season is the pass season, else the Season Master covering the weighment date.
+	rst_mill = {}
+	if mill_filter:
+		rst_mill = dict(frappe.get_all("RST Details", fields=["name", "mill_name"], as_list=True))
+	ppc_by_party: dict[str, object] = {}
+	season_by_date: dict[object, str] = {}
+	for wbm in frappe.get_all(
+		"Weigh Bridge Measurement",
+		fields=["name", "party_name", "pass_unique_key", "net_weight", "date", "demo_rst_data"],
+	):
+		pass_key = (wbm.pass_unique_key or "").strip()
+		if mill_filter:
+			mill = mill_of_key(pass_key) if pass_key else (rst_mill.get(wbm.demo_rst_data) or "").strip()
+			if mill != mill_filter:
+				continue
+		tp_meta = tp_meta_by_key.get(pass_key, {})
+		party = (wbm.party_name or "").strip()
+		if party not in ppc_by_party:
+			ppc_by_party[party] = resolve_to_ppc_master(party) if party else None
+		p = ppc_by_party[party] or tp_meta.get("ppc_doc")
+		s = tp_meta.get("season", "")
+		if not s and wbm.date:
+			day = getdate(wbm.date)
+			if day not in season_by_date:
+				season_by_date[day] = get_season_for_date(day) or ""
+			s = season_by_date[day]
+		if not s or not p:
+			continue
+		aggregated[(s, p.name)]["physical_paddy"] += flt(wbm.net_weight)
 
 	# 7. Render report rows: only PPCs present in PPC Master with Target Allocation > 0 in season
 	data = []
@@ -228,8 +280,10 @@ def get_data(filters):
 			tp_qty = flt(b["tp_quantity"], 3)
 			physical = flt(b["physical_paddy"], 3)
 			entry_qty = flt(b["entry_qty"], 3)
-			chhatni_qty = flt(chhatni_by_ppc_season.get((season, p.name), 0.0), 3)
+			# Chhatni Quantity = Physical Paddy + Entry Qty - TP Quantity.
+			chhatni_qty = flt(physical + entry_qty - tp_qty, 3)
 
+			# Chhatni % = Chhatni Quantity / (TP Quantity - Entry Qty) x 100.
 			denom = tp_qty - entry_qty
 			if denom > 0:
 				chhatni_pct = flt((chhatni_qty / denom) * 100.0, 2)
@@ -255,25 +309,3 @@ def get_data(filters):
 			})
 
 	return data
-
-
-def chhatni_qt_by_season_ppc(resolve_to_ppc_master, tp_meta_by_key: dict) -> dict[tuple[str, str], float]:
-	"""Cumulative Chhatni (QT) of saved Chhatni records, keyed by (Season, PPC Master name).
-
-	Season and PPC come from the Chhatni record, else from its Transit Pass.
-	Each record is counted once (by name), so the same Mandi/PPC is never double-counted.
-	"""
-	totals: dict[tuple[str, str], float] = defaultdict(float)
-	seen: set[str] = set()
-	for row in frappe.get_all("Chhatni", fields=["name", "season", "ppc_name", "pass_unique_key", "chhatni_qt"]):
-		if row.name in seen:
-			continue
-		seen.add(row.name)
-		tp_meta = tp_meta_by_key.get((row.pass_unique_key or "").strip(), {})
-		season = (
-			resolve_season_master_name(row.season) or (row.season or "").strip() or tp_meta.get("season", "")
-		)
-		ppc = resolve_to_ppc_master(row.ppc_name) or tp_meta.get("ppc_doc")
-		if season and ppc:
-			totals[(season, ppc.name)] = flt(totals[(season, ppc.name)] + flt(row.chhatni_qt), 3)
-	return totals

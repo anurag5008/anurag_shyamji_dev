@@ -257,6 +257,6 @@ def _ppc_display(ppc_link: str | None, fallback: str | None) -> str:
 
 def _mill_display(mill_link: str | None, fallback: str | None) -> str:
 	if mill_link and frappe.db.exists("Mill Master", mill_link):
-		code = frappe.db.get_value("Mill Master", mill_link, "miller_code")
-		return (code or mill_link).strip()
+		short, code = frappe.db.get_value("Mill Master", mill_link, ["short_name", "miller_code"]) or ("", "")
+		return (short or code or mill_link).strip()
 	return (fallback or "").strip()

@@ -379,11 +379,8 @@ def run_e2e_procurement():
 	assert duduka_ap, "DUDUKA row missing in Abstract Physical"
 	print(f"  Abstract Physical DUDUKA: TP Qty={duduka_ap['tp_quantity']}, Physical={duduka_ap['physical_paddy']}, Entry Qty={duduka_ap['entry_qty']}, Deduction={duduka_ap['chhatni_quantity']}, Chhatni%={duduka_ap['chhatni_pct']}")
 	assert flt(duduka_ap["physical_paddy"], 3) == 666.176, f"Physical paddy must be 666.176, got {duduka_ap['physical_paddy']}"
-	# Chhatni Quantity = cumulative Chhatni (QT) of the saved Chhatni records for this PPC and season.
-	expected_chhatni = flt(
-		sum(flt(q) for q in frappe.get_all("Chhatni", filters={"ppc_name": PPC_CODE, "season": SEASON}, pluck="chhatni_qt")),
-		3,
-	)
+	# Chhatni Quantity = Physical Paddy + Entry Qty - TP Quantity.
+	expected_chhatni = flt(duduka_ap["physical_paddy"] + duduka_ap["entry_qty"] - duduka_ap["tp_quantity"], 3)
 	assert flt(duduka_ap["chhatni_quantity"], 3) == expected_chhatni, f"Chhatni qty must be {expected_chhatni}, got {duduka_ap['chhatni_quantity']}"
 	print("  ✓ Abstract Physical: PASS")
 

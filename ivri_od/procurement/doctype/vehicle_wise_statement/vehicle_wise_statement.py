@@ -6,6 +6,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
+from ivri_od.procurement import cmr_statement as cmr
 from ivri_od.procurement import vehicle_statement as vs
 
 
@@ -15,11 +16,11 @@ class VehicleWiseStatement(Document):
 		self.recalculate()
 
 	def check_statement_type(self):
-		"""Only the Paddy statement is built; CMR (rice) comes later."""
+		"""Paddy (from the PPAS Transit Passes) or CMR (rice, from the DC Transit Challan of FCI or the Lot Search of RRC)."""
 		if not self.statement_type:
 			self.statement_type = "Paddy"
-		if self.statement_type == "CMR":
-			frappe.throw(_("The CMR (rice) statement is not ready yet. Choose Paddy."))
+		if self.statement_type == "CMR" and not self.cmr_to:
+			frappe.throw(_("Choose where the CMR was delivered: FCI or RRC."))
 
 	def recalculate(self):
 		"""One row for each vehicle and PPC. Amount = Qty x Rate (the KM is only noted). Hired vehicles first, then own vehicles; the rows of a vehicle stay together.
@@ -30,7 +31,8 @@ class VehicleWiseStatement(Document):
 		for row in rows:
 			row.vehicle_type = vs.OWN if vs.normal_vehicle(row.vehicle_no) in own else vs.HIRED
 			row.amount = vs.amount_of(row.qty, row.rate)
-		rows.sort(key=lambda row: (row.vehicle_type == vs.OWN, vs.normal_vehicle(row.vehicle_no)))  # stable: the PPC order of a vehicle is kept
+		# stable: the PPC order of a vehicle is kept; the challans of a vehicle (CMR) go by date
+		rows.sort(key=lambda row: (row.vehicle_type == vs.OWN, vs.normal_vehicle(row.vehicle_no), str(row.get("challan_date") or "")))
 		self.items = rows
 		for index, row in enumerate(rows, 1):
 			row.idx = index
@@ -67,10 +69,13 @@ class VehicleWiseStatement(Document):
 
 	@frappe.whitelist()
 	def fetch_details(self):
-		"""Fill the table from the PPAS Transit Passes. The KM and Rate already typed for a vehicle and PPC are kept when it is fetched again."""
+		"""Fill the table: Paddy from the PPAS Transit Passes, CMR from the DC Transit Challan (FCI) or the Lot Search (RRC).
+		The KM and Rate already typed are kept when it is fetched again."""
 		self.check_statement_type()
 		if not self.miller or not self.season:
 			frappe.throw(_("Choose the Miller and the Season first."))
+		if self.statement_type == "CMR":
+			return self.fetch_cmr_details()
 		passes = vs.get_passes(self.miller, self.season, self.district)
 		if not passes:
 			frappe.throw(_("No PPAS Transit Pass found for these filters."))
@@ -85,11 +90,33 @@ class VehicleWiseStatement(Document):
 		self.recalculate()
 		return len(self.items)
 
+	def fetch_cmr_details(self):
+		"""CMR: one row for each challan (and vehicle). The KM comes from the Distance of the Depo in the Depo Master;
+		the Rate (and a KM the Depo Master does not have) typed before for a depo is kept when it is fetched again."""
+		rows = cmr.cmr_rows(self.cmr_to, self.miller, self.season)
+		if not rows:
+			frappe.throw(_("No {0} challan found for this Miller and Season.").format(self.cmr_to))
+		typed = {}
+		for row in self.get("items") or []:
+			typed.setdefault((row.depo_name or "").strip(), (row.km, row.rate))
+		distances = cmr.depo_distances(row["depot_code"] for row in rows)
+		own = {vs.normal_vehicle(v) for v in vs.own_vehicle_numbers()}
+		self.set("items", [])
+		for row in rows:
+			km, rate = typed.get(row["depo_name"], (0, 0))
+			km = distances.get(row["depot_code"]) or km
+			self.append("items", {**row, "km": km, "rate": rate, "trips": 1})
+		self.recalculate()
+		return len(self.items)
+
 
 @frappe.whitelist()
-def get_filter_options():
-	"""The millers and seasons found in the PPAS Transit Passes, to choose from."""
+def get_filter_options(statement_type="Paddy", cmr_to=None):
+	"""The millers and seasons to choose from: those of the PPAS Transit Passes (Paddy), or the millers of the DC Transit Challan (FCI) / Lot Search (RRC) (CMR)."""
+	seasons = frappe.get_all("PPAS Transit Pass", filters={"season": ["is", "set"]}, pluck="season", distinct=True, order_by="season asc")
+	if statement_type == "CMR":
+		return {"millers": cmr.millers(cmr_to), "seasons": seasons}
 	return {
 		"millers": frappe.get_all("PPAS Transit Pass", filters={"miller": ["is", "set"]}, pluck="miller", distinct=True, order_by="miller asc"),
-		"seasons": frappe.get_all("PPAS Transit Pass", filters={"season": ["is", "set"]}, pluck="season", distinct=True, order_by="season asc"),
+		"seasons": seasons,
 	}

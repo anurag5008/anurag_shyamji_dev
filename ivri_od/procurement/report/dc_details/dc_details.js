@@ -20,13 +20,6 @@ frappe.query_reports["DC Details"] = {
 			description: __("DCs by District in View DC from DCRO; paddy by PPC's District. Empty: every district."),
 		},
 	],
-	onload(report) {
-		// Open on the latest season.
-		if (report.get_filter_value("season")) return;
-		frappe.db
-			.get_list("Season Master", { fields: ["name"], order_by: "creation desc", limit: 1 })
-			.then((rows) => rows.length && report.set_filter_value("season", rows[0].name));
-	},
 	after_refresh(report) {
 		ivri_od.dc_details.render_charts(report);
 	},
